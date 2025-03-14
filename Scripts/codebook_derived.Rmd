@@ -1,0 +1,515 @@
+This is the second portion of the codebook that will explain which variables we will derive using the data and columns specified in the first portion of the codebook
+
+# Packages used
+
+library(lubridate)
+library(tidyverse)
+
+# Dependent Variables
+
+## age of child - choose the oldest one under 18
+
+### variables used
+
+-   date of childbirth
+    -   `child_1_DOB_year`, `child_1_DOB_month`
+    -   `child_2_DOB_year`, `child_2_DOB_month`
+    -   `child_3_DOB_year`, `child_3_DOB_month`
+    -   `child_4_DOB_year`, `child_4_DOB_month`
+    -   `child_5_DOB_year`, `child_5_DOB_month`
+-   date of response
+    -   `response_time`
+
+### variables derived
+
+-   Age of each child 
+    -   `child_1_age`
+    -   `child_2_age`
+    -   `child_3_age`
+    -   `child_4_age`
+    -   `child_5-age`
+-   Age of child of interest
+    -   `age_of_interest`
+    -   *Date of response* - *Date of child birth* and choose the largest value \<= 18 y/o
+
+## Influenza vaccination coverage
+
+### Variables used
+
+-   Influenza vaccination status of child (as of October 1st 2022)
+    -   `influenza_first_dose`
+        -   1 = Yes
+        -   2 = Not yet
+        -   3 = No, not planning to
+    -   `influenza_second_dose`
+        -   1 = Yes
+        -   2 = Not yet
+        -   3 = No, not planning to
+-   Month and year of child's influenza vaccintion (most recent as of October 1st 2022)
+    -   `influenza_first_dose_month`, `influenza_first_dose_year`
+    -   `influenza_second_dose_month`, `influenza_second_dose_year`
+
+### Variables derived
+
+-   Date of child's influenza vaccination
+    -   `influenza_first_dose_date`
+    -   `influenza_second_dose_date`
+-   Degree of coverage (doses)
+    -   `influenza_coverage_dosage`
+    -   0 = 0 doses
+    -   1 = 1 dose
+    -   2 = 2 doses
+-   Degree of coverage (relative to *Age of child*
+    -   `influenza_coverage_age`
+    -   0 = none(0 doses for those above 6 months)
+    -   1 = partial (1 dose for those \>= 13y/o but \< 18 y/o)
+    -   2 = full (2 doses for those \>=13 y/o but \<18y/o and \>= 1 dose for those 6 months to 13 y/o)
+
+*note that individuals below 6 months should not be counted to avoid skewing the number of individuals who have received 0 doses*
+
+## Covid vaccination coverage
+
+### Variables used
+
+-   Covid-19 vaccination status of child (of each dose)
+    -   `covid_first_dose`
+        -   1 = Yes
+        -   2 = Not yet
+        -   3 = No, not planning to
+    -   `covid_second_dose`
+        -   1 = Yes
+        -   2 = Not yet
+        -   3 = No, not planning to
+    -   `covid_third_dose`
+        -   1 = Yes
+        -   2 = Not yet
+        -   3 = No, not planning to
+-   Date of child's Covid-19 vaccination
+    -   `covid_first_dose_month`, `covid_first_dose_year`
+    -   `covid_second_dose_month`, `covid_second_dose_year`
+
+### Variables derived
+
+-   Degree of coverage, `covid_coverage_dosage`
+    -   0 doses
+    -   1 dose
+    -   2 doses
+    -   3 doses
+    
+-   Vaccination status (relative to *Age of child*), `covid_coverage_age`
+    -   none (0 for individuals >= 6m)
+    -   partial coverage (1-2 dose for those aged 5-11 y/o and 1-2 doses for those aged 12 - 17 y/o)
+    -   full coverage (1-3 doses for those <5y, 3 doses for those aged 5-11 and 3 doses for those aged 12 -17)
+
+*note that individuals below 6 months of age should not be considered as they are ineligible for the Covid-19 vaccine*
+
+*children aged 6 months to 5 years are eligible for the covid-19 vaccine but it isn't compulsory for them to receive it*
+
+*for children aged 6 months to 5 years, any sort of vaccination constitutes a full vax due to inconsistencies in what constitutes a full vaccination between diferent brands*
+
+# Independent Variables
+
+## Number of individuals in the same household
+
+### Variables used
+
+-   Number of individuals in the same household, `total_individuals`
+-   Number of spouses (of the respondent) living in the same household), `spouses`
+-   Number of siblings (of the respondent), `siblings`
+-   Number of grandparents (of the respondent)
+-   Number of people who are bedridden or close to it, `bedridden`
+-   Number of people who need medical care such as ventilators, `need_ventilation`
+-   Number of people who need medical care such as gastric wax, `need_feeding`
+-   Number of parents and parents-in-law (of the respondent), `parents_in_law`
+-   Number of grandchildren (of the respondent), `grandchildren`
+-   Number of other personnel living in the same household, `other_individuals`
+
+### Variables derived (and used)
+
+-   Number of parents of the child, `child_parents`
+-   Number of aunts and uncles of the child, `child_auntcles`
+-   Number of vulnerable individuals, `vulnerable_indviduals`
+-   Total number of individuals, `child_total`
+-   Number of grandparents and great grandparents of the child, `child_grand`
+
+## Sex of child and siblings
+
+### Variables used
+
+-   Sex of child (of the 5 oldest children)
+    -   `child_1_sex`
+    -   `child_2_sex`
+    -   `child_3_sex`
+    -   `child_4_sex`
+    -   `child_5_sex`
+    -   1 = male, 2 = female
+-   Number of children
+    -   `children_under_18`
+    -   `children_over_18`
+
+### Variables derived
+
+-   Sex of child of interest (reference *Age of child*), `sex_of_interest` 
+    -   0 = male
+    -   1 = female
+-   Number of sisters and/or brothers
+    -   No. of sisters, `child_sisters`
+    -   No. of brothers, `child_brothers`
+
+\*Note that this is limited for up to a combination within a total of 5 siblings
+
+-   Number of siblings at the time of vaccination, `siblings_tov`
+    -   sum the number of children who were born before the vaccination date of the child of interest
+-   Total number of siblings, `child_siblings`
+
+## Parents' marital status
+
+### Variables used
+
+-   Respondent's marital status, `marital_status`
+    -   1-3 = Married
+    -   4 = unmarried (*should be excluded*)
+    -   5-7 = Bereaved
+    -   8-10 = Divorced
+-   Respondent's sexual orientation, `sexual_orientation`
+    -   1 = Heterosexual = different sex
+    -   2 = Homosexual = same sex
+
+### Variables derived
+
+-   Marital , `parents_marital_status`
+    -   0 = married
+    -   1 = bereaved
+    -   2 = divorced
+    -   4 = unmarried
+
+-   Couple's sexual orientation/make-up, `parents_sexual_make_up`
+    -   1 = different sex couple
+    -   2 = same sex couple
+
+## Sex and age of responding parent
+
+### Variables used
+
+-   respondent's sex, `respondent_sex`
+    -   1 = Male
+    -   2 = Female
+-   respondent's age, `respondent_age`
+
+### Variables derived
+
+-   responding parent's sex, `parent_1_sex`
+    -   0 = Male (Father)
+    -   1 = Female (Mother)
+-   sex of the respondent's partner, `parent_2_sex`
+    -   0 = Male (Father)
+    -   1 = Female (Mother)
+-   responding parent's age, `parent_1_age`    
+    
+## Finances
+
+### Variables Used
+
+-   Annual household income, `household_income_annual`
+
+-   Financial assets of respondents' household, `household_assets`
+
+-   Mortgage, `household_mortgage`
+
+-   Household debt, `household_debt`
+
+-   Categories:
+
+    -   1 = 0
+    -   2 = \<500
+    -   3 = 500-1000
+    -   4 = 1000-2000
+    -   5 = 2000-3000
+    -   6 = 3000-4000
+    -   7 = 4000-5000
+    -   8 = 5000-6000
+    -   9 = 6000-7000
+    -   10 = 7000-8000
+    -   11 = 8000-9000
+    -   12 = 9000 - 10000
+    -   13-18 = 10000+
+    -   19-20 = NA
+
+### Variables derived (and used)
+
+-   Annual household income (categorised), `household_income`
+
+categories in (100,000s) of jpy/year:
+
+    -   1 = 0
+    -   2 = \<500
+    -   3 = 500-1000
+    -   4 = 1000-2000
+    -   5 = 2000-3000
+    -   6 = 3000-4000
+    -   7 = 4000-5000
+    -   8 = 5000-6000
+    -   9 = 6000-7000
+    -   10 = 7000-8000
+    -   11 = 8000-9000
+    -   12 = 9000 - 10000
+    -   13 = 10000+
+    -   NA
+    
+*13-18 represent the top decile of earners in Japan according to 2023 nationwide statistics *
+
+-   Financial assets of respondents' household
+
+-   Mortgage
+
+-   Household debt
+
+## Chronic illness
+
+### Variables Used
+
+    `respondent_hypertension`
+    `respondent_diabetes`
+    `respondent_dyslipidemia`
+    `respondent_pneumonia`
+    `respondent_asthma`
+    `respondent_atopic_dermatitis`
+    `respondent_allergic_rhinitis`
+    `respondent_periodontitis`
+    `respondent_caries`
+    `respondent_cataract`
+    `respondent_angina`
+    `respondent_stroke`
+    `respondent_COPD`
+    `respondent_kidney_disease`
+    `respondent_hepatitis_cirrhosis`
+    `respondent_immune_abnormalities`
+    `respondent_cancer`
+    `respondent_chronic_pain`
+    `respondent_depression`
+    `respondent_psychiatric_other`
+
+categories:
+
+    -   presence of chronic illness (in respondent)
+    -   1 = Never
+    -   2 = No longer
+    -   3-5 = Currently
+
+### Variables derived
+
+-   Presence of chronic illness in the parent, `parent_chronic_illness`
+    
+categories:
+    -   1 = Never
+    -   2 = No longer
+    -   3 = Yes
+
+*To qualify as never having had a chronic illness, respondents must answer 1 for all questions*
+
+*To qualify as having had a chronic illness in the past but none now, respondents must answer 2 for at least 1 question while not responding 3-5 for any of the questions*
+
+*To qualify as currently having a chronic illness, respondents must answer at least one question with 3-5*
+
+## Child's parents industry of work
+
+### Variables used
+
+-   Respondent's industry of work, `industry_of_work`
+    -   15 or 16 = Healthcare
+    -   1 - 14 ***OR*** 17 - 20 = non-Healthcare
+
+### Variables derived
+
+-   Child's parent working in healthcare, `parents_healthcare`
+    -   0 = No
+    -   1 = Yes
+
+## Child's parents highest educational attainment
+
+### Variables used
+
+-   Highest educational attainment of respondent, `highest_education`
+-   Highest educational attainment of partner/spouse, `highest_education_partner`
+
+Categories:
+
+-   Institution last graduated from
+    -   1 = Lower Secondary (junior high)
+    -   2 = Private High Schools (high sch)
+    -   3 = National and Public High Schools (high sch)
+    -   4 = Vocational School (tertiary)
+    -   5 = Junior/Technical college (tertiary)
+    -   6 = Private University (tertiary)
+    -   7 = National Universities (tertiary)
+    -   8 = Public Universities (prefectural and municipal) (tertiary)
+    -   9 = Post-Graduate education (post-graduate)
+    -   10 = Other (NA)
+    -   11 = Don't Understand (NA)
+
+### Variables derived
+
+-   Highest educational attainment of parents by qualification, `parents_highest_education`
+    -   0 = Junior high
+    -   1 = High school
+    -   2 = Tertiary
+    -   3 = Post-graduate education
+    -   NA = NIL/OTHER
+
+
+## Child's parent's inlfuenza vaccination status
+
+*Note that data on influenza vaccination status is relative to the yearly influenza vaccination cycle which is, in this case, from Sep 2022 to the time of response*
+
+### Variables used
+
+-   Have you (respondent) received the flu vaccine in the past year?, `influenza_vaccination_respondent`
+    -   1 = Yes
+    -   2 = No
+
+### Variables derived
+
+-   Has the child's parent received the flu vaccine in the past year, `parent_influenza`
+    -   0 = No
+    -   1 = No
+
+## Child's parent's covid vaccination status
+
+### Variables used
+
+-   Parent's covid vaccination status (Q70), `covid_vaccination_respondent`
+    -   1 = 6 doses
+    -   2 = 5 doses
+    -   3 = 4 doses
+    -   4 = 3 doses
+    -   5 = 2 doses
+    -   6 = 1 dose
+    -   7 = ineligible
+    -   8 = unsure
+    -   9 = feel no need
+    -   10 = don't want to
+    
+-   Covid Vaccination status of respondent in the past 6 months (Q64.7), `covid_vaccination_within6m`
+    -   1 = Yes
+    -   2 = No
+-   Covid Vaccination status of respondent in the past year (Q64.8), `covid_vaccination_within1y`
+    -   1 = Yes
+    -   2 = No
+-   Intention to get the new covid vaccine once a year in the future (Q64.9), `covid_vaccination_yearly_intention`
+    -   1 = Yes
+    -   2 = No
+
+### Variables derived (and used)
+
+-   Number of doses of parent (Q70), `parent_covid_doses`
+    -   0 = 0 doses
+    -   1 = 1 dose
+    -   2 = 2 doses
+    -   3 = 3 doses
+    -   4 = 4 doses
+    -   5 = 5 doses
+    -   6 = 6 doses
+    -   NA = not eligible
+
+
+-   Vax status and intention of parent (Q70), `parent_covid_coverage`
+
+    -   0 = ineligible for the covid vax
+    -   1 = partially vaccinated (1 or 2 dosees)
+    -   2 = fully vaccintaed
+    -   3 = unsure about the covid vaccination
+    -   4 = feel no need to get vaccinated
+    -   5 = don't want to get vaccinated
+
+-   Time since last parent's last covid dose (Q64.7, Q64.8 and Q70), `parents_ time_since_covvax`
+
+    -   0 = 1 year+
+    -   1 = 6m - 1y
+    -   2 = \<6m
+
+*respondents who have had at least 1 dose, and answered 2 for both Q64.7 and Q64.8 will correspond to 1 year+*
+
+*respondents who answer 2 for Q64.7 but 1 for Q64.8 will correspond to 6m - 1y*
+
+*respondents who answer 1 for Q64.7 will correspond to \<6m*
+
+-   Respondent's intention to receive the Covid vaccination yearly in the future, `covid_vaccination_yearly_intention`
+    -   1 = Yes
+    -   2 = No
+
+## Child's parent's experience with covid
+
+### Variables used
+
+**Respondent has been:**
+
+-   diagnosed with covid, `covid_respondent_diagnosed`
+
+-   given oxygen for covid, `covid_respondent_oxygen`
+
+-   hospitalised for covid, `covid_respondent_hospitalised`
+
+-   treated with a ventilator for covid, `covid_respondent_ventilator`
+
+**A family member (in the same household) has been:**
+
+-   diagnosed with covid, `covid_family_diagnosed`
+
+-   given oxygen for covid, `covid_family_oxygen`
+
+-   hospitalised for covid, `covid_family_hospitalised`
+
+**A family member (living apart) has been:**
+
+-   diagnosed with covid, `covid_apart_diagnosed`
+
+**A colleague or boss has been:**
+
+-   diagnosed with covid, `covid_work_diagnosed`
+
+**A family member (living together and apart) has:**
+
+-   died from covid, `covid_death`
+
+**Options:**
+
+-   1 = Within the last 3 months
+
+-   2 = Between 6 and 3 months ago
+
+-   3 = Between a year and 6 months ago
+
+-   4 = More than a year ago
+
+-   5 = Has not
+
+### Derived variables
+
+-   Experience with covid (timeframe), `parent_covid_exp_time`
+    -   0 = Never
+    -   1 = \<3 months
+    -   2 = 3-6 months
+    -   3 = 6m-1y
+    -   4 = \>1Y
+    
+  
+-   (respondent's) Experience with covid (closeness of people), `parent_covid_exp_relation`
+    
+    -   0 = None
+    -   1 = Respondent themselves
+    -   2 = Family (same household)
+    -   3 = Family (different household)
+    -   4 = Work
+
+*This data should only look at being diagnosed, not hospitalised/given oxygen etc. to ensure that the comparison is not confounded by the severity of the interaction*
+
+-   Experience with covid (severity): you or someone you know has, `parent_covid_exp_severity`
+   
+    -   0 = None
+    -   1 = Been diagnosed
+    -   2 = Received oxygen
+    -   3 = Been hospitalised
+    -   4 = Been treated on a ventilator
+    -   5 = Passed away
+
+\*This data should be proportion data (for each group/demographic)

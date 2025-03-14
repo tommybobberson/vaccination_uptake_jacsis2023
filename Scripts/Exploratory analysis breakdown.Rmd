@@ -1,0 +1,50 @@
+The following collection of script files will serve to create plots for exploratory analysis of the JACSIS2023 data. We will be examining the dependent variables (rate of vaccination) for the influenza vaccine, from Sep 2022 to the time of response, and COVID-19 vaccine with respect to our chosen independent variables. 
+
+Each child, regardless of if they have siblings, will count for a unique data point. Thus, each household can produce (up to) 2 sets of data for 2 different children.
+
+Each script investigating the effect on uptake of a certain vaccine (in children) will include the following categories
+
+(together with the question numbers that represent the respective data)
+
+The covid-19 vaccine as such: 
+  1. 0 doses (Q4, Q3)
+  2. 1 dose
+  3. 2 doses
+  4. 3 doses
+  
+The influenza vaccine as such
+  1. 0 doses
+  2. 1 dose
+  3. 2 doses
+  
+  and
+  1. none
+  2. completed (1 or 2)
+
+Our independent Variables are as follows: (together with the question numbers that represent the respective data)
+  Sex of child (Q4S1.1 - Q4S1.5)
+  Age of child 
+  Total number of siblings
+  Number of siblings of the child at the time of their vaccination
+  Number of parents living in the same household
+  Parents's Sex
+  Parent's Age
+  Parental marital status
+  Number of aunts and uncles
+  Number of vulnerable personnel
+  Number of Grandparents and Greatgrandparents
+  Number of other personnel living in the same household
+  Annual household income
+  The presence of chronically ill personnel
+  The industry of employment of a child's parent
+  Parent's type of employment
+  The Highest educational attainment of the child's parents
+  Influenza Vaccination Status of respondent (from sep 2022 to the time of response)
+  Experience with covid (for family members living together)
+  Experience with death from covid (for all family members living and not living together)
+  
+  
+  The scripts will be titled as such
+  
+  vaccinename_independentvariable
+  

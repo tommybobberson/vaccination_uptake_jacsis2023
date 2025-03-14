@@ -1,0 +1,162 @@
+This will be a codebook that explains how we derive each of the variables to be used for calculation, together with the question headers that correspond to the data from which such variables were derived. Question headers are derived from row 2 of "Responses Japanese.csv"
+
+"Responses Japanese.csv" is derived from "Òâ¡Òâ╝ÒâåÒéÖÒâ╝Oé┐\_1of1.csv" by passing it into a text editor -- in this case microsoft notepad -- and saving the file as a .csv file with file origin set to "Unicode (UTF-8)", with the data type set to "Delimited" and the delimiter set to "Comma"
+
+Data is read into R with `read.csv(Responses Japanese.csv, skip = 1, header = TRUE)`
+
+Text contained within () references the header text of the variable of interest i.e. DOB child 1 yyyy (Q4.1) means that the header text of the year of birth for the first child can be referenced by indexing the column with name "Q4.1"
+
+# Dependent Variables
+
+**Date of child birth** 
+DOB child 1: yyyy/m (Q4.1/Q4.2) 
+DOB child 2: yyyy/m (Q4.3/Q4.4) 
+DOB child 3: yyyy/m (Q4.5/Q4.6) 
+DOB child 4: yyyy/m (Q4.7/Q4.8) 
+DOB child 5: yyyy/m (Q4.9/Q4.10)
+
+**Date of response** Start of survey (回答開始日時)
+
+**Influenza vaccination status of child (as of October 1st 2022)** 
+1st dose (Q65.32) 1 = Yes 2 = Not yet, planning to 3 = No and not planning to
+
+2nd dose (Q65.33) 1 = Yes 2 = Not yet, planning to 3 = No and not planning to
+
+**Date of child's Influenza vaccination (most recent as of October 1st 2022)** 
+1st dose Year (Q65S1.63) Month (Q65S1.64)
+2nd dose Year (Q65S1.65) Month (Q65S1.66)
+
+**Covid-19 vaccination status of child** 1st dose (Q65.34) 1 = Yes 2 = Not yet, planning to 3 = No and not planning to
+
+2nd dose (Q65.35) 1 = Yes 2 = Not yet, planning to 3 = No and not planning to
+
+3rd dose (Q65.36) 1 = Yes 2 = Not yet, planning to 3 = No and not planning to
+
+**Date of child's Covid-19 vaccination** 1st dose Year (Q65S1.67) Month (Q65S1.68)
+
+2nd dose Year (65S1.69) Month (Q65S1.70)
+
+3rd dose Year (Q65S1.71) Month (Q65S1.72)
+
+
+# Independent Variables All family data is with respect to the children, i.e. siblings of respondent = aunts and uncles of the child no. of siblings of child = total no. of children - 1
+
+**Sex of child** (Q4S1.1 - Q4S1.5) which correspond to the sex of the first to the fifth child 1: male 2: female
+
+**Date of birth of child** DOB child 1: yyyy/m (Q4.1/Q4.2) DOB child 2: yyyy/m (Q4.3/Q4.4) DOB child 3: yyyy/m (Q4.5/Q4.6) DOB child 4: yyyy/m (Q4.7/Q4.8) DOB child 5: yyyy/m (Q4.9/Q4.10)
+
+**Number of children** 
+children under 18 (Q3.2) + children over 18 (Q3.3)
+
+**Number of siblings of the child at the time of their vaccination**
+
+**Number of individuals in the same household** (Q1)
+
+**Number of spouses (of the respondent) living in the same household** (Q3.1)
+
+**Respondent's marital status** (Q2) 1-3 = Married 4 = unmarried - *should be excluded* 5-7 = Bereaved 8-10 = Divorced
+
+**couple's sexual orientation** (Q35)
+1 = Heterosexual
+2 = Homosexual
+3-6 = ignore
+
+**Number of siblings** number of siblings (Q3.7)
+
+**Number of vulnerable personnel** people who are bedridden or close to it + People who need medical care such as ventilators + People who need medical care such as gastric wax (Q3.9 + Q3.10 + Q3.11)
+
+**Number of parents or parents-in-law** (Q3.4)
+
+**Number of grandparents** (Q3.6)
+
+**Number of other personnel living in the same household** (Q3.8)
+
+**Finances - in 1000s of JPY** Annual Household Income (Q90.1) Financial assets of respondents' household (Q90.2) Mortgage (Q90.3) Household debt (Q90.4) 
+
+**Chronic illness in the respondent** (Q41.1 - 41.20)
+
+1 = Never 2 = No longer 3-5 = Currently
+
+
+**Respondent's industry of work** (Q7)
+
+15 or 16 = Healthcare
+1-14 or 17-20 = Non-Healthcare
+
+**The Highest educational attainment of the Respondent and/or their spouse** (Q21.1) 
+1 = Lower Secondary 
+2 = Private High Schools 
+3 = National and Public High Schools 
+4 = Vocational School 
+5 = Junior/Technical college 
+6 = Private University 
+7 = National Universities 
+8 = Public Universities (prefectural and municipal) 
+9 = Post-Graduate education 
+10 = Other 
+11 = Don't Understand
+
+Partner/Spouse (Q21.2) 1 = Lower Secondary 2-3 = Upper Secondary 4 = Vocational School 5 - 8 = Tertiary Education 9 = Post-Graduate education 10 = Other 11 = Don't Understand
+
+**Influenza Vaccination Status of respondent (from sep 2022 to the time of response)**
+
+**Have you reeived the flu vaccine in the past year?** (Q64.5)
+1 = Yes 2 = No
+
+**Covid vaccination status of respondent** (Q70)
+Pleases tell me your new coronavirus vaccination status
+1 = 6 doses
+2 = 5 doses
+3 = 4 doses
+4 = 3 doses
+5 = 2 doses
+6 = 1 dose
+7 = 0 doses - ineligible to be vaccinated due to chronic illness or allergy
+8 = 0 doses - want to get vaccinated after watching the situation
+9 = 0 doses - i feel no need to get vaccinated
+10 = 0 doses - i don't want to get vaccinated
+
+**Covid vaccination status of respondent in the past 6 months** (Q64.7)
+Have you received the covid vaccine in the past 6 months?
+1 = Yes
+2 = No
+
+**Covid vaccination status of respondent in the past year** (Q64.8)
+Have you received the covid vaccine in the past year?
+1 = Yes
+2 = No
+
+**Do you plan to get the new coronavirus vaccine once a year in the future?** (Q64.9)
+1 = Yes
+2 = No
+
+**Experience with covid (for family members living together)**
+
+Respondent has been diagnosed with covid (Q67.1)
+Respondent has been given oxygen for covid (Q67.2)
+Respondent has been hospitalised for covid (Q67.3)
+Respondent has been treated with a ventilator for covid (Q67.4)
+
+A family member (same household) has been diagnosed with covid (Q67.5)
+A family member (same household) has been given oxygen for covid (Q67.6)
+A family member (same household) has been hospitalised for covid (Q67.7)
+
+A family member (living apart) has been diagnosed with covid (Q67.8)
+
+A colleague or boss has been diagnosed with covid (Q67.10)
+
+Options:
+1 = Within the last 3 months
+2 = Between 6 and 3 months ago
+3 = Between a year and 6 months ago
+4 = More than a year ago
+5 = Has not
+
+**Experience with death from covid (for all family members living and not living together)** (Q67.9)
+
+Options:
+1 = Within the last 3 months
+2 = Between 6 and 3 months ago
+3 = Between a year and 6 months ago
+4 = More than a year ago
+5 = Has not

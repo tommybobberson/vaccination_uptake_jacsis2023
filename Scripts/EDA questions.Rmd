@@ -1,0 +1,156 @@
+EDA_questions
+
+This document contains questions and their corresponding plots which we would like to answer via our exploratory data analysis (EDA)
+
+# Overall plots
+
+-   Univariate analysis
+
+-   Bivariate analysis
+
+-   Multivariate analysis -- Pair plots
+
+    -   Covid Data
+    -   Influenza Data
+    -   Independent variables
+
+```{R}
+library(tidyverse)
+library(here)
+library(lubridate)
+library(knitr)
+```
+
+# Univariate
+```{R}
+  # load saved univariate tabular data
+  univariate_table <- readRDS(here("output", "EDA", "univariate_tables.RDS"))
+
+  # display formatted 
+  knitr::kable(univariate_table)
+```
+
+# Bivariate
+
+
+
+## Number of individuals
+
+### Total number of individuals
+
+-   Does the number of individuals in a household affect:
+
+    -   the child's (covid) vaccination status
+
+    -   the number of doses of the covid vaccine the child receives
+
+    -   the child's (influenza) vaccination status
+
+    -   the number of doses of the influenza vaccine the child receive
+
+### Number of aunts and uncles
+
+-   Does the number of aunts and uncles a child has affect:
+
+    -   the child's (covid) vaccination status
+
+    -   the number of doses of the covid vaccine the child receives
+
+    -   the child's (influenza) vaccination status
+
+    -   the number of doses of the influenza vaccine the child receive
+
+### Number of vulnerable individuals
+
+-   Does the number of vulnerable individuals living in the same household (this includes individuals who are bedriden, need ventilation and need feeding) affect:
+
+### Number of grandparents
+
+-   Does the number of grandparents living in the same household affect:
+
+## Child and siblings
+
+### Total number of siblings
+
+-   Does the number of siblings living with the child in the same household affect:
+
+### Number of brothers and/or siblings
+
+-   Does the number of sisters and or brothers living in the same household as the child affect:
+
+### Number of siblings at the time of vaccination
+
+## Parents
+
+### Number of parents
+
+-   Does the number of parents a child has affect:
+
+    -   the child's (covid) vaccination status
+
+    -   the number of doses of the covid vaccine the child receives
+
+    -   the child's (influenza) vaccination status
+
+    -   the number of doses of the influenza vaccine the child receive
+
+### Parent's marital status
+
+-   Does the marital status of the parents affect:
+
+## Finances
+
+### Annual household income
+
+-   Does the family's annual household income affect:
+
+## Chronic illness
+
+### Respondent's chronic illness
+
+-   Does the presence of chronic illness in the responding parent affect:
+
+## Industry of work
+
+### Respondent parent working in healthcare
+
+-   Does the respondent parent working in the healthcare sector affect:
+
+## Parent's highest educational attianment
+
+### Parent's highest education by qualification
+
+-   Does the highest educational qualification of a child's parents affect:
+
+## Child's parent's vaccination
+
+### Parent's influenza vaccination
+
+-   Does the influenza vaccination status of a child's parents in the past year affect:
+
+### Parent's covid vaccination (dosage)
+
+-   Does the covid vaccination status of a child's parents affect:
+
+### Recency of parent's covid vaccination
+
+-   Does the recency of a child's parent's covid vaccination affect:
+
+### Child's parent's yearly vaccination intention
+
+-   Does the child's parent's intention to get the covid vaccine every year affect:
+
+## Parent's experience with covid
+
+### Overall?????
+
+-   **This is the thing you need to clarify**
+
+### Timeframe
+
+-   Does the recency of a child's parent's experience with covid affect:
+    -   The child's uptake of the covid vaccine (doses)
+
+### Degree of closeness??? of those affected
+
+### Severity of experience
