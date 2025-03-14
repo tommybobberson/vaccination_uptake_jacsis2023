@@ -2,8 +2,10 @@
 title: "04_Exploratory Data Analysis"
 format: html
 ---
+
 ## Load Packages
 These are the packages that have been used throughout the following document: `here`, `tidyverse`, `lubridate`, `knitr`
+
 ```{r}
 #| echo: false
 #| warning: false
@@ -13,12 +15,14 @@ library(lubridate)
 library(knitr)
 library(GGally)
 ```
+
 *other packages will be loaded as needed*
 
 ## Reading data
+
 ```{r}
 # transformed independent variable data
-transformed_ivd <-
+ivd <-
   readRDS(
     here(
       "Data",
@@ -29,7 +33,7 @@ transformed_ivd <-
     )
 
 # transformed covid data
-transformed_cov <-
+cov <-
   readRDS(
     here(
       "Data",
@@ -40,7 +44,7 @@ transformed_cov <-
   )
 
 # transformed influenza data
-transformed_inf <-
+inf <-
   readRDS(
     here(
       "Data",
@@ -51,12 +55,28 @@ transformed_inf <-
   )
 ```
 
+
+## Creating data frames for bivariate and multivariate analysis
+
+```{r}
+#| output: false
+
+# influenza and independent variable data
+inf_ivd <- bind_cols(inf, ivd)
+
+# covid and independent variable data
+cov_ivd <- bind_cols(cov, ivd)
+```
+
+
+
 ## Influenza data
 ### Distribution of coverage by number of doses and the degree of coverage (since october 2022)
 
 **By degree of coverage**
+
 ```{r}
-  transformed_inf |>
+  inf |>
     filter(!is.na(influenza_coverage_age)) |>
     summarise(individuals = n(), .by = influenza_coverage_age) |>
     mutate(proportion = individuals / sum(individuals)) |>
@@ -73,18 +93,21 @@ transformed_inf <-
     ggtitle(
       paste(
         "Vaccination status of eligible children, N =",
-        sum(!is.na(transformed_inf$influenza_coverage_age))
+        sum(!is.na(inf$influenza_coverage_age))
         )
       )
 ```
+
 **By number of doses**
+
 ```{r}
-  transformed_inf |>
+  inf |>
     filter(!is.na(influenza_coverage_dosage)) |>
     summarise(individuals = n(), .by = influenza_coverage_dosage) |>
     mutate(proportion = individuals / sum(individuals)) |>
     arrange(influenza_coverage_dosage)
 ```
+
 
 
 A majority of the children (68%) who are eligible for the influenza vax have not receieved the vaccine at all (i.e. 0 doses or Not vaxxed). However, within the children who have receieved at least one dose of the vaccine (~32%), a much greater proportion of them are considered fully vaxxed than being partially vaxxed (a ratio of 10:1). 
@@ -96,8 +119,9 @@ This is supported by data on the number of doses received, the ratio of individu
 ### Distribution of coverage by number of doses and the degree of coverage (since october 2022)
 
 **By degree of coverage**
+
 ```{r}
-  transformed_cov |>
+  cov |>
     filter(!is.na(covid_coverage_age)) |>
     summarise(individuals = n(), .by = covid_coverage_age) |>
     mutate(proportion = individuals / sum(individuals)) |>
@@ -111,14 +135,17 @@ This is supported by data on the number of doses received, the ratio of individu
     )
 ```
 
+
 **By number of doses**
+
 ```{r}
-  transformed_cov |>
+  cov |>
     filter(!is.na(covid_coverage_dosage)) |>
     summarise(individuals = n(), .by = covid_coverage_dosage) |>
     mutate(proportion = individuals / sum(individuals)) |>
     arrange(covid_coverage_dosage) 
 ```
+
 
 The data on covid vaccinations tells a similar story to that of influenza vaccinations. Namely, the proportion of eligible children who are not vaxxed at all remains high at 80% of the children body. However, the proportion of individuals who are partially vaccinated -- less than 3 doses for individuals over the age of 5 -- is significantly higher (partial:full = 1:3) than that for those who received the influenza vaccine (partial:full = 1:10). 
 
@@ -126,9 +153,11 @@ Referencing the number of doses of the covid vaccine received by individuals, we
 
 ***Why are there more children who are partially vaccinated for covid as opposed to the influenza vaccination?***
 
+
 ## Multivariate analysis
 ### Independent variables 
 Package used: `GGally` for pairs plots?
+
 
 
 ## Bivariate analysis
@@ -136,13 +165,45 @@ Package used: `GGally` for pairs plots?
 
 Questions to be asked
 
-
-
-
-
 ## Number of individuals
 
 ### Total number of individuals
+The following is a breakdown of the number of households according to number of individuals per household 
+
+```{r}
+ivd |>
+  
+  # group number of households and number of households with children of
+  # interest by individuals per household
+  summarise(
+    households = n(), 
+    households_w_COI = sum(child_of_interest),
+    percentage_w_COI = signif((households_w_COI / households) * 100, 2),
+    .by = household_total
+  ) |>
+
+  # arrange in ascending order of individuals per household
+  arrange(.by = household_total) |>
+  rename(individuals = household_total) -> households_by_indivs
+
+  # display a transposed table
+  households_by_indivs |>
+  t() |>
+  as.data.frame() |>
+   kable(col.names = NULL) 
+```
+
+
+Focusing on the number of households with at least 1 child of interest for each category, 
+
+
+```{r}
+households_by_indivs |>
+  ggplot() +
+  geom_col(aes(x = individuals, y = households)) + 
+  geom_text(aes(x = individuals, y = households, label = paste(percentage_w_COI, "%")), vjust = -1.5, size = "2") +
+  geom_line(aes(x = individuals, y = households_w_COI))
+```
 
 -   Does the number of individuals in a household affect:
 
@@ -245,4 +306,5 @@ Questions to be asked
 ### Child's parent's yearly vaccination intention
 
 -   Does the child's parent's intention to get the covid vaccine every year affect:
+
 

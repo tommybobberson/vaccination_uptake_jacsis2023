@@ -112,7 +112,6 @@ library(tidyverse)
 ## Number of individuals in the same household
 
 ### Variables used
-
 -   Number of individuals in the same household, `total_individuals`
 -   Number of spouses (of the respondent) living in the same household), `spouses`
 -   Number of siblings (of the respondent), `siblings`
@@ -129,8 +128,9 @@ library(tidyverse)
 -   Number of parents of the child, `child_parents`
 -   Number of aunts and uncles of the child, `child_auntcles`
 -   Number of vulnerable individuals, `vulnerable_indviduals`
--   Total number of individuals, `child_total`
+-   Total number of individuals, `household_total`
 -   Number of grandparents and great grandparents of the child, `child_grand`
+
 
 ## Sex of child and siblings
 
@@ -152,6 +152,7 @@ library(tidyverse)
 -   Sex of child of interest (reference *Age of child*), `sex_of_interest` 
     -   0 = male
     -   1 = female
+-   Number of children of interest (<18y/o), `child_of_interest`
 -   Number of sisters and/or brothers
     -   No. of sisters, `child_sisters`
     -   No. of brothers, `child_brothers`

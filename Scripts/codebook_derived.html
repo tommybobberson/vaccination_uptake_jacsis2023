@@ -559,7 +559,7 @@ vaccination between diferent brands</em></p>
 <code>child_auntcles</code></li>
 <li>Number of vulnerable individuals,
 <code>vulnerable_indviduals</code></li>
-<li>Total number of individuals, <code>child_total</code></li>
+<li>Total number of individuals, <code>household_total</code></li>
 <li>Number of grandparents and great grandparents of the child,
 <code>child_grand</code></li>
 </ul>
@@ -595,6 +595,8 @@ vaccination between diferent brands</em></p>
 <li>0 = male</li>
 <li>1 = female</li>
 </ul></li>
+<li>Number of children of interest (&lt;18y/o),
+<code>child_of_interest</code></li>
 <li>Number of sisters and/or brothers
 <ul>
 <li>No. of sisters, <code>child_sisters</code></li>
@@ -614,39 +616,9 @@ of the child of interest</li>
 </ul>
 </div>
 </div>
-<div id="sex-and-age-of-responding-parent" class="section level2">
-<h2>Sex and age of responding parent</h2>
-<div id="variables-used-5" class="section level3">
-<h3>Variables used</h3>
-<ul>
-<li>respondent’s sex, <code>respondent_sex</code>
-<ul>
-<li>1 = Male</li>
-<li>2 = Female</li>
-</ul></li>
-<li>respondent’s age, <code>respondent_age</code></li>
-</ul>
-</div>
-<div id="variables-derived-4" class="section level3">
-<h3>Variables derived</h3>
-<ul>
-<li>responding parent’s sex, <code>parent_1_sex</code>
-<ul>
-<li>1 = Male</li>
-<li>2 = Female</li>
-</ul></li>
-<li>sex of the respondent’s partner, <code>parent_2_sex</code>
-<ul>
-<li>1 = Male</li>
-<li>2 = Female</li>
-</ul></li>
-<li>responding parent’s age, <code>parent_1_age</code></li>
-</ul>
-</div>
-</div>
 <div id="parents-marital-status" class="section level2">
 <h2>Parents’ marital status</h2>
-<div id="variables-used-6" class="section level3">
+<div id="variables-used-5" class="section level3">
 <h3>Variables used</h3>
 <ul>
 <li>Respondent’s marital status, <code>marital_status</code>
@@ -663,10 +635,10 @@ of the child of interest</li>
 </ul></li>
 </ul>
 </div>
-<div id="variables-derived-5" class="section level3">
+<div id="variables-derived-4" class="section level3">
 <h3>Variables derived</h3>
 <ul>
-<li>Marital , `parents_marital_status
+<li>Marital , <code>parents_marital_status</code>
 <ul>
 <li>0 = married</li>
 <li>1 = bereaved</li>
@@ -679,6 +651,36 @@ of the child of interest</li>
 <li>1 = different sex couple</li>
 <li>2 = same sex couple</li>
 </ul></li>
+</ul>
+</div>
+</div>
+<div id="sex-and-age-of-responding-parent" class="section level2">
+<h2>Sex and age of responding parent</h2>
+<div id="variables-used-6" class="section level3">
+<h3>Variables used</h3>
+<ul>
+<li>respondent’s sex, <code>respondent_sex</code>
+<ul>
+<li>1 = Male</li>
+<li>2 = Female</li>
+</ul></li>
+<li>respondent’s age, <code>respondent_age</code></li>
+</ul>
+</div>
+<div id="variables-derived-5" class="section level3">
+<h3>Variables derived</h3>
+<ul>
+<li>responding parent’s sex, <code>parent_1_sex</code>
+<ul>
+<li>0 = Male (Father)</li>
+<li>1 = Female (Mother)</li>
+</ul></li>
+<li>sex of the respondent’s partner, <code>parent_2_sex</code>
+<ul>
+<li>0 = Male (Father)</li>
+<li>1 = Female (Mother)</li>
+</ul></li>
+<li>responding parent’s age, <code>parent_1_age</code></li>
 </ul>
 </div>
 </div>

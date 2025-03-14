@@ -325,12 +325,12 @@ independent_variable_data <- readRDS(
       vulnerable_individuals = need_ventilation + need_feeding + bedridden
     )
 
-# child_total
+# household_total
   # create a variable that represents the total number of individuals in the 
-  # child's household
+  # household
   independent_variable_data <- independent_variable_data |>
     mutate(
-      child_total = total_individuals
+      household_total = total_individuals
     )
   
 # child_grand
@@ -378,6 +378,17 @@ independent_variable_data <- readRDS(
     )
 
 
+# child_of_interest
+  # create a variable to indicate whether a response includes a child < 18y/o
+  independent_variable_data <- independent_variable_data |>
+    mutate(
+      child_of_interest = case_when(
+        !is.na(sex_of_interest) ~ 1, # child of interest
+        is.na(sex_of_interest) ~ 0 # no child of interest
+      )
+    )
+  
+  
 # child_sisters
   # number of sisters of the child of interest
   sexes <- independent_variable_data[, sex_indexing] # columns containing the sexes of the children
