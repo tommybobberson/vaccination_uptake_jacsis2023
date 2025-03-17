@@ -20,40 +20,6 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-/* CSS for syntax highlighting */
-pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { line-height: 1.25; }
-pre > code.sourceCode > span:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-div.sourceCode { margin: 1em 0; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
-}
-@media print {
-pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
-}
-pre.numberSource code
-  { counter-reset: source-line 0; }
-pre.numberSource code > span
-  { position: relative; left: -4em; counter-increment: source-line; }
-pre.numberSource code > span > a:first-child::before
-  { content: counter(source-line);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-  }
-pre.numberSource { margin-left: 3em;  padding-left: 4px; }
-div.sourceCode
-  {   }
-@media screen {
-pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
-}
 </style>
 
 
@@ -103,40 +69,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="reading-data" class="level2">
 <h2 class="anchored" data-anchor-id="reading-data">Reading data</h2>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># transformed independent variable data</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>ivd <span class="ot">&lt;-</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">readRDS</span>(</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">here</span>(</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Data"</span>,</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>      <span class="st">"JACSIS2023"</span>, </span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>      <span class="st">"processed"</span>, </span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>      <span class="st">"transformed_independent_variable_data.RDS"</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>      )</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="co"># transformed covid data</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>cov <span class="ot">&lt;-</span></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">readRDS</span>(</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">here</span>(</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Data"</span>,</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>      <span class="st">"JACSIS2023"</span>, </span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>      <span class="st">"processed"</span>, </span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>      <span class="st">"transformed_covid_data.RDS"</span></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="co"># transformed influenza data</span></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>inf <span class="ot">&lt;-</span></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">readRDS</span>(</span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    <span class="fu">here</span>(</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>      <span class="st">"Data"</span>,</span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>      <span class="st">"JACSIS2023"</span>, </span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>      <span class="st">"processed"</span>, </span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>      <span class="st">"transformed_influenza_data.RDS"</span></span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
 </section>
 <section id="creating-data-frames-for-bivariate-and-multivariate-analysis" class="level2">
 <h2 class="anchored" data-anchor-id="creating-data-frames-for-bivariate-and-multivariate-analysis">Creating data frames for bivariate and multivariate analysis</h2>
@@ -147,26 +79,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h3 class="anchored" data-anchor-id="distribution-of-coverage-by-number-of-doses-and-the-degree-of-coverage-since-october-2022">Distribution of coverage by number of doses and the degree of coverage (since october 2022)</h3>
 <p><strong>By degree of coverage</strong></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>  inf <span class="sc">|&gt;</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(influenza_coverage_age)) <span class="sc">|&gt;</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">summarise</span>(<span class="at">individuals =</span> <span class="fu">n</span>(), <span class="at">.by =</span> influenza_coverage_age) <span class="sc">|&gt;</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">proportion =</span> individuals <span class="sc">/</span> <span class="fu">sum</span>(individuals)) <span class="sc">|&gt;</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">arrange</span>(influenza_coverage_age) <span class="sc">|&gt;</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>      <span class="at">influenza_coverage_age =</span> <span class="fu">case_when</span>(</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>        influenza_coverage_age <span class="sc">==</span> <span class="dv">0</span> <span class="sc">~</span> <span class="st">"Not vaxxed"</span>,</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>        influenza_coverage_age <span class="sc">==</span> <span class="dv">1</span> <span class="sc">~</span> <span class="st">"Partially vaxxed"</span>,</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>        influenza_coverage_age <span class="sc">==</span> <span class="dv">2</span> <span class="sc">~</span> <span class="st">"Fully vaxxed"</span></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>      )</span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> influenza_coverage_age, <span class="at">y =</span> proportion)) <span class="sc">+</span> <span class="fu">geom_col</span>() <span class="sc">+</span></span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_text</span>(<span class="fu">aes</span>(<span class="at">label =</span> individuals), <span class="at">vjust =</span> <span class="fl">1.0</span>) <span class="sc">+</span></span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggtitle</span>(</span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>      <span class="fu">paste</span>(</span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Vaccination status of eligible children, N ="</span>,</span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>        <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(inf<span class="sc">$</span>influenza_coverage_age))</span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>        )</span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>      )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -177,11 +89,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <p><strong>By number of doses</strong></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>  inf <span class="sc">|&gt;</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(influenza_coverage_dosage)) <span class="sc">|&gt;</span></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">summarise</span>(<span class="at">individuals =</span> <span class="fu">n</span>(), <span class="at">.by =</span> influenza_coverage_dosage) <span class="sc">|&gt;</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">proportion =</span> individuals <span class="sc">/</span> <span class="fu">sum</span>(individuals)) <span class="sc">|&gt;</span></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">arrange</span>(influenza_coverage_dosage)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>  influenza_coverage_dosage individuals proportion
 1                         0        3684 0.67497252
@@ -199,32 +106,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h3 class="anchored" data-anchor-id="distribution-of-coverage-by-number-of-doses-and-the-degree-of-coverage-since-october-2022-1">Distribution of coverage by number of doses and the degree of coverage (since october 2022)</h3>
 <p><strong>By degree of coverage</strong></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>  cov <span class="sc">|&gt;</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(covid_coverage_age)) <span class="sc">|&gt;</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">summarise</span>(<span class="at">individuals =</span> <span class="fu">n</span>(), <span class="at">.by =</span> covid_coverage_age) <span class="sc">|&gt;</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">proportion =</span> individuals <span class="sc">/</span> <span class="fu">sum</span>(individuals)) <span class="sc">|&gt;</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">arrange</span>(covid_coverage_age) <span class="sc">|&gt;</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>      <span class="at">covid_coverage_age =</span> <span class="fu">case_when</span>(</span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>        covid_coverage_age <span class="sc">==</span> <span class="dv">0</span> <span class="sc">~</span> <span class="st">"Not vaxxed"</span>,</span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>        covid_coverage_age <span class="sc">==</span> <span class="dv">1</span> <span class="sc">~</span> <span class="st">"Partially vaxxed"</span>,</span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>        covid_coverage_age <span class="sc">==</span> <span class="dv">2</span> <span class="sc">~</span> <span class="st">"Fully vaxxed"</span></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>      )</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>  covid_coverage_age individuals proportion
-1         Not vaxxed        4338 0.79479663
-2   Partially vaxxed         305 0.05588128
-3       Fully vaxxed         815 0.14932210</code></pre>
+1         Not vaxxed        4338  0.8273889
+2   Partially vaxxed         305  0.0581728
+3       Fully vaxxed         600  0.1144383</code></pre>
 </div>
 </div>
 <p><strong>By number of doses</strong></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>  cov <span class="sc">|&gt;</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(covid_coverage_dosage)) <span class="sc">|&gt;</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">summarise</span>(<span class="at">individuals =</span> <span class="fu">n</span>(), <span class="at">.by =</span> covid_coverage_dosage) <span class="sc">|&gt;</span></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">proportion =</span> individuals <span class="sc">/</span> <span class="fu">sum</span>(individuals)) <span class="sc">|&gt;</span></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">arrange</span>(covid_coverage_dosage) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>  covid_coverage_dosage individuals proportion
 1                     0        4338 0.79479663
@@ -259,27 +149,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h3 class="anchored" data-anchor-id="total-number-of-individuals">Total number of individuals</h3>
 <p>The following is a breakdown of the number of households according to number of individuals per household</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>ivd <span class="sc">|&gt;</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># group number of households and number of households with children of</span></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># interest by individuals per household</span></span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">households =</span> <span class="fu">n</span>(), </span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">households_w_COI =</span> <span class="fu">sum</span>(child_of_interest),</span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">percentage_w_COI =</span> <span class="fu">signif</span>((households_w_COI <span class="sc">/</span> households) <span class="sc">*</span> <span class="dv">100</span>, <span class="dv">2</span>),</span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">.by =</span> household_total</span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># arrange in ascending order of individuals per household</span></span>
-<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="at">.by =</span> household_total) <span class="sc">|&gt;</span></span>
-<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">individuals =</span> household_total) <span class="ot">-&gt;</span> households_by_indivs</span>
-<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>  <span class="co"># display a transposed table</span></span>
-<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>  households_by_indivs <span class="sc">|&gt;</span></span>
-<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">t</span>() <span class="sc">|&gt;</span></span>
-<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.data.frame</span>() <span class="sc">|&gt;</span></span>
-<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>   <span class="fu">kable</span>(<span class="at">col.names =</span> <span class="cn">NULL</span>) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
 <colgroup>
@@ -376,13 +245,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tbody>
 </table>
 </div>
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>  <span class="co"># bar and line plot</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  households_by_indivs <span class="sc">|&gt;</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>() <span class="sc">+</span></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="fu">aes</span>(<span class="at">x =</span> individuals, <span class="at">y =</span> households)) <span class="sc">+</span> </span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(<span class="fu">aes</span>(<span class="at">x =</span> individuals, <span class="at">y =</span> households, <span class="at">label =</span> households), <span class="at">vjust =</span> <span class="sc">-</span><span class="fl">0.5</span>, <span class="at">size =</span> <span class="fl">2.0</span>) <span class="sc">+</span></span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">x =</span> individuals, <span class="at">y =</span> households_w_COI)) <span class="sc">+</span></span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(<span class="fu">aes</span>(<span class="at">x =</span> individuals, <span class="at">y =</span> households_w_COI, <span class="at">label =</span> <span class="fu">paste</span>(percentage_w_COI, <span class="st">"%"</span>)), <span class="at">vjust =</span> <span class="sc">-</span><span class="fl">2.0</span>, <span class="at">size =</span> <span class="fl">2.0</span>, <span class="at">colour =</span> <span class="st">"skyblue"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -393,80 +255,29 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <p>Where the bars represent the number of household for each household size and the line graph represents the number of households <strong>with a child of interest</strong> for each household size</p>
 <p>Responses from households of 3 to 5 people posses the majority of children of interest. Households comprise of 2 individuals had very little responses with a child of interest which could be attributed to there being less single-child parents.</p>
-<p>To examine how the number of individuals in a household affects the children of interest then, we should primarily be looking at households of at least 2 individuals (children of interest = 109), and up to 7 people (children of interest = 31).</p>
+<p>To examine how the number of individuals in a household affects the children of interest then, we should primarily be looking at households of at least 2 individuals (children of interest = 109), and up to 7 people (children of interest = 39).</p>
 <p><strong><em>Does the number of individuals in a household affect</em></strong></p>
-<ol type="1">
-<li>The child’s covid vaccination status</li>
-</ol>
+<p>Breakdown of the number of households by household size – for those with covid vaccination data</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># determine the proportion of individuals who are not, partially and fully vaccinated</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co"># for households of each size</span></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>covage_by_total <span class="ot">&lt;-</span> cov_ivd <span class="sc">|&gt;</span></span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>   <span class="fu">filter</span>(household_total <span class="sc">&gt;</span> <span class="dv">1</span> <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(covid_coverage_age)) <span class="sc">|&gt;</span></span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>   <span class="fu">group_by</span>(household_total, covid_coverage_age) <span class="sc">|&gt;</span></span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>   <span class="fu">summarise</span>(<span class="at">count =</span> <span class="fu">n</span>()) <span class="sc">|&gt;</span> </span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>   <span class="fu">ggplot</span>() <span class="sc">+</span> </span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>   <span class="fu">geom_col</span>(</span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>     <span class="fu">aes</span>(<span class="at">x =</span> household_total, <span class="at">y =</span> count, <span class="at">fill =</span> covid_coverage_age), </span>
-<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>     <span class="at">position =</span> <span class="st">"fill"</span></span>
-<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>   ) <span class="sc">+</span> </span>
-<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>   <span class="fu">scale_fill_hue</span>(<span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"not vaxxed"</span>, <span class="st">"partially vaxxed"</span>, <span class="st">"fully vaxxed"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>`summarise()` has grouped output by 'household_total'. You can override using
-the `.groups` argument.</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># print full graph</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>covage_by_total</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="04_exploratory_data_analysis_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid figure-img" width="672"></p>
-</figure>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 11 × 2
+   household_total count
+             &lt;int&gt; &lt;int&gt;
+ 1               2   107
+ 2               3  1957
+ 3               4  2285
+ 4               5   666
+ 5               6   172
+ 6               7    38
+ 7               8    11
+ 8               9     3
+ 9              10     1
+10              11     1
+11              25     2</code></pre>
 </div>
 </div>
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># limit the same plot to households of 2 to 7 individuals</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>covage_by_total <span class="sc">+</span> <span class="fu">xlim</span>(<span class="dv">1</span>,<span class="dv">7</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: Removed 9 rows containing missing values or values outside the scale range
-(`geom_col()`).</code></pre>
-</div>
-<div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="04_exploratory_data_analysis_files/figure-html/unnamed-chunk-9-2.png" class="img-fluid figure-img" width="672"></p>
-</figure>
-</div>
-</div>
-</div>
-<p>For household sizes of 2 to 7 individuals, we see a positive linear relationship between household size and being fully vaccinated. The apparent continuation of this trend with households of size 9 is deceptive as it is due to the small sample size of households of 9 individuals with a COI(n = 3)</p>
-<ol start="2" type="1">
-<li>The number of doses of the covid vaccine the child receives</li>
-</ol>
-<p>*Following data on the degree of covid coverage by total household size, we limit the range of household sizes to household sizes of siginificantly large (n &gt;= 30) counts.</p>
+<p><strong><em>1. The child’s covid vaccination status</em></strong></p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># determine the proportion of individuals who receive 0 to 3 doses</span></span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="co"># for households of each size</span></span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>cov_ivd <span class="sc">|&gt;</span></span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>   <span class="co"># stratify by household size and doses received</span></span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>   <span class="fu">filter</span>(household_total <span class="sc">&gt;</span> <span class="dv">1</span> <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(covid_coverage_dosage)) <span class="sc">|&gt;</span></span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>   <span class="fu">group_by</span>(household_total, covid_coverage_dosage) <span class="sc">|&gt;</span></span>
-<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>   <span class="co"># count the number of children in each category</span></span>
-<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>   <span class="fu">summarise</span>(<span class="at">count =</span> <span class="fu">n</span>()) <span class="sc">|&gt;</span> </span>
-<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>   <span class="fu">ggplot</span>() <span class="sc">+</span> </span>
-<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>   <span class="fu">geom_col</span>(</span>
-<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>     <span class="fu">aes</span>(<span class="at">x =</span> household_total, <span class="at">y =</span> count, <span class="at">fill =</span> covid_coverage_dosage), </span>
-<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>     <span class="at">position =</span> <span class="st">"fill"</span></span>
-<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>   ) <span class="sc">+</span> <span class="fu">xlim</span>(<span class="dv">1</span>,<span class="dv">8</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>`summarise()` has grouped output by 'household_total'. You can override using
-the `.groups` argument.</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: Removed 6 rows containing missing values or values outside the scale range
-(`geom_col()`).</code></pre>
-</div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -474,28 +285,218 @@ the `.groups` argument.</code></pre>
 </figure>
 </div>
 </div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="04_exploratory_data_analysis_files/figure-html/unnamed-chunk-10-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
 </div>
-<pre><code>-   the child's (influenza) vaccination status
-
--   the number of doses of the influenza vaccine the child receive</code></pre>
+</div>
+</div>
+<p>For household sizes of 2 to 7 individuals, we see a positive linear relationship between household size and being fully vaccinated. The apparent continuation of this trend with households of size 9 is deceptive as it is due to the small sample size of households of 9 individuals (n = 3)</p>
+<p><strong><em>2. The number of doses of the covid vaccine the child receives</em></strong></p>
+<p>*Following data on the degree of covid coverage by total household size, we limit the range of household sizes to household sizes of sufficiently large (n &gt;= 30) counts.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="04_exploratory_data_analysis_files/figure-html/unnamed-chunk-11-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Using simple linear regression to test the effect of an increasing number of household members on the proportions of individuals receiving 0 to 3 doses of the covid vaccine respectively.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="04_exploratory_data_analysis_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>There is a positive linear relationship between total household size and the number of individuals receiving 1 &amp; 3 doses of the covid vaccine.</p>
+<p>This is accounted for by the negative linear relationship between total household size and the number of individuals receiving 0 doses of the covid vaccine – indicating that more invidiuals who were previously unvaccinated were getting vaccinated.</p>
+<p>However, there was no significant relationship between total household size and the proportion of individuals who received 2 doses of the covid vaccine.</p>
+<p><strong><em>3.the child’s (influenza) vaccination status</em></strong> Breakdown of the number of households by household size – for those with influenza vaccination data</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 11 × 2
+   household_total count
+             &lt;int&gt; &lt;int&gt;
+ 1               2    90
+ 2               3  1533
+ 3               4  1716
+ 4               5   524
+ 5               6   145
+ 6               7    30
+ 7               8     7
+ 8               9     3
+ 9              10     1
+10              11     1
+11              25     2</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="04_exploratory_data_analysis_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="04_exploratory_data_analysis_files/figure-html/unnamed-chunk-14-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>We limit the range of observations to households of sizes from 2 to 7 people such that the sample for each household size is sufficiently large (n &gt;= 30).</p>
+<p>Whilst it may appear that the proportion of individuals who get fully vaccinated increases with an increasing household size, this does not hold true once we limit the range of observations to households of sizes from 2 to 7 people such that the sample for each household size is sufficiently large (n &gt;= 30).</p>
+<p>The proportion of children of interest becoming fully vaccinated with the influenza vaccine fluctuates with the total number of individuals in a household. This deviates from the trend, where the proportion of individuals becoming fully vaccinated increased as the total number of individuals in a household increased, shown with the covid vaccine.</p>
+<pre><code>-   the number of doses of the influenza vaccine the child receives</code></pre>
+<p>*Following data on the degree of influenza coverage by total household size, we limit the range of household sizes to household sizes of sufficiently large (n &gt;= 30) counts.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="04_exploratory_data_analysis_files/figure-html/unnamed-chunk-15-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Using simple linear regression to test the effect of an increasing number of household members on the proportions of individuals receiving 0 to 3 doses of the covid vaccine respectively.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="04_exploratory_data_analysis_files/figure-html/unnamed-chunk-16-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>The total number of individuals in a household is not indicative of the proportion of individuals who receive 0 doses of the influenza vaccine.</p>
+<p>The proportion of individuals receiving 1 vaccine decreased with an increasing number of individuals in a household whilst The proportion of individuals receiving 2 doses of the influenza vacine increased with an increasing number of individuals in the household.</p>
 </section>
 <section id="number-of-aunts-and-uncles" class="level3">
 <h3 class="anchored" data-anchor-id="number-of-aunts-and-uncles">Number of aunts and uncles</h3>
-<ul>
-<li><p>Does the number of aunts and uncles a child has affect:</p>
-<ul>
-<li><p>the child’s (covid) vaccination status</p></li>
-<li><p>the number of doses of the covid vaccine the child receives</p></li>
-<li><p>the child’s (influenza) vaccination status</p></li>
-<li><p>the number of doses of the influenza vaccine the child receive</p></li>
-</ul></li>
-</ul>
+<p><strong><em>Does the number of aunts and uncles a child has affect:</em></strong> The following is a breakdown of the number of households with respect to the number of aunts and uncles that the child of interest has – for those with a valid covid vaccination status</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>  child_auntcles count
+1              0  5209
+2              1    25
+3              2     7
+4              3     2</code></pre>
+</div>
+</div>
+<p><strong><em>1. The child’s (covid) vaccination status</em></strong></p>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="04_exploratory_data_analysis_files/figure-html/unnamed-chunk-18-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Due to the small sample of households where there are both children of interest with valid covid vaccination data and aunts or uncles living with them, let us recatogrise such data to determine if having an aunt or uncle living with a child impacts their chances of receiving the covid vaccine at all</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 4 × 3
+# Groups:   auntcles [2]
+  auntcles covid_coverage count
+  &lt;chr&gt;    &lt;chr&gt;          &lt;int&gt;
+1 No       No              4309
+2 No       Yes              900
+3 Yes      No                29
+4 Yes      Yes                5</code></pre>
+</div>
+</div>
+<p>re-categorising the data, we get the following contingency table</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Pearson's Chi-squared test with Yates' continuity correction
+
+data:  chisq_auntcles_cov
+X-squared = 0.02819, df = 1, p-value = 0.8667</code></pre>
+</div>
+</div>
+<p>Since the p-value (0.8667) is not less than 0.05, we fail to reject the null hypothesis. Thus Covid vaccination uptake of a child is independent of the presence of aunts and uncles in the household.</p>
+<p><strong><em>2. The number of doses of the covid vaccine the child receives</em></strong> Refer to data on the degree of coverage for the covid vaccine with respect to the presence of aunts and uncles</p>
+<p><strong><em>3. The child’s (influenza) vaccination status</em></strong> The following is a breakdown of the number of households with respect to the number of aunts and uncles the child of interest has – for those with a valid influenza vaccination status</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>  child_auntcles count
+1              0  4027
+2              1    18
+3              2     5
+4              3     2</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="04_exploratory_data_analysis_files/figure-html/unnamed-chunk-22-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>For all cases where children had aunts/uncles living with them, the children of interest were not vaccinated with the influenza vaccine.</p>
+<p>To carry out a chi-squared test:</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 3 × 3
+# Groups:   auntcles [2]
+  auntcles influenza_coverage count
+  &lt;chr&gt;    &lt;chr&gt;              &lt;int&gt;
+1 No       No                  3659
+2 No       Yes                  368
+3 Yes      No                    25</code></pre>
+</div>
+</div>
+<p>re-categorising the data, we get the following contingency table</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Pearson's Chi-squared test with Yates' continuity correction
+
+data:  chisq_auntcles_cov
+X-squared = 0.02819, df = 1, p-value = 0.8667</code></pre>
+</div>
+</div>
+<p>As the p-value (p = 0.2164) is not smaller than 0.05, we cannot reject the null. Thus, the uptake of the influenza vaccine by a child is independent of the presence of aunts or ucles living in the same household.</p>
+<p><strong><em>4. The number of doses of the influenza vaccine the child receives</em></strong> Refer to data on the degree of coverage for the influenza vaccine with respect to the presence of aunts and uncles.</p>
 </section>
 <section id="number-of-vulnerable-individuals" class="level3">
 <h3 class="anchored" data-anchor-id="number-of-vulnerable-individuals">Number of vulnerable individuals</h3>
-<ul>
-<li>Does the number of vulnerable individuals living in the same household (this includes individuals who are bedriden, need ventilation and need feeding) affect:</li>
-</ul>
+<p>Does the number of vulnerable individuals living in the same household (this includes individuals who are bedriden, need ventilation and need feeding) affect:</p>
+<p><strong><em>The uptake of the covid vaccine?</em></strong></p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 4 × 2
+  vulnerable_individuals count
+                   &lt;int&gt; &lt;int&gt;
+1                      0  5421
+2                      1    25
+3                      2     3
+4                      3     9</code></pre>
+</div>
+</div>
+<p>plotting the uptake of the covid vaccine by dosage against thenumber of vulnerable individuals in a household:</p>
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="04_exploratory_data_analysis_files/figure-html/unnamed-chunk-26-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
 </section>
 <section id="number-of-grandparents" class="level3">
 <h3 class="anchored" data-anchor-id="number-of-grandparents">Number of grandparents</h3>
