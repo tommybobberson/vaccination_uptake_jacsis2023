@@ -1,6 +1,10 @@
 ---
 title: "04_Exploratory_Data_Analysis"
 format: html
+execute:
+  eval: true
+  echo: false
+  warning: false
 ---
 ## Load Packages
 These are the packages that have been used throughout the following document: `here`, `tidyverse`, `lubridate`, `knitr`
@@ -192,11 +196,20 @@ Where the bars represent the number of household for each household size and the
 
 Responses from households of 3 to 5 people posses the majority of children of interest. Households comprise of 2 individuals had very little responses with a child of interest which could be attributed to there being less single-child parents. 
 
-To examine how the number of individuals in a household affects the children of interest then, we should primarily be looking at households of at least 2 individuals (children of interest = 109), and up to 7 people (children of interest = 31).
+To examine how the number of individuals in a household affects the children of interest then, we should primarily be looking at households of at least 2 individuals (children of interest = 109), and up to 7 people (children of interest = 39).
 
 ***Does the number of individuals in a household affect***
 
-1. The child's covid vaccination status
+Breakdown of the number of households by household size -- for those with covid
+vaccination data
+```{r}
+cov_ivd |>
+  filter(household_total > 1 & !is.na(covid_coverage_age)) |>
+  group_by(household_total) |>
+  summarise(count = n())
+```
+
+***1. The child's covid vaccination status***
 ```{r}
 # determine the proportion of individuals who are not, partially and fully vaccinated
 # for households of each size
@@ -221,13 +234,13 @@ covage_by_total + xlim(1,7)
 For household sizes of 2 to 7 individuals, we see a positive linear relationship
 between household size and being fully vaccinated. The apparent continuation of 
 this trend with households of size 9 is deceptive as it is
-due to the small sample size of households of 9 individuals with a COI(n = 3) 
+due to the small sample size of households of 9 individuals (n = 3) 
 
 
-2. The number of doses of the covid vaccine the child receives
+***2. The number of doses of the covid vaccine the child receives***
 
 *Following data on the degree of covid coverage by total household size, we
-limit the range of household sizes to household sizes of siginificantly large
+limit the range of household sizes to household sizes of sufficiently large
 (n >= 30) counts.
 
 ```{r}
@@ -247,25 +260,304 @@ cov_ivd |>
      position = "fill"
    ) + xlim(1,8)
 ```
-    -   the child's (influenza) vaccination status
 
-    -   the number of doses of the influenza vaccine the child receive
+Using simple linear regression to test the effect of an increasing number of 
+household members on the proportions of individuals receiving 0 to 3 doses of 
+the covid vaccine respectively.
+
+```{r}
+cov_ivd |>
+    
+     # stratify by household size and doses received
+     filter(household_total > 1 & !is.na(covid_coverage_dosage)) |>
+     group_by(household_total, covid_coverage_dosage) |>
+     
+     # count the number of children in each category
+     summarise(count = n()) |>
+     reframe(doses = covid_coverage_dosage, proportion = count/sum(count)) |>
+     ggplot(aes(x = household_total, y = proportion, colour = doses)) + 
+     xlim(2,7) +
+     geom_point() +
+     geom_smooth(method = "lm")
+```
+
+There is a positive linear relationship between total household size and
+the number of individuals receiving 1 & 3 doses of the covid vaccine.
+
+This is accounted for by the negative linear relationship between total 
+household size and the number of individuals receiving 0 doses of the covid 
+vaccine -- indicating that more invidiuals who were previously unvaccinated
+were getting vaccinated.
+
+However, there was no significant relationship between total household size and 
+the proportion of individuals who received 2 doses of the covid vaccine.
+
+***3.the child's (influenza) vaccination status***
+Breakdown of the number of households by household size -- for those with 
+influenza vaccination data
+```{r}
+inf_ivd |>
+  filter(household_total > 1 & !is.na(influenza_coverage_age)) |>
+  group_by(household_total) |>
+  summarise(count = n())
+```
+
+
+```{r}
+# determine the proportion of individuals who are not, partially and fully vaccinated
+# for households of each size
+infage_by_total <- inf_ivd |>
+   filter(household_total > 1 & !is.na(influenza_coverage_age)) |>
+   group_by(household_total, influenza_coverage_age) |>
+   summarise(count = n()) |> 
+   ggplot() + 
+   geom_col(
+     aes(x = household_total, y = count, fill = influenza_coverage_age), 
+     position = "fill"
+   ) + 
+   scale_fill_hue(labels = c("not vaxxed", "partially vaxxed", "fully vaxxed"))
+
+# print full graph
+infage_by_total
+
+# limit the same plot to households of 2 to 7 individuals
+ infage_by_total + xlim(1,8)
+```
+We limit the range of observations to households of sizes from 2 to 7 people
+such that the sample for each household size is sufficiently large (n >= 30).
+
+Whilst it may appear that the proportion of individuals who get fully vaccinated increases with an increasing household size, this does not hold true once we limit the range of observations to households of sizes from 2 to 7 people
+such that the sample for each household size is sufficiently large (n >= 30).
+
+The proportion of children of interest becoming fully vaccinated with the influenza vaccine fluctuates with the total number of individuals in a household. This deviates from
+the trend, where the proportion of individuals becoming fully vaccinated increased 
+as the total number of individuals in a household increased, shown with the 
+covid vaccine.
+
+
+    -   the number of doses of the influenza vaccine the child receives
+*Following data on the degree of influenza coverage by total household size, we
+limit the range of household sizes to household sizes of sufficiently large
+(n >= 30) counts.
+
+```{r}
+# determine the proportion of individuals who receive 0 to 3 doses
+# for households of each size
+inf_ivd |>
+  
+   # stratify by household size and doses received
+   filter(household_total > 1 & !is.na(influenza_coverage_dosage)) |>
+   group_by(household_total, influenza_coverage_dosage) |>
+  
+   # count the number of children in each category
+   summarise(count = n()) |> 
+   ggplot() + 
+   geom_col(
+     aes(x = household_total, y = count, fill = influenza_coverage_dosage), 
+     position = "fill"
+   ) + xlim(1,8)
+```
+    
+Using simple linear regression to test the effect of an increasing number of 
+household members on the proportions of individuals receiving 0 to 3 doses of 
+the covid vaccine respectively.
+
+```{r}
+inf_ivd |>
+    
+     # stratify by household size and doses received
+     filter(household_total > 1 & !is.na(influenza_coverage_dosage)) |>
+     group_by(household_total, influenza_coverage_dosage) |>
+     
+     # count the number of children in each category
+     summarise(count = n()) |>
+     reframe(doses = influenza_coverage_dosage, proportion = count/sum(count)) |>
+     ggplot(aes(x = household_total, y = proportion, colour = doses)) + 
+     xlim(2,7) +
+     geom_point() +
+     geom_smooth(method = "lm")
+```
+
+The total number of individuals in a household is not indicative of the proportion of individuals who receive 0 doses of the influenza vaccine.
+
+The proportion of individuals receiving 1 vaccine decreased with an increasing number of individuals in a household whilst
+The proportion of individuals receiving 2 doses of the influenza
+vacine increased with an increasing number of individuals in the household.
 
 ### Number of aunts and uncles
 
--   Does the number of aunts and uncles a child has affect:
+***Does the number of aunts and uncles a child has affect:***
+The following is a breakdown of the number of households with respect to the
+number of aunts and uncles that the child of interest has -- for those with a
+valid covid vaccination status
+```{r}
+cov_ivd |>
+  filter(!is.na(covid_coverage_age)) |>
+  summarise(count = n(), .by = child_auntcles) |>
+  arrange(child_auntcles)
+```
 
-    -   the child's (covid) vaccination status
+***1. The child's (covid) vaccination status***
 
-    -   the number of doses of the covid vaccine the child receives
+```{r}
+# determine the proportion of individuals who are not, partially and fully vaccinated
+# for households of each size
+cov_ivd |>
+   filter(!is.na(covid_coverage_age)) |>
+   mutate(
+     auntcles = case_when(
+     child_auntcles == 0 ~ "No",
+     child_auntcles > 0 ~ "Yes"
+     )
+   ) |>
+   group_by(auntcles, covid_coverage_age) |>
+   summarise(count = n()) |> 
+   ggplot() + 
+   geom_col(
+     aes(x = auntcles, y = count, fill = covid_coverage_age), 
+     position = "fill"
+   ) + 
+   scale_fill_hue(labels = c("not vaxxed", "partially vaxxed", "fully vaxxed"))
+```
 
-    -   the child's (influenza) vaccination status
+Due to the small sample of households where there are both children of interest
+with valid covid vaccination data and aunts or uncles living with them, let us 
+recatogrise such data to determine if having an aunt or uncle living with a 
+child impacts their chances of receiving the covid vaccine at all
 
-    -   the number of doses of the influenza vaccine the child receive
+```{r}
+cov_ivd |>
+     filter(!is.na(covid_coverage_age)) |>
+     mutate(
+         auntcles = case_when(
+             child_auntcles == 0 ~ "No",
+             child_auntcles > 0 ~ "Yes"
+         ),
+         covid_coverage = case_when(
+             covid_coverage_age == 0 ~ "No",
+             covid_coverage_age != 0 ~ "Yes"
+         )
+     ) |>
+     group_by(auntcles, covid_coverage) |>
+     summarise(count = n())
+```
+re-categorising the data, we get the following contingency table
+```{r}
+chisq_auntcles_cov <- matrix(c(4309, 900, 29,5), nrow =2, ncol = 2)
+rownames(chisq_auntcles_cov) <-c("No vax", "vax")
+colnames(chisq_auntcles_cov) <- c("No auntcles", "auntcles")
+
+# chi squared results
+chisq.test(chisq_auntcles_cov)
+```
+
+Since the p-value (0.8667) is not less than 0.05, we fail to reject the null hypothesis. Thus Covid vaccination uptake of a child is independent of the presence of aunts and uncles in the household.
+
+***2. The number of doses of the covid vaccine the child receives***
+Refer to data on the degree of coverage for the covid vaccine with respect
+to the presence of aunts and uncles
+
+***3. The child's (influenza) vaccination status***
+The following is a breakdown of the number of households with respect to the
+number of aunts and uncles the child of interest has -- for those with a valid
+influenza vaccination status
+
+```{r}
+inf_ivd |>
+  filter(!is.na(influenza_coverage_age)) |>
+  summarise(count = n(), .by = child_auntcles) |>
+  arrange(child_auntcles)
+```
+
+```{r}
+# determine the proportion of individuals who are not, partially and fully vaccinated
+# for households of each size
+inf_ivd |>
+   filter(!is.na(influenza_coverage_age)) |>
+   mutate(
+     auntcles = case_when(
+     child_auntcles == 0 ~ "No",
+     child_auntcles > 0 ~ "Yes"
+     )
+   ) |>
+   group_by(auntcles, influenza_coverage_age) |>
+   summarise(count = n()) |> 
+   ggplot() + 
+   geom_col(
+     aes(x = auntcles, y = count, fill = influenza_coverage_age), 
+     position = "fill"
+   ) + 
+   scale_fill_hue(labels = c("not vaxxed", "partially vaxxed", "fully vaxxed"))
+```
+For all cases where children had aunts/uncles living with them, the children
+of interest were not vaccinated with the influenza vaccine.
+
+To carry out a chi-squared test:
+```{r}
+inf_ivd |>
+     filter(!is.na(influenza_coverage_age)) |>
+     mutate(
+         auntcles = case_when(
+             child_auntcles == 0 ~ "No",
+             child_auntcles > 0 ~ "Yes"
+         ),
+         influenza_coverage = case_when(
+             influenza_coverage_age == 0 ~ "No",
+             influenza_coverage_age != 0 ~ "Yes" # any degree of coverage
+         )
+     ) |>
+     group_by(auntcles, influenza_coverage) |>
+     summarise(count = n())
+```
+re-categorising the data, we get the following contingency table
+```{r}
+chisq_auntcles_inf <- matrix(c(3659, 368, 25, 0), nrow =2, ncol = 2)
+rownames(chisq_auntcles_cov) <-c("No vax", "vax")
+colnames(chisq_auntcles_cov) <- c("No auntcles", "auntcles")
+
+# chi squared results
+chisq.test(chisq_auntcles_cov)
+```
+As the p-value (p = 0.2164) is not smaller than 0.05, we cannot reject the null.
+Thus, the uptake of the influenza vaccine by a child is independent of the presence
+of aunts or ucles living in the same household.
+
+***4. The number of doses of the influenza vaccine the child receives***
+Refer to data on the degree of coverage for the influenza vaccine with respect
+to the presence of aunts and uncles.
 
 ### Number of vulnerable individuals
 
--   Does the number of vulnerable individuals living in the same household (this includes individuals who are bedriden, need ventilation and need feeding) affect:
+Does the number of vulnerable individuals living in the same household (this includes individuals who are bedriden, need ventilation and need feeding) affect:
+
+***The uptake of the covid vaccine?***
+```{r}
+cov_ivd |>
+  filter(!is.na(covid_coverage_dosage)) |>
+  group_by(vulnerable_individuals) |>
+  summarise(count = n())
+```
+
+plotting the uptake of the covid vaccine by dosage against thenumber of 
+vulnerable individuals in a household:
+```{r}
+# determine the proportion of individuals who receive 0 to 3 doses
+# for households with varying numbers of vulnerable individuals
+cov_ivd |>
+  
+   # stratify by number of vulnerable individuals and doses received
+   filter(!is.na(covid_coverage_dosage)) |>
+   group_by(vulnerable_individuals, covid_coverage_dosage) |>
+  
+   # count the number of children in each category
+   summarise(count = n()) |> 
+   ggplot() + 
+   geom_col(
+     aes(x = vulnerable_individuals, y = count, fill = covid_coverage_dosage), 
+     position = "fill"
+   )
+```
+
 
 ### Number of grandparents
 

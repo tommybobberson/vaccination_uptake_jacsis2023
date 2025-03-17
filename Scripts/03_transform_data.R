@@ -128,7 +128,11 @@ influenza_data <- influenza_data |>
           influenza_first_dose == 1 & influenza_second_dose >= 2 ~ 1, # 1 dose of influenza 
           influenza_second_dose == 1 ~ 2 # 2 doses of influenza
         )
-      )
+      ) |>
+      
+      # factorise doses
+      factor()
+      
   )
 
 # influenza_coverage_age
@@ -236,7 +240,10 @@ covid_data <- covid_data |>
             covid_second_dose == 1 & covid_third_dose >= 2 ~ 2, # 2 doses of the covid vax 
             covid_third_dose == 1 ~ 3 # 3 doses of the covid vax
          )
-      )
+      ) |>
+      
+      # factorise doses
+      factor()
   )
 
 
