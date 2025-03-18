@@ -474,7 +474,7 @@ X-squared = 0.02819, df = 1, p-value = 0.8667</code></pre>
 </section>
 <section id="number-of-vulnerable-individuals" class="level3">
 <h3 class="anchored" data-anchor-id="number-of-vulnerable-individuals">Number of vulnerable individuals</h3>
-<p>Does the number of vulnerable individuals living in the same household (this includes individuals who are bedriden, need ventilation and need feeding) affect:</p>
+<p><strong><em>Does the number of vulnerable individuals living in the same household (this includes individuals who are bedriden, need ventilation and need feeding) affect:</em></strong></p>
 <p><strong><em>The uptake of the covid vaccine?</em></strong></p>
 <div class="cell">
 <div class="cell-output cell-output-stdout">
@@ -487,7 +487,7 @@ X-squared = 0.02819, df = 1, p-value = 0.8667</code></pre>
 4                      3     9</code></pre>
 </div>
 </div>
-<p>plotting the uptake of the covid vaccine by dosage against thenumber of vulnerable individuals in a household:</p>
+<p>plotting the uptake of the covid vaccine by dosage against the number of vulnerable individuals in a household:</p>
 <div class="cell">
 <div class="cell-output-display">
 <div>
@@ -497,12 +497,24 @@ X-squared = 0.02819, df = 1, p-value = 0.8667</code></pre>
 </div>
 </div>
 </div>
+<p>Given the small number of households who have 1 or more vulnerable individuals living with them, let’s reframe this variable to investigate the effect of <strong>the presence</strong> of vulnerable individuals on the number of doses of the covid vaccine the individuals receives.</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>  vulnerable_individuals covid_coverage count
+1                      0             No  4313
+2                      0            yes  1108
+3                      1             No    17
+4                      3            yes     3
+5                      3             No     6
+6                      1            yes     8
+7                      2            yes     1
+8                      2             No     2</code></pre>
+</div>
+</div>
 </section>
 <section id="number-of-grandparents" class="level3">
 <h3 class="anchored" data-anchor-id="number-of-grandparents">Number of grandparents</h3>
-<ul>
-<li>Does the number of grandparents living in the same household affect:</li>
-</ul>
+<p><strong><em>Does the number of grandparents living in the same household affect:</em></strong> <strong><em>1. The number of doses of the covid vaccine the child receives</em></strong> The following is a breakdown of the households by the number of grandparents per household</p>
 </section>
 </section>
 <section id="child-and-siblings" class="level2">

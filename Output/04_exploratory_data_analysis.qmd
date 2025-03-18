@@ -429,26 +429,31 @@ child impacts their chances of receiving the covid vaccine at all
 cov_ivd |>
      filter(!is.na(covid_coverage_age)) |>
      mutate(
+       
+        # recode for the presence/lack of aunts and uncles
          auntcles = case_when(
              child_auntcles == 0 ~ "No",
              child_auntcles > 0 ~ "Yes"
          ),
+         
+         # recode for the presence/lack of any degree of covid coverage
          covid_coverage = case_when(
              covid_coverage_age == 0 ~ "No",
              covid_coverage_age != 0 ~ "Yes"
          )
      ) |>
      group_by(auntcles, covid_coverage) |>
-     summarise(count = n())
-```
-re-categorising the data, we get the following contingency table
-```{r}
-chisq_auntcles_cov <- matrix(c(4309, 900, 29,5), nrow =2, ncol = 2)
-rownames(chisq_auntcles_cov) <-c("No vax", "vax")
-colnames(chisq_auntcles_cov) <- c("No auntcles", "auntcles")
+     summarise(count = n()) -> auntcles_cov
 
-# chi squared results
-chisq.test(chisq_auntcles_cov)
+# test if uptake of the covid vaccine in children of interest is dependent on
+# the presence of aunts and uncles in a houseold
+auntcles_cov |>
+  
+  # re-frame the data as a contingency table
+  (function(x) xtabs(count ~ auntcles + covid_coverage, data = x))() |>
+  
+  # carry out a chi-sqaured test
+  chisq.test()
 ```
 
 Since the p-value (0.8667) is not less than 0.05, we fail to reject the null hypothesis. Thus Covid vaccination uptake of a child is independent of the presence of aunts and uncles in the household.
@@ -497,30 +502,39 @@ To carry out a chi-squared test:
 inf_ivd |>
      filter(!is.na(influenza_coverage_age)) |>
      mutate(
+       
+         # recode variables for the presence/lack of any uncles
          auntcles = case_when(
              child_auntcles == 0 ~ "No",
              child_auntcles > 0 ~ "Yes"
          ),
+         
+         # recode variables for the presence or lack of influenza coverage
          influenza_coverage = case_when(
              influenza_coverage_age == 0 ~ "No",
              influenza_coverage_age != 0 ~ "Yes" # any degree of coverage
          )
      ) |>
+  
+     # stratify by degree of coverage and the presence of uncles to get a 2x2
+     # contingeny table 
      group_by(auntcles, influenza_coverage) |>
-     summarise(count = n())
-```
-re-categorising the data, we get the following contingency table
-```{r}
-chisq_auntcles_inf <- matrix(c(3659, 368, 25, 0), nrow =2, ncol = 2)
-rownames(chisq_auntcles_cov) <-c("No vax", "vax")
-colnames(chisq_auntcles_cov) <- c("No auntcles", "auntcles")
+     summarise(count = n()) -> auntcles_inf
 
-# chi squared results
-chisq.test(chisq_auntcles_cov)
+# determine if there's a relation between influenza vax uptake and the presence
+# of aunts and uncles
+auntcles_inf |>
+  
+  # re-frame the data in a contingency table
+  (function(x) xtabs(count ~ influenza_coverage + auntcles, data = x))() |>
+  
+  # chi-squared test
+  chisq.test()
 ```
-As the p-value (p = 0.2164) is not smaller than 0.05, we cannot reject the null.
-Thus, the uptake of the influenza vaccine by a child is independent of the presence
-of aunts or ucles living in the same household.
+
+As the p-value (p = 0.2164) > 0.05, we cannot reject the null.
+Thus, we cannot conclude that the uptake of the influenza vaccine in children of
+interest is dependent on the presence of aunts and/or uncles in a household.
 
 ***4. The number of doses of the influenza vaccine the child receives***
 Refer to data on the degree of coverage for the influenza vaccine with respect
@@ -528,7 +542,7 @@ to the presence of aunts and uncles.
 
 ### Number of vulnerable individuals
 
-Does the number of vulnerable individuals living in the same household (this includes individuals who are bedriden, need ventilation and need feeding) affect:
+***Does the number of vulnerable individuals living in the same household (this includes individuals who are bedriden, need ventilation and need feeding) affect:***
 
 ***The uptake of the covid vaccine?***
 ```{r}
@@ -538,7 +552,7 @@ cov_ivd |>
   summarise(count = n())
 ```
 
-plotting the uptake of the covid vaccine by dosage against thenumber of 
+plotting the uptake of the covid vaccine by dosage against the number of 
 vulnerable individuals in a household:
 ```{r}
 # determine the proportion of individuals who receive 0 to 3 doses
@@ -557,12 +571,191 @@ cov_ivd |>
      position = "fill"
    )
 ```
+Given the small number of households who have 1 or more vulnerable individuals
+living with them, let's reframe this variable to investigate the effect of
+**the presence** of vulnerable individuals on the number of doses of the covid 
+vaccine the individuals receives.
+
+```{r}
+cov_ivd |>
+  
+  # filter out eligible individuals
+  filter(!is.na(covid_coverage_dosage) & !is.na(vulnerable_individuals)) |>
+  
+  mutate(
+    
+    # recode according to the presence/lack of any doses of the covid vaccine
+    covid_coverage = case_when(
+      covid_coverage_dosage == 0 ~ "No",
+      covid_coverage_dosage != 0 ~ "Yes"
+    ) |>
+    factor(),
+    
+    # recode according to the presence/lack of any vulnerable individuals
+    vulnerables = case_when(
+      vulnerable_individuals == 0 ~ "No",
+      vulnerable_individuals != 0 ~ "Yes"
+    ) |>
+    factor()
+  ) |>
+
+  # stratify to create 4 categories 
+  summarise(count = n(), .by = c(vulnerables, covid_coverage)) -> vulnerable_cov
+  
+# compare the proportion of individuals who have/haven't received doses of the
+# covid vaccine for households with and without vulnerable individuals
+vulnerable_cov |>
+  mutate(proportion = count/sum(count), .by = vulnerables) |>
+  ggplot() +
+  geom_col(
+    aes(
+      x = vulnerables, y = proportion, fill = covid_coverage
+      ),
+    position = "fill"
+  )
+
+# perform a chi-sqaured test to determine if there is a correlation between
+# the presence of vulnerable individuals and the number of doses of the covid
+# vaccine received
+vulnerable_cov |>
+  # convert the table to a contingency table
+  (function(x) xtabs(count ~ vulnerables + covid_coverage, data = x))() |>
+    chisq.test()
+```
+Having vulnerable individuals in a household increases the proportion of
+children of interest who receive some form of covid vaccine coverage (32.4%) 
+as compared to children of interest who have no vulnerable individuals in their 
+household (20.4%). 
+However, performing a Pearson's Chi-sqaured test, we obtain
+a p-value < 0.05 (p = 0.1105). Thus, we have insufficient evidence to reject the
+null and cannot conclude that a child's covid vaccine coverage is dependent on
+the presence of vulnerables in their household.
+
+***The uptake of the influenza vaccine***
+The following is a breakdown of households by the number of vulnerable 
+individuals -- for those with children of interest that have valid influenza
+vaccination data
+```{r}
+inf_ivd |>
+  filter(!is.na(influenza_coverage_dosage) & !is.na(vulnerable_individuals)) |>
+  summarise(count = n(), .by = vulnerable_individuals) |>
+  arrange(vulnerable_individuals)
+```
+plotting the uptake of the influenza vaccine by dosage against the number of 
+vulnerable individuals in a household:
+
+```{r}
+# determine the proportion of individuals who receive 0 to 2 doses
+# for households with varying numbers of vulnerable individuals
+inf_ivd |>
+  
+   # stratify by number of vulnerable individuals and doses received
+   filter(!is.na(influenza_coverage_dosage)) |>
+   group_by(vulnerable_individuals, influenza_coverage_dosage) |>
+  
+   # count the number of children in each category
+   summarise(count = n()) |> 
+   ggplot() + 
+   geom_col(
+     aes(x = vulnerable_individuals, y = count, fill = influenza_coverage_dosage), 
+     position = "fill"
+   )
+```
+An increase in the number of vulnerable individuals in a household seems to be 
+indicative of an increase in the proportion of children of interest who receive 
+2 doses oef the influenza vaccine. However,the sample size is not statistically 
+significant. (n = 3 for households with 2 vulnerable individuals; and n = 9 for
+households with 3 vulnerable individuals).
+
+As there are an insignificant number of households with more than 1 vulnerable 
+individual (n = 37), we will re-group our categories to investigate the impact 
+of ***the presence*** of vulnerable individuals on influenza vaccine uptake.
+
+```{r}
+inf_ivd |>
+  
+  # filter out eligible individuals
+  filter(!is.na(influenza_coverage_dosage) & !is.na(vulnerable_individuals)) |>
+  
+  mutate(
+    
+    # recode according to the presence/lack of any doses of the influenza vaccine
+    influenza_coverage = case_when(
+      influenza_coverage_dosage == 0 ~ "No",
+      influenza_coverage_dosage != 0 ~ "Yes"
+    ) |>
+    factor(),
+    
+    # recode according to the presence/lack of any vulnerable individuals
+    vulnerables = case_when(
+      vulnerable_individuals == 0 ~ "No",
+      vulnerable_individuals != 0 ~ "Yes"
+    ) |>
+    factor()
+  ) |>
+
+  # stratify to create 4 categories 
+  summarise(count = n(), .by = c(vulnerables, influenza_coverage)) ->
+  vulnerable_inf
+  
+# compare the proportion of individuals who have/haven't received doses of the
+# influenza vaccine for households with and without vulnerable individuals
+vulnerable_inf |>
+  mutate(proportion = count/sum(count), .by = vulnerables) |>
+  ggplot() +
+  geom_col(
+    aes(
+      x = vulnerables, y = proportion, fill = influenza_coverage
+      ),
+    position = "fill"
+  )
+
+# perform a chi-sqaured test to determine if there is a correlation between
+# the presence of vulnerable individuals and the number of doses of the influenza
+# vaccine received
+vulnerable_inf |>
+  # convert the table to a contingency table
+  (function(x) xtabs(count ~ vulnerables + influenza_coverage, data = x))() |>
+    chisq.test()
+```
+Performing a chi-squared test, as the p-value > 0.05 (p = 0.6037). Thus, we have
+insufficient evidence to reject the null and cannot conclude that the proportion
+of children of interest receiving a dose of the influenza vaccine is not 
+independent of the presence of vulnerable individuals in their household.
 
 
 ### Number of grandparents
 
--   Does the number of grandparents living in the same household affect:
+***Does the number of grandparents living in the same household affect:***
+***1. The  number of doses of the covid vaccine the child receives***
+The following is a breakdown of the households by the number of grandparents per household
+```{r}
+cov_ivd |>
+  
+  filter(!is.na(covid_coverage_dosage) & !is.na(child_grand)) |>
+  summarise(count = n(), .by = child_grand) |>
+  arrange(child_grand)
+```
+let us plot the proportion of children of interest with different covid 
+vaccination statuses for households of each size (0 to 4 grandparents.) 
 
+```{r} 
+cov_ivd |>
+  filter(!is.na(covid_coverage_age) & !is.na(child_grand)) |>
+  summarise(count = n(), .by = c(covid_coverage_age, child_grand)) |>
+  mutate(proportion = count/sum(count), .by = child_grand) |>
+  
+  # create proportion bar plots to reflect the proportion of children who are
+  # fully, partially and not covered by the covid vaccine across 
+  # each of the household sizes
+  ggplot() + 
+  geom_col(aes(x = child_grand, y = proportion, fill = covid_coverage_age), position = "fill")
+```
+An increase in the number of grandparents in a household does not have a 
+significant impact on the proportion of children of interest who receive full 
+coverage with the covid vaccine. 
+
+Plotting a linear regression,
 ## Child and siblings
 
 ### Total number of siblings
