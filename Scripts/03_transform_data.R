@@ -312,8 +312,10 @@ independent_variable_data <- readRDS(
 # child_parents
   # create a variable that represents the number of parents the child has
   independent_variable_data <- 
-    mutate(independent_variable_data,
-         child_parents = spouses + 1)
+    mutate(
+      independent_variable_data,
+      child_parents = spouses + 1
+    )
   
   # replace NA values with 0
   independent_variable_data$child_parents[is.na(independent_variable_data$child_parents)] <- 0
@@ -547,8 +549,101 @@ independent_variable_data <- independent_variable_data |>
       factor()
   )
 
+
+# father_employment_status
+# status of father's employment
+# considering only heterosexual couples
+independent_variable_data <- independent_variable_data |>
+  mutate(
+    father_employment_status = case_when(
+      
+      # ignore same sex couples
+      parents_sexual_make_up == 1 ~ NA,
+      
+      # When the respondent is the father
+      parent_1_sex == 0 ~ case_when(
+        
+        # respondent's employment status is father's employment status
+        respondent_employment_status %in% c(13:16) ~ 0, # unemployed
+        respondent_employment_status %in% c(1, 5, 6) ~ 1, # regular office
+        respondent_employment_status %in% c(2:4, 11) ~ 2, # self or family 
+        respondent_employment_status %in% c(7:10, 12) ~ 3 # part-time & temp
+      ),
+      
+      # When the respondent is the mother
+      parent_1_sex == 1 ~ case_when(
+        
+        # partner's employment status is father's employment status
+        partner_employment_status %in% c(13:16) ~ 0, # unemployed
+        partner_employment_status %in% c(1, 5, 6) ~ 1, # regular office
+        partner_employment_status %in% c(2:4, 11) ~ 2, # self or family 
+        partner_employment_status %in% c(7:10, 12) ~ 3 # part-time & temp
+      )
+    ) |>
+      
+      factor()
+  )
+
+
+
+# mother_employment_status
+# status of mother's employment
+# considering only heterosexual couples
+independent_variable_data <- independent_variable_data |>
+  mutate(
+    mother_employment_status = case_when(
+      
+      # ignore same sex couples
+      parents_sexual_make_up == 1 ~ NA,
+      
+      # When respondent is the mother
+      parent_1_sex == 1 ~ case_when(
+        
+        # respondent's employment status is mother's employment status
+        respondent_employment_status %in% c(13:16) ~ 0, # unemployed
+        respondent_employment_status %in% c(1, 5, 6) ~ 1, # regular office
+        respondent_employment_status %in% c(2:4, 11) ~ 2, # self or family 
+        respondent_employment_status %in% c(7:10, 12) ~ 3 # part-time & temp
+      ),
+      
+      # When respondent is the father
+      parent_1_sex ==  0 ~ case_when(
+        
+        # partner's employment status is mother's employment status
+        partner_employment_status %in% c(13:16) ~ 0, # unemployed
+        partner_employment_status %in% c(1, 5, 6) ~ 1, # regular office
+        partner_employment_status %in% c(2:4, 11) ~ 2, # self or family 
+        partner_employment_status %in% c(7:10, 12) ~ 3 # part-time & temp
+      )
+    ) |>
+      
+      factor()
+  )
+
+
+# parents_student_status
+# whether the mother or father is currently a student
+independent_variable_data <- independent_variable_data |>
+  mutate(
+    parents_student_status = case_when(
+      
+      # none are students
+      !(respondent_employment_status %in% c(12:13)) & 
+      !(partner_employment_status !%in% c(12:13)) ~ 0,
+      
+      # father is a student
+      parent_1_
+      
+      # mother is a student
+      
+      # both are students
+    )
+  )
+
+
+
 # parents_healthcare
-# indicates whether the responding parent works in the
+# indicates whether the the child's mother or father works in the
 # healthcare sector
 
 independent_variable_data <- independent_variable_data |>
@@ -556,8 +651,8 @@ independent_variable_data <- independent_variable_data |>
     parents_healthcare = case_when(
     
     # seperate individuals who work in healthcare and non-healthcare sectors
-    industry_of_work %in% c(1:14, 17:20) ~ 0, # non-healthcare
-    industry_of_work %in% 15:16 ~ 1 # healthcare
+    respondent_industry_of_work %in% c(1:14, 17:20) ~ 0, # non-healthcare
+    respondent_industry_of_work %in% 15:16 ~ 1 # healthcare
     ) |>
       
       # factorise parents_healthcare

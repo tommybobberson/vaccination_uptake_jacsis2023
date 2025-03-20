@@ -168,8 +168,12 @@ independent_variables <- data |>
     respondent_depression = Q40.19,
     respondent_psychiatric_other = Q40.20,
     
+    # respondent's and respondent's parnter's work situation
+    repsondent_employment_status = Q6.1,
+    partner_employment_status = Q6.2,
+    
     # respondents' industry of work
-    industry_of_work = Q7,
+    respondent_industry_of_work = Q7,
     
     # highest educational attainment
     highest_education = Q21.1, # respondents' highest educational attainment

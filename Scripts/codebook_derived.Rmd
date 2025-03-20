@@ -319,12 +319,70 @@ categories:
 -   Respondent's industry of work, `industry_of_work`
     -   15 or 16 = Healthcare
     -   1 - 14 ***OR*** 17 - 20 = non-Healthcare
-
+    
 ### Variables derived
 
 -   Child's parent working in healthcare, `parents_healthcare`
     -   0 = No
     -   1 = Yes
+    
+## Child's parent's work status
+
+### Variables Used
+-   Respondent's employment status, `respondent_employment_status`
+    -   1, 5, 6 = Regular office employment
+    -   2, 3, 4, 11 = self or family employment
+    -   7, 8, 9, 10, 12 = part-time/temporary/contract
+    -   13, 14, 15, 16 = unemployed
+    
+    -   12 or 13 = student
+    -   14 = retired
+    -   15 = stay-home parent
+    
+-   Partner's employment status, `partner_employment_status`
+    -   1, 5, 6 = Regular office employment
+    -   2, 3, 4, 11 = self or family employment
+    -   7, 8, 9, 10, 12 = part-time/temporary/contract
+    -   13, 14, 15, 16 = unemployed
+    
+    -   12 or 13 = student
+    -   14 = retired
+    -   15 = stay-home parent
+
+### Variables Derived
+*ignoring cases of same-sex parent families given the small sample size who have a child of interest (n = 21)* 
+
+-   Father's employment status, `father_employment_status`
+    -   0 = Unemployment
+    -   1 = Regular office employment
+    -   2 = self or family employment
+    -   3 = temporary or part-time work
+
+-   Mother's employment status, `mother_employment_status`
+    -   0 = Unemployment
+    -   1 = Regular office employment
+    -   2 = self or family employment
+    -   3 = temporary or part-time work
+
+-   Parent's student status, `parents_student_status`
+    -   0 = Neither
+    -   1 = Father
+    -   2 = Mother
+    -   3 = Both
+
+-   Parent's retired status, `parents_retired_status`
+    -   0 = Neither
+    -   1 = Father
+    -   2 = Mother
+    -   3 = Both
+
+-   Parent's stay-home status, `parents_stay_home`
+    -   0 = Neither
+    -   1 = Father
+    -   2 = Mother
+    -   3 = Both
+
+
 
 ## Child's parents highest educational attainment
 
