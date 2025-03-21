@@ -168,8 +168,8 @@ independent_variables <- data |>
     respondent_depression = Q40.19,
     respondent_psychiatric_other = Q40.20,
     
-    # respondent's and respondent's parnter's work situation
-    repsondent_employment_status = Q6.1,
+    # respondent's and respondent's partner's work situation
+    respondent_employment_status = Q6.1,
     partner_employment_status = Q6.2,
     
     # respondents' industry of work
@@ -205,6 +205,16 @@ independent_variables <- data |>
     
     #experiences with the death of loved ones
     covid_death = Q67.9,
+    
+    # parents' perception of covid vaccines for their chilren
+    perception_safety = Q5.1,
+    perception_infection_danger = Q5.2,
+    perception_immunisation_importance = Q5.3,
+    perception_immunisation_benefits = Q5.4,
+    perception_collective_immunisation = Q5.5,
+    perception_immunisation_sanctions = Q5.6,
+    perception_immunisation_adverse = Q5.7,
+    perception_immunisation_herd = Q5.8,
     
     # sex of respondent
     respondent_sex = SEX,

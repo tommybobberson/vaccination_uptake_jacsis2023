@@ -202,9 +202,11 @@ library(tidyverse)
 -   responding parent's sex, `parent_1_sex`
     -   0 = Male (Father)
     -   1 = Female (Mother)
+    
 -   sex of the respondent's partner, `parent_2_sex`
     -   0 = Male (Father)
     -   1 = Female (Mother)
+    
 -   responding parent's age, `parent_1_age`    
     
 ## Finances
@@ -323,8 +325,11 @@ categories:
 ### Variables derived
 
 -   Child's parent working in healthcare, `parents_healthcare`
-    -   0 = No
-    -   1 = Yes
+    -   0 = Neither
+    -   1 = Responding father works in HC
+    -   2 = Responding mother works in HC
+*note that we can only extract the status of if the child's responding parent is working in healthcare*
+*and not their partner as we were not provided with the partner's industry of work*
     
 ## Child's parent's work status
 
@@ -407,6 +412,22 @@ Categories:
     -   11 = Don't Understand (NA)
 
 ### Variables derived
+
+-   Highest educational attainment attained by father, `father_highest_education`
+    -   0 = Junior high
+    -   1 = High school
+    -   2 = Tertiary
+    -   3 = Post-graduate education
+    -   NA = NIL/OTHER
+    *excluding same sex couples*
+
+-   Highest educational attinment attained by mother, `mother_highest_education`
+    -   0 = Junior high
+    -   1 = High school
+    -   2 = Tertiary
+    -   3 = Post-graduate education
+    -   NA = NIL/OTHER
+    *excluding same sex couples*  
 
 -   Highest educational attainment of parents by qualification, `parents_highest_education`
     -   0 = Junior high

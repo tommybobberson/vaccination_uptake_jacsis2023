@@ -616,8 +616,7 @@ independent_variable_data <- independent_variable_data |>
         partner_employment_status %in% c(7:10, 12) ~ 3 # part-time & temp
       )
     ) |>
-      
-      factor()
+    factor()
   )
 
 
@@ -629,17 +628,82 @@ independent_variable_data <- independent_variable_data |>
       
       # none are students
       !(respondent_employment_status %in% c(12:13)) & 
-      !(partner_employment_status !%in% c(12:13)) ~ 0,
-      
-      # father is a student
-      parent_1_
-      
-      # mother is a student
+      !(partner_employment_status %in% c(12:13)) ~ 0,
       
       # both are students
-    )
+      respondent_employment_status & partner_employment_status %in% 12:13 ~ 3,
+      
+      # father is a student
+      parent_1_sex == 0 & respondent_employment_status %in% 12:13 ~ 1,
+      parent_2_sex == 0 & partner_employment_status %in% 12:13 ~ 1,
+      
+      # mother is a student
+      parent_1_sex == 1 & respondent_employment_status %in% 12:13 ~ 2,
+      parent_2_sex == 1 & partner_employment_status %in% 12:13 ~ 2,
+    ) |>
+      factor()
   )
 
+
+# parents_retired_status
+# indicates which of the parents are retired
+independent_variable_data <- independent_variable_data |>
+  mutate(
+    parents_retired_status = case_when(
+      
+      # neither are retired
+      # only true if both parents aren't retired
+      all(
+        
+        # check to see if each parent is NOT retired
+        c(respondent_employment_status, partner_employment_status) != 14
+      ) ~ 0,
+      
+      # both retired
+      all(
+        
+        # check if each parent is retired
+        c(respondent_employment_status, partner_employment_status) == 14
+      ) ~ 3,
+      
+      # father retired
+      parent_1_sex == 0 & respondent_employment_status == 14 ~ 1,
+      parent_2_sex == 0 & partner_employment_status == 14 ~ 1,
+      
+      # mother retired
+      parent_1_sex == 1 & respondent_employment_status == 14 ~ 2,
+      parent_2_sex == 1 & partner_employment_status == 14 ~ 2,
+    ) |>
+      factor()
+  )
+
+
+# parents_stay_home
+# indicates which of the child of interest's parents are stay home parents
+independent_variable_data <- independent_variable_data |>
+  mutate(
+    parents_stay_home = case_when(
+      
+      # neither are stay home parents
+      all(
+        c(respondent_employment_status & partner_employment_status) != 15
+      ) ~ 0,
+      
+      # both parents are stay home parents
+      all(
+        c(respondent_employment_status & partner_employment_status) == 15
+      ) ~ 3,
+      
+      # father is the stay home parent
+      parent_1_sex == 0 & respondent_employment_status == 15 ~ 1,
+      parent_2_sex == 0 & partner_employment_status == 15 ~ 1,
+      
+      # mother is the stay home parent
+      parent_1_sex == 1 & respondent_employment_status == 15 ~ 2,
+      parent_2_sex == 1 & partner_employment_status == 15 ~ 2,
+    ) |>
+      factor()
+  )
 
 
 # parents_healthcare
@@ -652,10 +716,71 @@ independent_variable_data <- independent_variable_data |>
     
     # seperate individuals who work in healthcare and non-healthcare sectors
     respondent_industry_of_work %in% c(1:14, 17:20) ~ 0, # non-healthcare
-    respondent_industry_of_work %in% 15:16 ~ 1 # healthcare
+    respondent_industry_of_work %in% 15:16 & parent_1_sex ~ 1, # responding father in HC
+    respondent_industry_of_work %in% 15:16 & parent_1_sex ~ 2, # responding mother in HC
     ) |>
+      factor()
+  )
+
+
+# father_highest_education
+# a variable that describes the highest educational attainment of a COI's father
+independent_variable_data <- independent_variable_data |>
+  mutate(
+    father_highest_education = case_when(
       
-      # factorise parents_healthcare
+      # filter out same-sex couples
+      parents_sexual_make_up == 2 ~ NA,  
+      
+      # father is respondent
+      parent_1_sex == 0 ~ case_when(
+        highest_education == 1 ~ 0, # junior high qualification
+        highest_education %in% 2:3 ~ 1, # high school qualification
+        highest_education %in% 4:8 ~ 2, # tertiary qualification
+        highest_education == 9 ~ 3, # post-graduate qualification
+        highest_education %in% 10:11 ~ NA # no response 
+      ),
+      
+      # father is respondent's partner
+      parent_2_sex == 0 ~ case_when(
+        highest_education_partner == 1 ~ 0, # junior high qualification
+        highest_education_partner %in% 2:3 ~ 1, # high school qualification
+        highest_education_partner %in% 4:8 ~ 2, # tertiary qualification
+        highest_education_partner == 9 ~ 3, # post-graduate qualification
+        highest_education_partner %in% 10:11 ~ NA # no response 
+      )
+    ) |>
+      factor()
+  )
+
+
+# mother_highest_education
+# a variable that describes the highest educational attainment of a COI's mother
+independent_variable_data <- independent_variable_data |>
+  mutate(
+    mother_highest_education = case_when(
+      
+      # filter out same-sex couples
+      parents_sexual_make_up == 2 ~ NA,
+      
+      # mother is respondent
+      parent_1_sex == 1 ~ case_when(
+        highest_education == 1 ~ 0, # junior high qualification
+        highest_education %in% 2:3 ~ 1, # high school qualification
+        highest_education %in% 4:8 ~ 2, # tertiary qualification
+        highest_education == 9 ~ 3, # post-graduate qualification
+        highest_education %in% 10:11 ~ NA # no response 
+      ),
+      
+      #  mother is respondent's partner
+      parent_2_sex == 1 ~ case_when(
+        highest_education_partner == 1 ~ 0, # junior high qualification
+        highest_education_partner %in% 2:3 ~ 1, # high school qualification
+        highest_education_partner %in% 4:8 ~ 2, # tertiary qualification
+        highest_education_partner == 9 ~ 3, # post-graduate qualification
+        highest_education_partner %in% 10:11 ~ NA # no response 
+      )
+    ) |>
       factor()
   )
 
@@ -861,8 +986,12 @@ independent_variable_data <- independent_variable_data |>
 
   # obtain a vector of the column names in the CLEANED RAW data 
   # i.e. all columns from independent_variables
-  to_remove_independent <- colnames(independent_variables)
-
+  to_remove_independent <- colnames(
+    select(
+      independent_variables, !starts_with("perception_")
+    )
+  )
+    
   # choose variables that have been derived for use
   transformed_independent_variable_data <- independent_variable_data |>
     select(!all_of(to_remove_independent))

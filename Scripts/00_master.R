@@ -10,5 +10,4 @@ library(GGally)
 # run scripts in order
 source("Scripts/01_read_data.R") # source data
 source("Scripts/02_clean_data.R") # clean data
-source("Scripts/03_transform_data.R") # transform data
 
