@@ -1,0 +1,429 @@
+---
+title: "04_exploring_perception_of_vaccines"
+output: html_document
+date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load Packages
+These are the packages that have been used throughout the following document: `here`, `tidyverse`, `lubridate`, `knitr`
+```{r}
+#| echo: false
+#| warning: false
+library(here)
+library(tidyverse)
+library(lubridate)
+library(knitr)
+library(GGally)
+```
+*other packages will be loaded as needed*
+
+## Reading data
+```{r}
+# transformed independent variable data
+ivd <-
+  readRDS(
+    here(
+      "Data",
+      "JACSIS2023", 
+      "processed", 
+      "transformed_independent_variable_data.RDS"
+      )
+    )
+
+# transformed covid data
+cov <-
+  readRDS(
+    here(
+      "Data",
+      "JACSIS2023", 
+      "processed", 
+      "transformed_covid_data.RDS"
+    )
+  )
+
+# transformed influenza data
+inf <-
+  readRDS(
+    here(
+      "Data",
+      "JACSIS2023", 
+      "processed", 
+      "transformed_influenza_data.RDS"
+    )
+  )
+```
+
+## Creating data frames for bivariate and multivariate analysis
+```{r}
+#| echo: FALSE
+
+# influenza and independent variable data
+inf_ivd <- bind_cols(inf, ivd)
+
+# covid and independent variable data
+cov_ivd <- bind_cols(cov, ivd)
+
+# all data
+cov_inf_ivd <- bind_cols(cov, inf, ivd)
+```
+
+
+this is a scrap document to quickly investigate if the perception of vaccine safety and 
+efficacy has any impact on vaccine uptake in children of interest from the families we are studying
+
+## Questions
+People were asked the following 8 questions and gave their responses on a scale
+of 1 (strongly disagree) to 7 (strongly agree)
+
+1.	We are confident that government agencies will only allow vaccines that are effective and safe for children
+2.	It is very dangerous to be infected, so I have my children vaccinated
+3.	Immunizations are very important to your child, so prioritize them over other things
+4.	Only vaccinate your own children if the benefits clearly outweigh the risks
+5.	I think immunization of children is a collective action to prevent the spread of disease
+6.	Sanctions should be available for those who do not comply with vaccination recommendations from health authorities
+7.	Vaccination causes more serious illnesses and allergies in children than the diseases it would otherwise prevent
+8.	If a lot of people want their children to get vaccinated, I'm going to get them vaccinated
+
+
+## Plots
+ 1.	We are confident that government agencies will only allow vaccines that are effective and safe for hildren
+```{r}
+cov_ivd |>
+     
+     # stratify by vaccine danger and doses received
+     filter(household_total > 1 & !is.na(covid_coverage_age)) |>
+     group_by(perception_safety, covid_coverage_age) |>
+  
+     # count the number of children per category
+     summarise(cov_count = n()) -> cov_processed
+
+barwidth = 0.10
+
+
+     ggplot() + 
+     geom_col(data = cov_processed,
+         aes(x = perception_safety, y = cov_count, fill = covid_coverage_age), 
+         position = "fill"
+     ) +
+     xlab("The government only allows safe and effective vaccines\
+     strongly disagree to strongly agree") +
+     ylab("proportion of households by dosage") +
+     labs(title = "variation in covid dosage by views on safety and efficacy of vaccines") +
+     geom_text(
+       data = cov_processed, 
+       aes(x = perception_safety,
+           y = cov_count,
+           label = cov_count,
+           colour = covid_coverage_age
+       ), 
+       position = position_fill(vjust = 0.5),
+       colour = "white"
+     )
+
+
+inf_ivd |>
+    filter(household_total > 1 & !is.na(influenza_coverage_age)) |>
+    group_by(perception_safety, influenza_coverage_age) |>
+    
+    # count the number of children by influenza doses and perceived vaccine safety
+    summarise(inf_count = n()) -> inf_processed
+
+ggplot() +
+     geom_col(data = inf_processed,
+         aes(x = perception_safety + barwidth + 0.01, y = inf_count, fill = influenza_coverage_age),
+         position = "fill")
+```
+
+ 2.	It is very dangerous to be infected, so I have my children vaccinated
+```{r}
+ 
+ cov_ivd |>
+     
+     # stratify by vaccine danger and doses received
+     filter(household_total > 1 & !is.na(covid_coverage_dosage)) |>
+     group_by(perception_infection_danger, covid_coverage_dosage) |>
+     
+     # count the number of children in each category
+     summarise(count = n()) |>
+     ggplot() + 
+     geom_col(
+         aes(x = perception_infection_danger, y = count, fill = covid_coverage_dosage), 
+         position = "fill"
+     ) + xlab("Infection is dangerous, so i get my children vaccinated\
+     strongly disagree to strongly agree") +
+     ylab("proportion of households by dosage") +
+     labs(title = "variation in covid dosage by views on dangers of infection")
+
+inf_ivd |>
+     # stratify by vaccine danger and doses received
+     filter(household_total > 1 & !is.na(influenza_coverage_dosage)) |>
+     group_by(perception_infection_danger, influenza_coverage_dosage) |>
+     
+     # count the number of children in each category
+     summarise(count = n()) |>
+     ggplot() + 
+     geom_col(
+         aes(x = perception_infection_danger, y = count, fill = influenza_coverage_dosage), 
+         position = "fill"
+     ) + xlab("Infection is dangerous, so i get my children vaccinated\
+     strongly disagree to strongly agree") +
+     ylab("proportion of households by dosage") +
+     labs(title = "variation in influenza dosage by views on dangers of infection")
+
+```
+
+ 3.	Immunizations are very important to your child, so prioritize them over other things
+```{r}
+cov_ivd |>
+     
+     # stratify by vaccine danger and doses received
+     filter(household_total > 1 & !is.na(covid_coverage_dosage)) |>
+     group_by(perception_immunisation_importance, covid_coverage_dosage) |>
+     
+     # count the number of children in each category
+     summarise(count = n()) |>
+     ggplot() + 
+     geom_col(
+         aes(x = perception_immunisation_importance, y = count, fill = covid_coverage_dosage), 
+         position = "fill"
+     ) + xlab("immunisations should be prioritised as they're important\
+     strongly disagree to strongly agree") +
+     ylab("proportion of households by dosage") +
+     labs(title = "variation in covid dosage by views on importance of immunisation")
+
+
+inf_ivd |>
+     # stratify by vaccine danger and doses received
+     filter(household_total > 1 & !is.na(influenza_coverage_dosage)) |>
+     group_by(perception_immunisation_importance, influenza_coverage_dosage) |>
+     
+     # count the number of children in each category
+     summarise(count = n()) |>
+     ggplot() + 
+     geom_col(
+         aes(x = perception_immunisation_importance, y = count, fill = influenza_coverage_dosage), 
+         position = "fill"
+     ) + xlab("Infection is dangerous, so i get my children vaccinated\
+     strongly disagree to strongly agree") +
+     ylab("proportion of households by dosage") +
+     labs(title = "variation in influenza dosage by views on importance of immunisation")
+```
+ 4.	Only vaccinate your own children if the benefits clearly outweigh the risks
+```{r}
+cov_ivd |>
+     
+     # stratify by vaccine danger and doses received
+     filter(household_total > 1 & !is.na(covid_coverage_dosage)) |>
+     group_by(perception_immunisation_benefits, covid_coverage_dosage) |>
+     
+     # count the number of children in each category
+     summarise(count = n()) |>
+     ggplot() + 
+     geom_col(
+         aes(x = perception_immunisation_benefits, y = count, fill = as.factor(covid_coverage_dosage)), 
+         position = "fill"
+     ) + xlab("Only immunise if benefits outweigh the risks\
+     strongly disagree to strongly agree") +
+     ylab("proportion of households by dosage") +
+     labs(title = "variation in covid dosage by views on risk & benefit of immunisation")
+
+inf_ivd |>
+     # stratify by vaccine danger and doses received
+     filter(household_total > 1 & !is.na(influenza_coverage_dosage)) |>
+     group_by(perception_immunisation_benefits, influenza_coverage_dosage) |>
+     
+     # count the number of children in each category
+     summarise(count = n()) |>
+     ggplot() + 
+     geom_col(
+         aes(x = perception_immunisation_benefits, y = count, fill = as.factor(influenza_coverage_dosage)), 
+         position = "fill"
+     ) + xlab("vaccinate only if benefits outweigh the risks\
+     strongly disagree to strongly agree") +
+     ylab("proportion of households by dosage") +
+     labs(title = "variation in influenza dosage by views on benefits and risks of vaccination")
+```
+
+
+ 5.	I think immunization of children is a collective action to prevent the spread of disease
+```{r}
+cov_ivd |>
+     
+     # stratify by perception of collective immunisation and doses received
+     filter(household_total > 1 & !is.na(covid_coverage_dosage)) |>
+     group_by(perception_collective_immunisation, covid_coverage_dosage) |>
+     
+     # count the number of children in each category
+     summarise(count = n()) |>
+     ggplot() + 
+     geom_col(
+         aes(x = perception_collective_immunisation, y = count, fill = as.factor(covid_coverage_dosage)), 
+         position = "fill"
+     ) + xlab("The immunisation of children is a collective action\
+     to prevent the spread of disease\
+     strongly disagree to strongly agree") +
+     ylab("proportion of households by dosage") +
+     labs(title = "variation in covid dosage by views on collective protection")
+
+inf_ivd |>
+     # stratify by perception of collective immunisation and doses received
+     filter(household_total > 1 & !is.na(influenza_coverage_dosage)) |>
+     group_by(perception_collective_immunisation, influenza_coverage_dosage) |>
+     
+     # count the number of children in each category
+     summarise(count = n()) |>
+     ggplot() + 
+     geom_col(
+         aes(x = perception_collective_immunisation, y = count, fill = as.factor(influenza_coverage_dosage)), 
+         position = "fill"
+     ) + xlab("The immunisation of children is a collective action\
+     to prevent the spread of disease\
+     strongly disagree to strongly agree") +
+     ylab("proportion of households by dosage") +
+     labs(title = "variation in influenza dosage by views on benefits and risks of vaccination")
+```
+
+
+
+ 6.	Sanctions should be available for those who do not comply with vaccination recommendations from health authorities
+```{r}
+cov_ivd |>
+     
+     # stratify by opinion on sanctions for unvaccinated and doses received
+     filter(household_total > 1 & !is.na(covid_coverage_dosage)) |>
+     group_by(perception_immunisation_sanctions, covid_coverage_dosage) |>
+     
+     # count the number of children in each category
+     summarise(count = n()) -> cov_sanctions_dosage
+
+cov_sanctions_dosage |>
+     ggplot() + 
+     geom_col(
+         aes(x = perception_immunisation_sanctions, y = count, fill = as.factor(covid_coverage_dosage)), 
+         position = "fill"
+     ) + xlab("Those who refuse to vaccinate should be sanctioned\
+     strongly disagree to strongly agree") +
+     ylab("proportion of households by dosage") +
+     labs(title = "variation in covid dosage by views on sanctioning unvaxxed")
+
+inf_ivd |>
+     
+     # stratify by opinion on sanctioning the unvaccinated and doses received
+     filter(household_total > 1 & !is.na(influenza_coverage_dosage)) |>
+     group_by(perception_immunisation_sanctions, influenza_coverage_dosage) |>
+     
+     # count the number of children in each category
+     summarise(count = n()) -> inf_sanctions_dosage
+
+inf_sanctions_dosage |>
+     ggplot() + 
+     geom_col(
+         aes(x = perception_immunisation_sanctions, y = count, fill = as.factor(influenza_coverage_dosage)),
+         position = "fill"
+     ) + xlab("Those who refuse to vaccinate should be sanctioned\
+     strongly disagree to strongly agree") +
+     ylab("proportion of households by dosage") +
+     labs(title = "variation in influenza dosage by views on sanctioning unvaxxed")
+
+```
+
+ 7.	Vaccination causes more serious illnesses and allergies in children than the diseases it would otherwise prevent
+```{r}
+cov_ivd |>
+     
+     # stratify by perception of the adverse effects of vaccines and doses received
+     filter(household_total > 1 & !is.na(covid_coverage_dosage)) |>
+     group_by(perception_immunisation_adverse, covid_coverage_dosage) |>
+     
+     # count the number of children in each category
+     summarise(count = n()) |> 
+     ggplot() + 
+     geom_col(
+         aes(x = perception_immunisation_adverse, y = count, fill = as.factor(covid_coverage_dosage)), 
+         position = "fill"
+     ) + xlab("vaccination causes more adverse effects than it presents,\
+     strongly disagree to strongly agree") +
+     ylab("proportion of households by dosage") +
+     labs(title = "variation in covid dosage by perception of the adverse effects of vaccines")
+
+inf_ivd |>
+     
+     # stratify by perception of the adverse effects of vaccines and doses received
+     filter(household_total > 1 & !is.na(influenza_coverage_dosage)) |>
+     group_by(perception_immunisation_adverse, influenza_coverage_dosage) |>
+     
+     # count the number of children in each category
+     summarise(count = n()) |> 
+     ggplot() + 
+     geom_col(
+         aes(x = perception_immunisation_adverse, y = count, fill = as.factor(influenza_coverage_dosage)), 
+         position = "fill"
+     ) + xlab("vaccination causes more adverse effects than it presents,\
+     strongly disagree to strongly agree") +
+     ylab("proportion of households by dosage") +
+     labs(title = "variation in influenza dosage by perception of the adverse effects of vaccines")
+```
+
+8.	If a lot of people want their children to get vaccinated, I'm going to get them vaccinated
+```{r}
+cov_ivd |>
+     
+     # stratify by opinion on herd vaccinating and doses received
+     filter(household_total > 1 & !is.na(covid_coverage_dosage)) |>
+     group_by(perception_immunisation_herd, covid_coverage_dosage) |>
+     
+     # count the number of children in each category
+     summarise(count = n()) |> 
+     ggplot() + 
+     geom_col(
+         aes(x = perception_immunisation_herd, y = count, fill = as.factor(covid_coverage_dosage)), 
+         position = "fill"
+     ) + xlab("vaccination causes more adverse effects than it presents,\
+     strongly disagree to strongly agree") +
+     ylab("proportion of households by dosage") +
+     labs(title = "variation in covid dosage by willingness to vaccinate with the herd")
+
+inf_ivd |>
+     
+     # stratify by opinion on herd vaccinating and doses received
+     filter(household_total > 1 & !is.na(influenza_coverage_dosage)) |>
+     group_by(perception_immunisation_herd, influenza_coverage_dosage) |>
+     
+     # count the number of children in each category
+     summarise(count = n()) |> 
+     ggplot() + 
+     geom_col(
+         aes(x = perception_immunisation_herd, y = count, fill = as.factor(influenza_coverage_dosage)), 
+         position = "fill"
+     ) + xlab("vaccination causes more adverse effects than it presents,\
+     strongly disagree to strongly agree") +
+     ylab("proportion of households by dosage") +
+     labs(title = "variation in influenza dosage by willingness to vaccinate with the herd")
+```
+
+# heatmap
+
+# pairs plot
+```{r}
+cov_perception <- select(cov_ivd, starts_with("perception_") | starts_with("covid_coverage"))
+
+ggpairs(cov_perception)
+```
+"***"
+if the p-value is < 0.001
+
+"**"
+if the p-value is < 0.01
+
+"*"
+if the p-value is < 0.05
+
+"."
+if the p-value is < 0.10
+
+""
+otherwise
