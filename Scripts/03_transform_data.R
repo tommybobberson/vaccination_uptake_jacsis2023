@@ -128,11 +128,7 @@ influenza_data <- influenza_data |>
           influenza_first_dose == 1 & influenza_second_dose >= 2 ~ 1, # 1 dose of influenza 
           influenza_second_dose == 1 ~ 2 # 2 doses of influenza
         )
-      ) |>
-      
-      # factorise doses
-      factor()
-      
+      )
   )
 
 # influenza_coverage_age
@@ -146,13 +142,13 @@ influenza_data <- influenza_data |>
         # degree of coverage for those aged 6 months to less than 13y/o
         age_of_interest < 13 & age_of_interest >= 0.5 ~ case_when(
           influenza_coverage_dosage == 0 ~ 0, # no coverage, 0 doses
-          influenza_coverage_dosage >= 1 ~ 2 # full coverage, 1 dose
+          influenza_coverage_dosage %in% 1:2 ~ 2 # full coverage, 1 dose
         ),
         
         # degree of coverage for those aged 13y/o to 18y/o
         age_of_interest >= 13 & age_of_interest <= 18 ~ case_when(
           influenza_coverage_dosage == 0 ~ 0, # no coverage, 0 doses
-          influenza_coverage_dosage == 1 ~ 1, # partial coverage, 1 dose
+          influenza_coverage_dosage == 2 ~ 1, # partial coverage, 1 dose
           influenza_coverage_dosage == 2 ~ 2 # full coverage, 2 doses
         ),
         
@@ -240,10 +236,7 @@ covid_data <- covid_data |>
             covid_second_dose == 1 & covid_third_dose >= 2 ~ 2, # 2 doses of the covid vax 
             covid_third_dose == 1 ~ 3 # 3 doses of the covid vax
          )
-      ) |>
-      
-      # factorise doses
-      factor()
+      ) 
   )
 
 
@@ -260,8 +253,8 @@ covid_data <- covid_data |>
       # children eligible for the vax
       
       # children less than 5 years of age
-      age_of_interest >= 0.5 & age_of_interest <5 ~ case_when(
-        covid_coverage_dosage > 0 ~ 2, # full coverage
+      age_of_interest >= 0.5 & age_of_interest < 5 ~ case_when(
+        covid_coverage_dosage >= 0 ~ 2, # full coverage
         covid_coverage_dosage == 0 ~ 0  # no coverage at all
       ),
       
