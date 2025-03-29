@@ -254,7 +254,7 @@ covid_data <- covid_data |>
       
       # children less than 5 years of age
       age_of_interest >= 0.5 & age_of_interest < 5 ~ case_when(
-        covid_coverage_dosage >= 0 ~ 2, # full coverage
+        covid_coverage_dosage >= 1  ~ 2, # full coverage
         covid_coverage_dosage == 0 ~ 0  # no coverage at all
       ),
       
@@ -406,7 +406,7 @@ independent_variable_data <- readRDS(
   # account for the sex of the child of interest
     independent_variable_data$child_sisters <- 
       ifelse(
-        independent_variable_data$sex_of_interest == 1, 
+        independent_variable_data$sex_of_interest == 1, # if the COI is female
         daughters - 1, # remove 1 from daughter count if COI is female
         daughters # no. of sisters daughter count if COI isn't female
       )
@@ -426,7 +426,7 @@ independent_variable_data <- readRDS(
     # account for the sex of the child of interest
     independent_variable_data$child_brothers <- 
       ifelse(
-        independent_variable_data$sex_of_interest == 1, 
+        independent_variable_data$sex_of_interest == 0, # if the COI is male
         sons - 1, # remove 1 from son count if COI is male
         sons # no. of brothers = son count if COI isn't male
       )
