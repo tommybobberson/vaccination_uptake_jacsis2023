@@ -139,17 +139,23 @@ influenza_data <- influenza_data |>
     influenza_coverage_age =
       case_when(
         
-        # degree of coverage for those aged 6 months to less than 13y/o
-        age_of_interest < 13 & age_of_interest >= 0.5 ~ case_when(
+        # degree of coverage for those aged 6 months to less than 3 y/o
+        age_of_interest < 3 & age_of_interest >= 0.5 ~ case_when(
           influenza_coverage_dosage == 0 ~ 0, # no coverage, 0 doses
-          influenza_coverage_dosage %in% 1:2 ~ 2 # full coverage, 1 dose
+          influenza_coverage_dosage >= 1 ~ 2 # full coverage, 1 or more doses
         ),
         
-        # degree of coverage for those aged 13y/o to 18y/o
-        age_of_interest >= 13 & age_of_interest <= 18 ~ case_when(
+        # degree of coverage for those aged 3y/o to less than 13y/o
+        age_of_interest >= 3 & age_of_interest < 13 ~ case_when(
           influenza_coverage_dosage == 0 ~ 0, # no coverage, 0 doses
           influenza_coverage_dosage == 2 ~ 1, # partial coverage, 1 dose
           influenza_coverage_dosage == 2 ~ 2 # full coverage, 2 doses
+        ),
+        
+        # degree of coverage for those aged 13 y/o to less than 18y/o
+        age_of_interest >= 13 & age_of_interest < 18 ~ case_when(
+          influenza_coverage_dosage == 0 ~ 0, # no coverage, 0 doses
+          influenza_coverage_dosage %in% 1:2 ~ 2 # full coverage, 1 dose or more
         ),
         
         # exclude those who are aged less than 6 months who are ineligible 
