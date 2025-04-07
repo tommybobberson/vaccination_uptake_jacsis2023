@@ -62,10 +62,12 @@ library(tidyverse)
 -   Degree of coverage (relative to *Age of child*
     -   `influenza_coverage_age`
     -   0 = none(0 doses for those above 6 months)
-    -   1 = partial (1 dose for those \>= 13y/o but \< 18 y/o)
-    -   2 = full (2 doses for those \>=13 y/o but \<18y/o and \>= 1 dose for those 6 months to 13 y/o)
+    -   1 = partial (1 dose for those >= 3 y/o but < 13 y/o)
+    -   2 = full (2 doses for those >= 3y/o and < 13 y/o and >= 1 dose for those 6 months to 3 y/o or those >= 1 dose for those >= 13y/o to < 18 y/o)
 
 *note that individuals below 6 months should not be counted to avoid skewing the number of individuals who have received 0 doses*
+**all derivationis of coverage were inferred from Vaccination Schedule Recommended by the Japan Pediatric Society as of October 27, 2024
+
 
 ## Covid vaccination coverage
 
