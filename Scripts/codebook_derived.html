@@ -808,8 +808,12 @@ must answer at least one question with 3-5</em></p>
 <li>Child’s parent working in healthcare,
 <code>parents_healthcare</code>
 <ul>
-<li>0 = No</li>
-<li>1 = Yes</li>
+<li>0 = Neither</li>
+<li>1 = Responding father works in HC</li>
+<li>2 = Responding mother works in HC <em>note that we can only extract
+the status of if the child’s responding parent is working in
+healthcare</em> <em>and not their partner as we were not provided with
+the partner’s industry of work</em></li>
 </ul></li>
 </ul>
 </div>
@@ -916,6 +920,24 @@ size who have a child of interest (n = 21)</em></p>
 <div id="variables-derived-9" class="section level3">
 <h3>Variables derived</h3>
 <ul>
+<li>Highest educational attainment attained by father,
+<code>father_highest_education</code>
+<ul>
+<li>0 = Junior high</li>
+<li>1 = High school</li>
+<li>2 = Tertiary</li>
+<li>3 = Post-graduate education</li>
+<li>NA = NIL/OTHER <em>excluding same sex couples</em></li>
+</ul></li>
+<li>Highest educational attinment attained by mother,
+<code>mother_highest_education</code>
+<ul>
+<li>0 = Junior high</li>
+<li>1 = High school</li>
+<li>2 = Tertiary</li>
+<li>3 = Post-graduate education</li>
+<li>NA = NIL/OTHER <em>excluding same sex couples</em></li>
+</ul></li>
 <li>Highest educational attainment of parents by qualification,
 <code>parents_highest_education</code>
 <ul>

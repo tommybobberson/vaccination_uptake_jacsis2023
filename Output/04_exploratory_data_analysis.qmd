@@ -20,7 +20,7 @@ library(reshape2)
 ```
 *other packages will be loaded as needed*
 
-## Reading data
+## Reading data and combining
 ```{r}
 # transformed independent variable data
 ivd <-
@@ -54,21 +54,18 @@ inf <-
       "transformed_influenza_data.RDS"
     )
   )
-```
 
-## Factorising the data
-```{r}
+
+# Factorising the data
+
 cov <- cov |>
   mutate(covid_coverage_dosage = factor(covid_coverage_dosage, levels = c(0, 1, 2, 3)))
 
 inf <- inf |>
   mutate(influenza_coverage_dosage = factor(influenza_coverage_dosage, levels = c(0, 1, 2)))
-```
 
-## Creating data frames for bivariate and multivariate analysis
-```{r}
-#| echo: FALSE
 
+# Creating data frames for bivariate and multivariate analysis
 # influenza and independent variable data
 inf_ivd <- bind_cols(inf, ivd)
 
@@ -1082,13 +1079,13 @@ cov_coverage_age_brothers |>
   ggplot() +
   geom_col(aes(x = child_brothers, y = proportion, fill = covid_coverage_age), position = "fill") +
   geom_text(aes(x = child_brothers, y = proportion, label = count, group = covid_coverage_age), position = position_fill(vjust = 0.5), size = 2.5) +
-  ggtitle("Uptake of the covid-19 vaccine by the number of brothers per household")
+  ggtitle("Uptake of the covid-19 vaccine by the number of \n brothers per household")
 
 cov_coverage_age_sisters |>
   ggplot() +
   geom_col(aes(x = child_sisters, y = proportion, fill = covid_coverage_age), position = "fill") +
   geom_text(aes(x = child_sisters, y = proportion, label = count, group = covid_coverage_age), position = position_fill(vjust = 0.5), size = 2.5) +
-  ggtitle("Uptake of the covid-19 vaccine by the number of sisters per household")
+  ggtitle("Uptake of the covid-19 vaccine by the number of \n sisters per household")
 
 cov_covereage_age_brothers_sisters |>
   mutate(sum_by_brothers = sum(count), .by = c(child_brothers, child_sisters)) |>
@@ -1096,7 +1093,7 @@ cov_covereage_age_brothers_sisters |>
   geom_col(aes(x = interaction(child_brothers, child_sisters), y = proportion, fill = covid_coverage_age), position = "fill") +
   geom_text(aes(x = interaction(child_brothers, child_sisters), y = 1, label = sum_by_brothers)) +
   facet_wrap(vars(child_sisters)) +
-  ggtitle("Uptake of the covid-19 vaccine with increasing numbers of sisters, for families with 0-3 brothers respectively")
+  ggtitle("Uptake of the covid-19 vaccine with increasing numbers of sisters, \n for families with 0-3 brothers respectively")
 
 cov_covereage_age_brothers_sisters |>
   mutate(sum_by_sisters = sum(count), .by = c(child_sisters, child_brothers)) |>
@@ -1104,7 +1101,7 @@ cov_covereage_age_brothers_sisters |>
   geom_col(aes(x = interaction(child_sisters, child_brothers), y = proportion, fill = covid_coverage_age), position = "fill") +
   geom_text(aes(x = interaction(child_sisters, child_brothers), y = 1, label = sum_by_sisters)) +
   facet_wrap(vars(child_brothers)) +
-  ggtitle("Uptake of the covid-19 vaccine with increasing numbers of brothers, for families with 0-3 sisters respectively")
+  ggtitle("Uptake of the covid-19 vaccine with increasing numbers of brothers, \n for families with 0-3 sisters respectively")
 ```
 
 
@@ -1172,102 +1169,973 @@ cov_ivd |>
 ```
 
 ***How does the age of the COI impact their uptake of:***
-***1. The covid-19 vaccination (by coverage)***
+***1. The covid-19 vaccination***
+Looking at the whole child population as a whole (0-18 y/o) we examine the proportion of children that make up each respective age and coverage group for the covid vaccine
 ```{r}
 # how each age takes up a different proprotion of the respective vax (doesn't account for differences in sizes of ages)
 cov_ivd |>
   filter(!is.na(covid_coverage_dosage)) |>
-  mutate(age_of_interest = round(age_of_interest * 2) / 2) |>
+  mutate(age_of_interest = round(age_of_interest * 2) / 2) -> cov_COI_age_whole
+
+# plot the proportion of the total no. of COI children of each age_of_interest and each dosage represent
+cov_COI_age_whole |>
   summarise(count = n(), .by = c(age_of_interest, covid_coverage_dosage)) |>
-  
-  # testing by introducing an age category factor
-  mutate(
-    age_category = factor(
-    case_when(
-    age_of_interest %in% 0:5 ~ 1,
-    age_of_interest %in% 5.5:12 ~ 2,
-    age_of_interest %in% 12.5:18 ~ 3
-    ))
-  ) |>
   mutate(proportions = count/sum(count), .by = covid_coverage_dosage) |>
   arrange(age_of_interest, covid_coverage_dosage) |>
   ggplot(aes(x = age_of_interest, y = proportions)) +
   geom_point(aes(colour = covid_coverage_dosage)) +
-  geom_smooth(aes(colour = covid_coverage_dosage), method = "loess")
+  geom_smooth(aes(colour = covid_coverage_dosage), method = "loess", se = FALSE)
 
+# plot the proportion of the total no. of COI children of each age_of_interest and each degree of coverage represent
+cov_COI_age_whole |>
+  summarise(count = n(), .by = c(age_of_interest, covid_coverage_age)) |>
+  mutate(proportions = count/sum(count), .by = covid_coverage_age) |>
+  arrange(age_of_interest, covid_coverage_age) |>
+  ggplot(aes(x = age_of_interest, y = proportions)) +
+  geom_point(aes(colour = covid_coverage_age)) +
+  geom_smooth(aes(colour = covid_coverage_age), method = "loess", se = FALSE)
+```
+- Interestingly, the proportion of individuals from 2-4 y/o is extremely high though this is explained by there being a greater proportion of children who fall into that group
+
+What accoutns for the coverage difference?? **Insert data about the pediatric soceity's recommendations for cov vaccination and when they were put in place**
+
+Examining how the proportion of children with the no. of covid doses and the degree of coverage by the covid vaccine varies with the child's age
+
+```{r}
 # how each dosage takes up a different proportion of the respective age (accounts for differences in sizes of ages)
 cov_ivd |>
   filter(!is.na(covid_coverage_dosage)) |>
-  mutate(age_of_interest = round(age_of_interest)) |>
+  mutate(age_of_interest = round(age_of_interest * 2) / 2) -> cov_COI_age_age
+
+cov_COI_age_age |>
   summarise(count = n(), .by = c(age_of_interest, covid_coverage_dosage)) |>
   mutate(proportions = count/sum(count), .by = age_of_interest) |>
-  arrange(age_of_interest, covid_coverage_dosage) |>
-  
-  ggplot() +
-  geom_point(aes(x = age_of_interest, y = proportions, colour = covid_coverage_dosage)) +
-  geom_smooth(aes(x = age_of_interest, y = proportions, colour = covid_coverage_dosage), method = "loess")
-  
+  mutate(
+    age_category = factor(
+    case_when(
+    age_of_interest %in% seq(0, 5, by = 0.5) ~ "pre",
+    age_of_interest %in% seq(5.5, 12, by = 0.5) ~ "primary",
+    age_of_interest %in% seq(12.5, 18, by = 0.5) ~ "highsch"
+    ))
+  ) |>
 
+  ggplot() +
+  geom_point(aes(x = age_of_interest, y = proportions, colour = covid_coverage_dosage, shape = age_category)) +
+  geom_smooth(aes(x = age_of_interest, y = proportions, colour = covid_coverage_dosage, linetype = age_category), method = "lm", se = FALSE) +
+  labs(title = "The proportion of children in each age group who have obtained \n 0 to 3 doses of the vaccine", subtitle = "By age group respectively")
+
+cov_COI_age_age |>
+  summarise(count = n(), .by = c(age_of_interest, covid_coverage_age)) |>
+  mutate(proportions = count/sum(count), .by = age_of_interest) |>
+  mutate(
+    age_category = factor(
+    case_when(
+    age_of_interest %in% seq(0, 5, by = 0.5) ~ "pre",
+    age_of_interest %in% seq(5.5, 12, by = 0.5) ~ "primary",
+    age_of_interest %in% seq(12.5, 18, by = 0.5) ~ "highsch"
+    ))
+  ) |>
+
+  ggplot() +
+  geom_point(aes(x = age_of_interest, y = proportions, colour = covid_coverage_age, shape = age_category)) +
+  geom_smooth(aes(x = age_of_interest, y = proportions, colour = covid_coverage_age, linetype = age_category), method = "lm", se = FALSE) +
+  labs(title = "The proportion of children in each age group who have obtained \n different degrees of coverage from the vaccine", subtitle = "By age group respectively")
+```
+***How does the age of the COI impact their uptake of:***
+***2. The Influenza vaccination***
+
+Looking at the whole child population as a whole (0-18 y/o) we examine the proportion of children that make up each respective age and coverage group for the influenza vaccine
+```{r}
+# how each age takes up a different proprotion of the respective vax (doesn't account for differences in sizes of ages)
+inf_ivd |>
+  filter(!is.na(influenza_coverage_dosage)) |>
+  mutate(age_of_interest = round(age_of_interest * 2) / 2) -> inf_COI_age_whole
+
+# plot the proportion of the total no. of COI children of each age_of_interest and each dosage represent
+inf_COI_age_whole |>
+  summarise(count = n(), .by = c(age_of_interest, influenza_coverage_dosage)) |>
+  mutate(proportions = count/sum(count), .by = influenza_coverage_dosage) |>
+  arrange(age_of_interest, influenza_coverage_dosage) |>
+  ggplot(aes(x = age_of_interest, y = proportions)) +
+  geom_point(aes(colour = influenza_coverage_dosage)) +
+  geom_smooth(aes(colour = influenza_coverage_dosage), method = "loess", se = FALSE)
+
+# plot the proportion of the total no. of COI children of each age_of_interest and each degree of coverage represent
+inf_COI_age_whole |>
+  summarise(count = n(), .by = c(age_of_interest, influenza_coverage_age)) |>
+  mutate(proportions = count/sum(count), .by = influenza_coverage_age) |>
+  arrange(age_of_interest, influenza_coverage_age) |>
+  ggplot(aes(x = age_of_interest, y = proportions)) +
+  geom_point(aes(colour = influenza_coverage_age)) +
+  geom_smooth(aes(colour = influenza_coverage_age), method = "loess", se = FALSE)
 ```
 
+Examining how the proportion of children with the no. of influenza doses and the degree of coverage by the influenza vaccine varies with the child's age
+```{r}
+# how each dosage takes up a different proportion of the respective age (accounts for differences in sizes of ages)
+inf_ivd |>
+  filter(!is.na(influenza_coverage_dosage)) |>
+  mutate(age_of_interest = round(age_of_interest * 2) / 2) -> inf_COI_age_age
+
+inf_COI_age_age |>
+  summarise(count = n(), .by = c(age_of_interest, influenza_coverage_dosage)) |>
+  mutate(proportions = count/sum(count), .by = age_of_interest) |>
+  mutate(
+    age_category = factor(
+    case_when(
+    age_of_interest %in% seq(0, 5, by = 0.5) ~ "pre",
+    age_of_interest %in% seq(5.5, 12, by = 0.5) ~ "primary",
+    age_of_interest %in% seq(12.5, 18, by = 0.5) ~ "highsch"
+    ))
+  ) |>
+
+  ggplot() +
+  geom_point(aes(x = age_of_interest, y = proportions, colour = influenza_coverage_dosage, shape = age_category)) +
+  geom_smooth(aes(x = age_of_interest, y = proportions, colour = influenza_coverage_dosage, linetype = age_category), method = "lm", se = FALSE) +
+  labs(title = "The proportion of children in each age group who have obtained \n 0 to 2 doses of the influenza vaccine", subtitle = "By age group respectively")
+
+inf_COI_age_age |>
+  summarise(count = n(), .by = c(age_of_interest, influenza_coverage_age)) |>
+  mutate(proportions = count/sum(count), .by = age_of_interest) |>
+  mutate(
+    age_category = factor(
+    case_when(
+    age_of_interest %in% seq(0, 5, by = 0.5) ~ "pre",
+    age_of_interest %in% seq(5.5, 12, by = 0.5) ~ "primary",
+    age_of_interest %in% seq(12.5, 18, by = 0.5) ~ "highsch"
+    ))
+  ) |>
+
+  ggplot() +
+  geom_point(aes(x = age_of_interest, y = proportions, colour = influenza_coverage_age, shape = age_category)) +
+  geom_smooth(aes(x = age_of_interest, y = proportions, colour = influenza_coverage_age, linetype = age_category), method = "lm", se = FALSE) +
+  labs(title = "The proportion of children in each age group who have obtained \n different degrees of coverage from the influenza vaccine", subtitle = "By age group respectively")
+```
+There is a peak in the influenza vaccination (give it's yearly) for children who are going into primary school
+
 ### Gender of the child
-## Parents
+***investigating how the gender of the child of interest affects their uptake of:***
+**1. the covid vaccine**
+```{r}
+cov_ivd |>
+  filter(!is.na(covid_coverage_dosage)) |>
+  summarise(count = n(), .by = c(covid_coverage_dosage, sex_of_interest)) |>
+
+  ggplot() +
+  geom_col(aes(x = sex_of_interest, y = count, fill = covid_coverage_dosage), position = "fill")
+
+cov_ivd |>
+  filter(!is.na(covid_coverage_dosage)) |>
+  mutate(age_of_interest = round(age_of_interest)) |>
+  summarise(count = n(), .by = c(covid_coverage_dosage, sex_of_interest, age_of_interest)) |>
+  mutate(proportion = count/sum(count), .by = c(age_of_interest, sex_of_interest)) -> cov_sex_age_dosage
+  
+cov_sex_age_dosage |>
+  ggplot() +
+  geom_point(aes(x = age_of_interest, y = proportion, shape = sex_of_interest, colour = covid_coverage_dosage)) +
+  geom_smooth(aes(x = age_of_interest, y = proportion, linetype = sex_of_interest, colour = covid_coverage_dosage), se = FALSE)
+  
+cov_sex_age_dosage |>
+  select(-count) |>
+  pivot_wider(names_from = sex_of_interest, values_from = proportion) |>
+  rename(male = `0`, female = `1`) |>
+  mutate(proportion_difference = female - male) |>
+  arrange(age_of_interest, covid_coverage_dosage) |>
+  ggplot() +
+  geom_col(aes(x = age_of_interest, y = proportion_difference, fill = covid_coverage_dosage)) +
+  facet_wrap(vars(covid_coverage_dosage)) +
+  ggtitle("The difference between the proportion of female and male children \n who receive the covid-19 vaccine across ages (f - m)", "Differences stratified by no. of doses received") +
+  theme(legend.title = element_text(size = 7))
+
+```
+Curiously a noticeable proportion of girls (sex = 1) have received 3 doses of the covid vaccine as opposed to boys (sex = 0) for child of age 13 y/o (~ 20% for girls vs 10 % for boys) and 15 y/o (~35% for girls vs 25% for boys)
+
+**2. the influenza vaccine**
+```{r}
+inf_ivd |>
+  filter(!is.na(influenza_coverage_dosage)) |>
+  summarise(count = n(), .by = c(influenza_coverage_dosage, sex_of_interest)) |>
+
+  ggplot() +
+  geom_col(aes(x = sex_of_interest, y = count, fill = influenza_coverage_dosage), position = "fill")
+
+inf_ivd |>
+  filter(!is.na(influenza_coverage_dosage)) |>
+  mutate(age_of_interest = round(age_of_interest)) |>
+  summarise(count = n(), .by = c(influenza_coverage_dosage, sex_of_interest, age_of_interest)) |>
+  mutate(proportion = count/sum(count), .by = c(age_of_interest, sex_of_interest)) -> inf_sex_age_dosage 
+  
+inf_sex_age_dosage |>
+  ggplot() +
+  geom_point(aes(x = age_of_interest, y = proportion, shape = sex_of_interest, colour = influenza_coverage_dosage)) +
+  geom_smooth(aes(x = age_of_interest, y = proportion, linetype = sex_of_interest, colour = influenza_coverage_dosage), se = FALSE)
+
+inf_sex_age_dosage |>
+  select(-count) |>
+  pivot_wider(names_from = sex_of_interest, values_from = proportion) |>
+  rename(male = `0`, female = `1`) |>
+  mutate(proportion_difference = female - male) |>
+  arrange(age_of_interest, influenza_coverage_dosage) |>
+  ggplot() +
+  geom_col(aes(x = age_of_interest, y = proportion_difference, fill = influenza_coverage_dosage)) +
+  facet_wrap(vars(influenza_coverage_dosage)) +
+  ggtitle("The difference between the proportion of female and male children \n who receive the influenza vaccine across ages (f - m)", "Differences stratified by the number of doses received") +
+  theme(legend.position = "top", legend.title = element_text(size = 10))
+```
+What could account for the increase in proportion of female children (aged 6-10) who received 0 doses of the influenza vaccine? And subsequently, lack of females aged 6 to 8, who received 2 doses of the influenza vaccine
+
+##Parents
 
 ### Number of parents
+Here is a breakdown of the number of children by the number of parents they have
+```{r}
+cov_ivd |>
+  filter(!is.na(covid_coverage_age)) |>
+  summarise(count = n(), .by = child_parents)
+```
 
--   Does the number of parents a child has affect:
 
-    -   the child's (covid) vaccination status
+***Does the marital status of the parents and the number of parents a child has affect:***
+**1. The child's covid vaccination status**
+```{r}
+cov_ivd |>
+  filter(!is.na(covid_coverage_age)) |>
+  summarise(count = n(), .by = c(child_parents, covid_coverage_age)) |>
+  mutate(proportion = count/sum(count), .by = child_parents) |>
+  mutate(child_parents = factor(child_parents)) |>
+  
+  ggplot(aes(x = covid_coverage_age, y = proportion)) +
+  geom_col(aes(fill = child_parents), position = "dodge") +
+  geom_text(aes(label = count, group = child_parents), position = position_dodge(width = 0.9), vjust = - 0.2) +
+  labs(
+    title = "Proportion of children with different coverages \n from the covid vaccine by number of parents"
+  )
+``` 
+***2. the number of doses of the covid vaccine the child receives:***
+```{r}
+cov_ivd |>
+  filter(!is.na(covid_coverage_dosage)) |>
+  summarise(count = n(), .by = c(child_parents, covid_coverage_dosage)) |>
+  mutate(proportion = count/sum(count), .by = child_parents) |>
+  mutate(child_parents = factor(child_parents)) |>
+  
+  ggplot(aes(x = covid_coverage_dosage, y = proportion)) +
+  geom_col(aes(fill = child_parents), position = "dodge") +
+  geom_text(aes(label = count, group = child_parents), position = position_dodge(width = 0.9), vjust = - 0.2) +
+  labs(
+    title = "Proportion of children receiving each dose of \n the vaccine by  number of parents"
+  )
+```
 
-    -   the number of doses of the covid vaccine the child receives
 
-    -   the child's (influenza) vaccination status
+***3. the child's (influenza) vaccination status:***
+```{r}
+inf_ivd |>
+  filter(!is.na(influenza_coverage_age)) |>
+  summarise(count = n(), .by = c(child_parents, influenza_coverage_age)) |>
+  mutate(proportion = count/sum(count), .by = child_parents) |>
+  mutate(child_parents = factor(child_parents)) |>
+  
+  ggplot(aes(x = influenza_coverage_age, y = proportion)) +
+  geom_col(aes(fill = child_parents), position = "dodge") +
+  geom_text(aes(label = count, group = child_parents), position = position_dodge(width = 0.9), vjust = - 0.2) +
+  labs(
+    title = "Proportion of children with different coverages \n from the influenza vaccine by number of parents"
+  )
+``` 
 
-    -   the number of doses of the influenza vaccine the child receive
+***the number of doses of the influenza vaccine the child receives***
+```{r}
+inf_ivd |>
+  filter(!is.na(influenza_coverage_dosage)) |>
+  summarise(count = n(), .by = c(child_parents, influenza_coverage_dosage)) |>
+  mutate(proportion = count/sum(count), .by = child_parents) |>
+  mutate(child_parents = factor(child_parents)) |>
+  
+  ggplot(aes(x = influenza_coverage_dosage, y = proportion)) +
+  geom_col(aes(fill = child_parents), position = "dodge") +
+  geom_text(aes(label = count, group = child_parents), position = position_dodge(width = 0.9), vjust = - 0.2) +
+  labs(
+    title = "Proportion of children with different doses \n of the influenza vaccine by number of parents"
+  )
+``` 
+In general, children from single parent families exhibit a higher uptake of the covid-19 vaccine than children with 2 parents.
+
+conversley, children from sinle parent families have a lower tendency to obtain full coverage of the influenza vaccine (or 2 doses though this could be due to age) as compared to children with 2 parents
 
 ### Parent's marital status
+Here is a distribution of the number of children with parents of different marital statuses 
+```{r}
+cov_ivd |>
+  filter(!is.na(covid_coverage_dosage)) |>
+  summarise(count = n(), .by = parents_marital_status)
+```
 
--   Does the marital status of the parents affect:
+***Examining how a parent's marital status affects their child's uptake of the:***
+***Covid vaccine***
+```{r}
+cov_ivd |>
+  filter(!is.na(covid_coverage_dosage)) |>
+  summarise(count = n(), .by = c(parents_marital_status, covid_coverage_dosage)) |>
+  mutate(proportion = count/sum(count), .by = parents_marital_status) |>
+  
+  ggplot(aes(x = parents_marital_status, y = proportion)) +
+  geom_col(aes(fill = covid_coverage_dosage), position = "fill") +
+  geom_text(aes(label = count, group = covid_coverage_dosage), position = position_fill(vjust = 0.5)) +
+  scale_x_discrete(labels = c("married", "bereaved", "divorced", "unmarried"))
+
+cov_ivd |>
+  filter(!is.na(covid_coverage_age)) |>
+  summarise(count = n(), .by = c(parents_marital_status, covid_coverage_age)) |>
+  mutate(proportion = count/sum(count), .by = parents_marital_status) |>
+  
+  ggplot(aes(x = parents_marital_status, y = proportion)) +
+  geom_col(aes(fill = covid_coverage_age), position = "fill") +
+  geom_text(aes(label = count, group = covid_coverage_age), position = position_fill(vjust = 0.5)) +
+  scale_x_discrete(labels = c("married", "bereaved", "divorced", "unmarried"))
+```
+***the uptake of the influenza vaccine***
+```{r}
+inf_ivd |>
+  filter(!is.na(influenza_coverage_dosage)) |>
+  summarise(count = n(), .by = c(parents_marital_status, influenza_coverage_dosage)) |>
+  mutate(proportion = count/sum(count), .by = parents_marital_status) |>
+  
+  ggplot(aes(x = parents_marital_status, y = proportion)) +
+  geom_col(aes(fill = influenza_coverage_dosage), position = "fill") +
+  geom_text(aes(label = count, group = influenza_coverage_dosage), position = position_fill(vjust = 0.5)) +
+  scale_x_discrete(labels = c("married", "bereaved", "divorced", "unmarried"))
+
+inf_ivd |>
+  filter(!is.na(influenza_coverage_age)) |>
+  summarise(count = n(), .by = c(parents_marital_status, influenza_coverage_age)) |>
+  mutate(proportion = count/sum(count), .by = parents_marital_status) |>
+  
+  ggplot(aes(x = parents_marital_status, y = proportion)) +
+  geom_col(aes(fill = influenza_coverage_age), position = "fill") +
+  geom_text(aes(label = count, group = influenza_coverage_age), position = position_fill(vjust = 0.5)) +
+  scale_x_discrete(labels = c("married", "bereaved", "divorced", "unmarried"))
+```
+It seems that children of divorced parents have a much higher likelihood of obtaining full and partial coverage of the covid vaccine as compared to children of married parents but this doesn't follow for influenza.
+Furthermore, children of parents who are unmarried (i.e. the child is adopted) show a much higher uptkae of the influenza vaccine though this could possibly be due to adoption requirements?
 
 ## Finances
-
 ### Annual household income
 
--   Does the family's annual household income affect:
+***Does the household's annual income affect:***
+***the child's uptake of the covid vaccine***
+```{r}
+# by doses
+cov_ivd |>
+  filter(!is.na(covid_coverage_dosage) & !is.na(household_income)) |>
+  mutate(household_income = as.numeric(household_income)) |>
+  summarise(count = n(), .by = c(household_income, covid_coverage_dosage)) |>
+  mutate(proportion = count / sum(count), .by = household_income) -> covid_income_dosage
+
+covid_income_dosage|>
+  arrange(household_income, covid_coverage_dosage) |>
+  select(-proportion) |>
+  pivot_wider(names_from = covid_coverage_dosage, values_from = count)
+  
+# table showing the counts for each point on the plot (number of
+# individuals who have each number of doses
+covid_income_dosage |>
+  ggplot(aes(x = household_income, y = proportion)) +
+  geom_point(aes(colour = covid_coverage_dosage)) +
+  geom_smooth(aes(colour = covid_coverage_dosage), method = "lm")
+
+# by degree of coverage
+cov_ivd |>
+  filter(!is.na(covid_coverage_age) & !is.na(household_income)) |>
+  mutate(household_income = as.numeric(household_income)) |>
+  summarise(count = n(), .by = c(household_income, covid_coverage_age)) |>
+  mutate(proportion = count / sum(count), .by = household_income) -> covid_income_age
+
+# table showing the counts for each point on the plot (number of
+# individuals who fall into each coverage category
+covid_income_age|>
+  arrange(household_income, covid_coverage_age) |>
+  select(-proportion) |>
+  pivot_wider(names_from = covid_coverage_age, values_from = count)
+  
+# scatter plot
+covid_income_age |>
+  ggplot(aes(x = household_income, y = proportion)) +
+  geom_point(aes(colour = covid_coverage_age)) +
+  geom_smooth(aes(colour = covid_coverage_age), method = "lm")
+```
+
+***the child's uptake of the influenza vaccine***
+```{r}
+# by number of doses
+inf_ivd |>
+  filter(!is.na(influenza_coverage_dosage) & !is.na(household_income)) |>
+  summarise(count = n(), .by = c(household_income, influenza_coverage_dosage)) |>
+  mutate(proportion = count / sum(count), .by = household_income) |>
+  mutate(household_income = as.numeric(household_income)) -> influenza_income_dosage
+
+# display a table showing the counts for each point on the plots
+# the number of individuals for each number of doses
+influenza_income_dosage |>
+  arrange(household_income, influenza_coverage_dosage) |>
+  select(-proportion) |>
+  pivot_wider(names_from = influenza_coverage_dosage, values_from = count)
+
+# scatter plot
+influenza_income_dosage |>
+  ggplot(aes(x = household_income, y = proportion)) +
+  geom_point(aes(colour = influenza_coverage_dosage)) +
+  geom_smooth(aes(colour = influenza_coverage_dosage), method = "lm") 
+
+
+
+# by degree of coverage
+inf_ivd |>
+  filter(!is.na(influenza_coverage_age) & !is.na(household_income)) |>
+  summarise(count = n(), .by = c(household_income, influenza_coverage_age)) |>
+  mutate(proportion = count / sum(count), .by = household_income) |>
+  mutate(household_income = as.numeric(household_income))-> influenza_income_age
+
+# display a table showing the counts for each point on the plots
+# the number of individuals for each coverage status
+influenza_income_age |>
+  arrange(household_income, influenza_coverage_age) |>
+  select(-proportion) |>
+  pivot_wider(names_from = influenza_coverage_age, values_from = count)
+
+# scatter plot
+influenza_income_age |>
+  ggplot(aes(x = household_income, y = proportion)) +
+  geom_smooth(aes(colour = influenza_coverage_age), method = "lm") +
+  geom_point(aes(colour = influenza_coverage_age)) 
+```
+Is there a threshold at category 3 (500 to 1000 * 100,000 yen a year) where they start receiving financial aid, and a threshold at category 6 (3000 to 4000 * 100,000 yen a year) where they stop receiving financial aid? this would explain the drop in influenza coverage as families no longer have subsidies to get their children vaccinated
 
 ## Chronic illness
+The following is a breakdown of the number of children by their responding parent's chronic illness status
+```{r}
+cov_ivd |>
+  filter(!is.na(covid_coverage_dosage) & !is.na(parent_chronic_illness)) |>
+  summarise(count = n(), .by = parent_chronic_illness)
+```
 
-### Respondent's chronic illness
+***Examining if the presence of a chronic illness in the responding parent affects***
+***The child's uptake of the covid vaccine***
+```{r}
+cov_ivd |>
+  filter(!is.na(covid_coverage_dosage) & !is.na(parent_chronic_illness)) |>
+  summarise(count = n(), .by = c(covid_coverage_dosage, parent_chronic_illness)) |>
+  mutate(proportion = count/sum(count), .by = parent_chronic_illness) |>
+  
+  ggplot(aes(x = covid_coverage_dosage, y = proportion)) +
+  geom_col(aes(fill = parent_chronic_illness), position = "dodge") +
+  labs(title = "uptake of the covid vaccination (doses) in children by \n their parent's chronic illness status", subtitle = "0 = Never, 1 = No longer, 2 = Yes")
 
--   Does the presence of chronic illness in the responding parent affect:
+cov_ivd |>
+  filter(!is.na(covid_coverage_age) & !is.na(parent_chronic_illness)) |>
+  summarise(count = n(), .by = c(covid_coverage_age, parent_chronic_illness)) |>
+  mutate(proportion = count/sum(count), .by = parent_chronic_illness) |>
+  
+  ggplot(aes(x = covid_coverage_age, y = proportion)) +
+  geom_col(aes(fill = parent_chronic_illness), position = "dodge") +
+  labs(title = "covid vaccination status in children by \n their parent's chronic illnes status", subtitle = "0 = Never, 1 = No longer, 2 = Yes")
+        
+```
+Though I don't get if there's any significance in this data given it's only for your responding parent so there's an equal chance of the othe parent having a chronic illness too?
+
+Children of parent's who have had or currently have a chronic illness exhibit higher coverages with the covid vaccine:
+-   Children who have parent's who used to have a chronic illness exhibit a higher uptake of partial covid vaccination
+-   Children who have parent's who currently have a chronic illness exhibit the highest uptake of full covid vaccination, closely followed by children whose responding parents used to have a chronic illness
+
+***The child's uptake of the influenza vaccine***
+```{r}
+inf_ivd |>
+  filter(!is.na(influenza_coverage_dosage) & !is.na(parent_chronic_illness)) |>
+  summarise(count = n(), .by = c(influenza_coverage_dosage, parent_chronic_illness)) |>
+  mutate(proportion = count/sum(count), .by = parent_chronic_illness) |>
+  
+  ggplot(aes(x = influenza_coverage_dosage, y = proportion)) +
+  geom_col(aes(fill = parent_chronic_illness), position = "dodge") +
+  labs(title = "uptake of the influenza vaccination (doses) in children by \n their parent's chronic illness status", subtitle = "0 = Never, 1 = No longer, 2 = Yes")
+
+inf_ivd |>
+  filter(!is.na(influenza_coverage_age) & !is.na(parent_chronic_illness)) |>
+  summarise(count = n(), .by = c(influenza_coverage_age, parent_chronic_illness)) |>
+  mutate(proportion = count/sum(count), .by = parent_chronic_illness) |>
+  
+  ggplot(aes(x = influenza_coverage_age, y = proportion)) +
+  geom_col(aes(fill = parent_chronic_illness), position = "dodge") +
+  labs(title = "influenza vaccination status in children by \n their parent's chronic illnes status", subtitle = "0 = Never, 1 = No longer, 2 = Yes")
+```
+
+
+**Looking at children with only 1 parent, to ensure we ignore effects of the other parent**
+
+```{r}
+cov_ivd |> 
+
+  filter(child_parents == 1 & !is.na(covid_coverage_age) & !is.na(parent_chronic_illness)) |>
+  summarise(count = n(), .by = parent_chronic_illness)
+
+cov_ivd |>
+  filter(child_parents == 1 & !is.na(parent_chronic_illness))|>
+  ggplot() +
+  geom_histogram(aes(parent_1_age))
+```
+Interestingly, MOST of the single parents currently have a chronic illness and the age of the single parents is distributed relatively evenly
+
+```{r}
+cov_ivd |>
+  filter(!is.na(covid_coverage_dosage) & child_parents == 1 & !is.na(parent_chronic_illness)) |>
+  summarise(count = n(), .by = c(covid_coverage_dosage, parent_chronic_illness)) |>
+  mutate(proportion = count/sum(count), .by = parent_chronic_illness) |>
+  
+  ggplot(aes(x = covid_coverage_dosage, y = proportion)) +
+  geom_col(aes(fill = parent_chronic_illness), position = "dodge") +
+  labs(title = "uptake of the covid vaccination (doses) in children by \n their parent's chronic illness status", subtitle = "0 = Never, 1 = No longer, 2 = Yes")
+
+cov_ivd |>
+  filter(!is.na(covid_coverage_age) & child_parents == 1 & !is.na(parent_chronic_illness)) |>
+  summarise(count = n(), .by = c(covid_coverage_age, parent_chronic_illness)) |>
+  mutate(proportion = count/sum(count), .by = parent_chronic_illness) |>
+  
+  ggplot(aes(x = covid_coverage_age, y = proportion)) +
+  geom_col(aes(fill = parent_chronic_illness), position = "dodge") +
+  labs(title = "covid vaccination status in children by \n their parent's chronic illnes status", subtitle = "0 = Never, 1 = No longer, 2 = Yes")
+        
+```
+For the covid vaccine, having a parent who USED to have a chronic illness was not a strong indicator of full covid coverage (for single-parent children) as opposed to it being a strong indicator of full covid coverage (for dual-parent children)
+
+```{r}
+inf_ivd |>
+  filter(!is.na(influenza_coverage_dosage) & child_parents == 1 & !is.na(parent_chronic_illness)) |>
+  summarise(count = n(), .by = c(influenza_coverage_dosage, parent_chronic_illness)) |>
+  mutate(proportion = count/sum(count), .by = parent_chronic_illness) |>
+  
+  ggplot(aes(x = influenza_coverage_dosage, y = proportion)) +
+  geom_col(aes(fill = parent_chronic_illness), position = "dodge") +
+  labs(title = "uptake of the influenza vaccination (doses) in children by \n their parent's chronic illness status", subtitle = "0 = Never, 1 = No longer, 2 = Yes")
+
+inf_ivd |>
+  filter(!is.na(influenza_coverage_age) & child_parents == 1 & !is.na(parent_chronic_illness)) |>
+  summarise(count = n(), .by = c(influenza_coverage_age, parent_chronic_illness)) |>
+  mutate(proportion = count/sum(count), .by = parent_chronic_illness) |>
+  
+  ggplot(aes(x = influenza_coverage_age, y = proportion)) +
+  geom_col(aes(fill = parent_chronic_illness), position = "dodge") +
+  labs(title = "influenza vaccination status in children by \n their parent's chronic illnes status", subtitle = "0 = Never, 1 = No longer, 2 = Yes")
+        
+```
+As is the same for influenza, children whose parents USED TO have a chronic illness did not exhibit a higher uptake of the influenza vaccine (for children with 1 parent) as opposed to children with 2 parents.
+
+Furthermore, parents not having a chronic illness is now  positively associated with children having full coverage with the influenza vaccine (for children with 1 parent) as opposed to it not being a positive predictor (for children with 2 parents) of the influenza vaccine.
 
 ## Industry of work
-
 ### Respondent parent working in healthcare
+***Does the industry of work of the child's respondent parent affect the child's uptake of***
+***The covid vaccnine***
+```{r}
+cov_ivd |>
+  filter(!is.na(covid_coverage_dosage) & !is.na(parents_healthcare)) |>
+  summarise(count = n(), .by = c(covid_coverage_dosage, parents_healthcare)) |>
+  mutate(proportion = count/sum(count), .by = parents_healthcare) |>
+  
+  ggplot(aes(x = covid_coverage_dosage, y = proportion)) +
+  geom_col(aes(fill = parents_healthcare), position = "dodge") +
+  labs(title = "Uptake of the covid vaccine by doses for children \n whose parents work or don't work in healthcare")
 
--   Does the respondent parent working in the healthcare sector affect:
+cov_ivd |>
+  filter(!is.na(covid_coverage_age) & !is.na(parents_healthcare)) |>
+  summarise(count = n(), .by = c(covid_coverage_age, parents_healthcare)) |>
+  mutate(proportion = count/sum(count), .by = parents_healthcare) |>
+  
+  ggplot(aes(x = covid_coverage_age, y = proportion)) +
+  geom_col(aes(fill = parents_healthcare), position = "dodge") +
+  labs(title = "Uptake of the covid vaccine by coverage for children \n whose parents work or don't work in healthcare")
+```
+***The influenza vaccine***
+```{r}
+inf_ivd |>
+  filter(!is.na(influenza_coverage_dosage) & !is.na(parents_healthcare)) |>
+  summarise(count = n(), .by = c(influenza_coverage_dosage, parents_healthcare)) |>
+  mutate(proportion = count/sum(count), .by = parents_healthcare) |>
+  
+  ggplot(aes(x = influenza_coverage_dosage, y = proportion)) +
+  geom_col(aes(fill = parents_healthcare), position = "dodge") +
+  labs(title = "Uptake of the influenza vaccine by doses for children \n whose parents work or don't work in healthcare")
+
+inf_ivd |>
+  filter(!is.na(influenza_coverage_age) & !is.na(parents_healthcare)) |>
+  summarise(count = n(), .by = c(influenza_coverage_age, parents_healthcare)) |>
+  mutate(proportion = count/sum(count), .by = parents_healthcare) |>
+  
+  ggplot(aes(x = influenza_coverage_age, y = proportion)) +
+  geom_col(aes(fill = parents_healthcare), position = "dodge") +
+  labs(title = "Uptake of the influenza vaccination by coverage for children \n whose parents work or don't work in healthcare")
+```
+
+Whilst a child's **responding parent** working in healthcare is strongly correlated with an increase in the uptake of both the covid and influenza vaccines in the child, this is especially pronounced with regards to the influenza vaccine
+
+
 
 ## Parent's highest educational attianment
 
 ### Parent's highest education by qualification
+The following is a breakdown of the highest education of mothers, fathers and those 2 combined of the children of interest
+```{r}
+cov_ivd |>
+  filter(!is.na(mother_highest_education)) |>
+  summarise(count = n(), .by = mother_highest_education) |>
+  arrange(mother_highest_education)
 
--   Does the highest educational qualification of a child's parents affect:
+cov_ivd |>
+  filter(!is.na(father_highest_education)) |>
+  summarise(count = n(), .by = father_highest_education) |>
+  arrange(father_highest_education)
+
+cov_ivd |>
+  filter(!is.na(parents_highest_education)) |>
+  summarise(count = n(), .by = parents_highest_education) |>
+  arrange(parents_highest_education)
+```
+
+***Does the highest educational qualification of a child's parents affect:***
+***The child's uptake of the covid vaccine***
+```{r}
+# by the number of doses of the covid vaccine
+cov_ivd |>
+  filter(!is.na(parents_highest_education) & !is.na(covid_coverage_dosage)) |>
+  summarise(count = n(), .by = c(parents_highest_education, covid_coverage_dosage)) |>
+  mutate(proportion = count/sum(count), .by = parents_highest_education) |>
+  mutate(parents_highest_education = factor(parents_highest_education)) |>
+  
+  ggplot() +
+  geom_col(aes(x = covid_coverage_dosage, y = proportion, fill = parents_highest_education), position = "dodge") +
+  geom_text(aes(x = covid_coverage_dosage, y = proportion, group = parents_highest_education, label = count), position = position_dodge(width = 0.9), size = 3, vjust = -0.5) +
+  labs(
+    title = "How the uptake of different doses of the covid vaccine differs \n as the highest educational qualification of the parent(s) changes", 
+    ) +
+  
+  #add legend
+  scale_fill_discrete(
+    labels = c("0" = "Junior High", "1" = "Highsch", "2" = "Tertiary", "3" = "Postgrad")
+  )
+
+# by the degree of coverage of the covid vaccine
+cov_ivd |>
+  filter(!is.na(parents_highest_education) & !is.na(covid_coverage_age)) |>
+  summarise(count = n(), .by = c(parents_highest_education, covid_coverage_age)) |>
+  mutate(proportion = count/sum(count), .by = parents_highest_education) |>
+  mutate(parents_highest_education = factor(parents_highest_education)) |>
+  
+  ggplot() +
+  geom_col(aes(x = covid_coverage_age, y = proportion, fill = parents_highest_education), position = "dodge") +
+  geom_text(aes(x = covid_coverage_age, y = proportion, group = parents_highest_education, label = count), position = position_dodge(width = 0.9), size = 3, vjust = -0.5) +
+  labs(
+    title = "How the degree of coverage with the covid vaccine differs \n as the highest educational qualification of the parent(s) changes", 
+    ) +
+  
+  #add legend
+  scale_fill_discrete(
+    labels = c("0" = "Junior High", "1" = "Highsch", "2" = "Tertiary", "3" = "Postgrad")
+  )
+```
+***The influenza vaccine***
+```{r}
+# by the number of doses of the influenza vaccine
+inf_ivd |>
+  filter(!is.na(parents_highest_education) & !is.na(influenza_coverage_dosage)) |>
+  summarise(count = n(), .by = c(parents_highest_education, influenza_coverage_dosage)) |>
+  mutate(proportion = count/sum(count), .by = parents_highest_education) |>
+  mutate(parents_highest_education = factor(parents_highest_education)) |>
+  
+  ggplot() +
+  geom_col(aes(x = influenza_coverage_dosage, y = proportion, fill = parents_highest_education), position = "dodge") +
+  geom_text(aes(x = influenza_coverage_dosage, y = proportion, group = parents_highest_education, label = count), position = position_dodge(width = 0.9), size = 3, vjust = -0.5) +
+  labs(
+    title = "How the uptake of different doses of the influenza vaccine differs \n as the highest educational qualification of the parent(s) changes", 
+    ) +
+  
+  #add legend
+  scale_fill_discrete(
+    labels = c("0" = "Junior High", "1" = "Highsch", "2" = "Tertiary", "3" = "Postgrad")
+  )
+
+# by the degree of coverage of the covid vaccine
+inf_ivd |>
+  filter(!is.na(parents_highest_education) & !is.na(influenza_coverage_age)) |>
+  summarise(count = n(), .by = c(parents_highest_education, influenza_coverage_age)) |>
+  mutate(proportion = count/sum(count), .by = parents_highest_education) |>
+  mutate(parents_highest_education = factor(parents_highest_education)) |>
+  
+  ggplot() +
+  geom_col(aes(x = influenza_coverage_age, y = proportion, fill = parents_highest_education), position = "dodge") +
+  geom_text(aes(x = influenza_coverage_age, y = proportion, group = parents_highest_education, label = count), position = position_dodge(width = 0.9), size = 3, vjust = -0.5) +
+  labs(
+    title = "How the degree of coverage with the influenza vaccine differs \n as the highest educational qualification of the parent(s) changes", 
+    ) +
+  
+  #add legend
+  scale_fill_discrete(
+    labels = c("0" = "Junior High", "1" = "Highsch", "2" = "Tertiary", "3" = "Postgrad")
+  )
+```
+The highest educational attainment of both parents being Tertiary or Postgraduate education are associated with a higher uptake of the influenza vaccines whilst th highest educational attainment being Tertiary doesn't seem to be predictive of a higher uptake of the covid vaccination 
+
+The highest educational attinemtn of both parents being a postgraduate education seems to impact the uptake of the covid vaccine to a greater degree than that of the influenza vaccine
+
+
+***Does the highest educational attainment of the COI's fatherand mother affect***
+***The child's uptake of the covid vaccine***
+```{r}
+# by the number of doses
+cov_ivd |>
+    filter(!is.na(parents_highest_education) & !is.na(covid_coverage_dosage)) |>
+
+    pivot_longer(
+        cols = c(father_highest_education, mother_highest_education),
+        names_to= "parent", values_to = "education"
+    ) |>
+    summarise(count = n(), .by = c(education, covid_coverage_dosage, parent)) |>
+
+    mutate(proportion = count/sum(count), .by = c(education, parent)) |>
+    mutate(education = factor(education)) |>
+    filter(!is.na(education)) |>
+    ggplot() +
+    geom_col(aes(x = covid_coverage_dosage, y = proportion, fill = education), position = "dodge") +
+    geom_text(aes(x = covid_coverage_dosage, y = proportion, group = education, label = count), position = position_dodge(width = 0.9), size = 3, vjust = -0.5) +
+    facet_wrap(vars(parent)) +
+  
+   labs(
+    title = "How the doses of the covid vaccine received differs \n with the mother/father's highest educational qualification", 
+    ) +
+  
+  # add legend
+  scale_fill_discrete(
+    labels = c("0" = "Junior High", "1" = "Highsch", "2" = "Tertiary", "3" = "Postgrad")
+  )
+
+
+# by the degree of coverage
+cov_ivd |>
+    filter(!is.na(parents_highest_education) & !is.na(covid_coverage_age)) |>
+
+    pivot_longer(
+        cols = c(father_highest_education, mother_highest_education),
+        names_to= "parent", values_to = "education"
+    ) |>
+    summarise(count = n(), .by = c(education, covid_coverage_age, parent)) |>
+
+    mutate(proportion = count/sum(count), .by = c(education, parent)) |>
+    mutate(education = factor(education)) |>
+    filter(!is.na(education)) |>
+    ggplot() +
+    geom_col(aes(x = covid_coverage_age, y = proportion, fill = education), position = "dodge") +
+    geom_text(aes(x = covid_coverage_age, y = proportion, group = education, label = count), position = position_dodge(width = 0.9), size = 3, vjust = -0.5) +
+    facet_wrap(vars(parent)) +
+  
+  labs(
+    title = "How the degree of coverage from the covid vaccine differs \n with the mother/father's highest educational qualification", 
+    ) +
+  
+  # add legend
+  scale_fill_discrete(
+    labels = c("0" = "Junior High", "1" = "Highsch", "2" = "Tertiary", "3" = "Postgrad")
+  )
+```
+
+***The influenza vaccine***
+```{r}
+# by the number of doses
+inf_ivd |>
+    filter(!is.na(parents_highest_education) & !is.na(influenza_coverage_dosage)) |>
+
+    pivot_longer(
+        cols = c(father_highest_education, mother_highest_education),
+        names_to= "parent", values_to = "education"
+    ) |>
+    summarise(count = n(), .by = c(education, influenza_coverage_dosage, parent)) |>
+
+    mutate(proportion = count/sum(count), .by = c(education, parent)) |>
+    mutate(education = factor(education)) |>
+    filter(!is.na(education)) |>
+    ggplot() +
+    geom_col(aes(x = influenza_coverage_dosage, y = proportion, fill = education), position = "dodge") +
+    geom_text(aes(x = influenza_coverage_dosage, y = proportion, group = education, label = count), position = position_dodge(width = 0.9), size = 3, vjust = -0.5) +
+    facet_wrap(vars(parent)) +
+  
+   labs(
+    title = "How the doses of the influenza vaccine received differs \n with the mother/father's highest educational qualification", 
+    ) +
+  
+  # add legend
+  scale_fill_discrete(
+    labels = c("0" = "Junior High", "1" = "Highsch", "2" = "Tertiary", "3" = "Postgrad")
+  )
+
+
+# by the degree of coverage
+inf_ivd |>
+    filter(!is.na(parents_highest_education) & !is.na(influenza_coverage_age)) |>
+
+    pivot_longer(
+        cols = c(father_highest_education, mother_highest_education),
+        names_to= "parent", values_to = "education"
+    ) |>
+    summarise(count = n(), .by = c(education, influenza_coverage_age, parent)) |>
+
+    mutate(proportion = count/sum(count), .by = c(education, parent)) |>
+    mutate(education = factor(education)) |>
+    filter(!is.na(education)) |>
+    ggplot() +
+    geom_col(aes(x = influenza_coverage_age, y = proportion, fill = education), position = "dodge") +
+    geom_text(aes(x = influenza_coverage_age, y = proportion, group = education, label = count), position = position_dodge(width = 0.9), size = 3, vjust = -0.5) +
+    facet_wrap(vars(parent)) +
+  
+  labs(
+    title = "How the degree of coverage from the influenza vaccine differs \n with the mother/father's highest educational qualification", 
+    ) +
+  
+  # add legend
+  scale_fill_discrete(
+    labels = c("0" = "Junior High", "1" = "Highsch", "2" = "Tertiary", "3" = "Postgrad")
+  )
+```
+Comparing parents, a higher educational attainment of the mother seems to be more influential on the increase in the uptake of vaccines as opposed to the highest educational attainment of the father. 
+e.g.the increase in full covid and influenza coverage for COI of mother's who have a postgraduate education are higher than that of fathers 
+
+Furthermore, having fathers of a lower educational attainment (junior high and highschool education) is associated with a lower uptake of the influenza vaccine as opposed to having mothers of the same educational attainment
+(12.5 % with fulll coverage with fathers of high or junior high as opposed to 22.5% for full coverage with mothers of the same coverage) 
+
+A Tertiary education for mothers of the child of interest is associated with an increase in the uptake of the influenza vaccine but not for the covid vaccine. A postrgarduate education is associated with a significantly higher uptake of the influenza vaccine than a tertiary education
+
+Education levels seem to have a larger impact on Influenza vaccination uptake than covid vaccination uptake
 
 ## Child's parent's vaccination
 
 ### Parent's influenza vaccination
 
--   Does the influenza vaccination status of a child's parents in the past year affect:
+***Does the influenza vaccination status of a child's parents in the past year affect:***
+**The child's influenza vaccination status**
+```{r}
+inf_ivd |>
+  filter(!is.na(parent_influenza) & !is.na(influenza_coverage_dosage)) |>
+  pivot_longer(
+    cols = c(influenza_coverage_dosage, influenza_coverage_age),
+    values_to = "degree",
+    names_to = "type_of_coverage"
+  ) |>
+  summarise(count = n(), .by = c(degree, type_of_coverage, parent_influenza)) |>
+  mutate(proportion = count/sum(count), .by = c(type_of_coverage, parent_influenza)) |>
+  
+  ggplot(aes(x = degree, y = proportion)) +
+  facet_wrap(vars(type_of_coverage)) +
+  geom_col(aes(fill = parent_influenza), position = "dodge") +
+  geom_text(aes(group = parent_influenza, label = count), position = position_dodge(width = 0.9), vjust = -0.3) +
+  scale_fill_discrete(
+    labels = c("0" = "No",
+               "1" = "Received")
+  ) +
+  labs(title = "influenza coverage by degree of coverage and doses received \n with if their parents got the infuenza vacccine within 12 months")
+```
+***The covid vaccine***
+```{r}
+cov_ivd |>
+  filter(!is.na(parent_influenza) & !is.na(covid_coverage_dosage)) |>
+  pivot_longer(
+    cols = c(covid_coverage_dosage, covid_coverage_age),
+    values_to = "degree",
+    names_to = "type_of_coverage"
+  ) |>
+  summarise(count = n(), .by = c(degree, type_of_coverage, parent_influenza)) |>
+  mutate(proportion = count/sum(count), .by = c(type_of_coverage, parent_influenza)) |>
+  
+  ggplot(aes(x = degree, y = proportion)) +
+  facet_wrap(vars(type_of_coverage)) +
+  geom_col(aes(fill = parent_influenza), position = "dodge") +
+  geom_text(aes(group = parent_influenza, label = count), position = position_dodge(width = 0.9), vjust = -0.3) +
+  scale_fill_discrete(
+    labels = c("0" = "No",
+               "1" = "Received")
+  ) +
+  labs(title = "covid coverage by degree of coverage and doses received \n with if their parents got the infuenza vacccine within 12 months")
+```
+A child's parents of interest receiving the influenza vaccine in the past 12 months is positively associated with the child's uptake of the covid and influenza vaccine. Though the effect is much more pronounced with regards to the child receiving the influenza vaccine
 
 ### Parent's covid vaccination (dosage)
+***Does the covid vaccination status of a child's parents affect***
+***The child's uptake of the covid vaccination***
+```{r}
+cov_ivd |>
+  filter(!is.na(parent_covid_coverage) & !is.na(covid_coverage_dosage)) |>
+  pivot_longer(
+    cols = c(covid_coverage_dosage, covid_coverage_age),
+    values_to = "degree",
+    names_to = "type_of_coverage"
+  ) |>
+  summarise(count = n(), .by = c(degree, type_of_coverage, parent_covid_coverage)) |>
+  mutate(proportion = count/sum(count), .by = c(type_of_coverage, parent_covid_coverage)) |>
+  
+  ggplot(aes(x = degree, y = proportion)) +
+  facet_wrap(vars(type_of_coverage)) +
+  geom_col(aes(fill = parent_covid_coverage), position = "dodge") +
+  geom_text(aes(group = parent_covid_coverage, label = count), position = position_dodge(width = 0.9), vjust = -0.3, size = 2) +
+  scale_fill_discrete(
+    labels = c("0" = "ineligible",
+               "1" = "partial",
+               "2" =  "full",
+               "3" = "unsure",
+               "4" = "feel no need",
+               "5" = "against it")
+  ) +
+  theme(legend.key.size = unit(1, "cm"),
+        legend.title = element_text(size = 7.5)
+  )
+```
+The parents having full vacination with the covid vaccination was positively assocaited with the COI receiving full coverage with the covid vaccine but the same cannot be said for parents who are partially vaccinated with the covid vaccine as it doesn't seem to be associated with partial vaccination of their COI
 
--   Does the covid vaccination status of a child's parents affect:
+***The child's uptake of the influenza vaccine***
+```{r}
+inf_ivd |>
+  filter(!is.na(parent_covid_coverage) & !is.na(influenza_coverage_dosage)) |>
+  pivot_longer(
+    cols = c(influenza_coverage_dosage, influenza_coverage_age),
+    values_to = "degree",
+    names_to = "type_of_coverage"
+  ) |>
+  summarise(count = n(), .by = c(degree, type_of_coverage, parent_covid_coverage)) |>
+  mutate(proportion = count/sum(count), .by = c(type_of_coverage, parent_covid_coverage)) |>
+  
+  ggplot(aes(x = degree, y = proportion)) +
+  facet_wrap(vars(type_of_coverage)) +
+  geom_col(aes(fill = parent_covid_coverage), position = "dodge") +
+  geom_text(aes(group = parent_covid_coverage, label = count), position = position_dodge(width = 0.9), vjust = -0.3, size = 2) +
+  scale_fill_discrete(
+    labels = c("0" = "ineligible",
+               "1" = "partial",
+               "2" =  "full",
+               "3" = "unsure",
+               "4" = "feel no need",
+               "5" = "against it")
+  ) +
+  theme(legend.key.size = unit(1, "cm"),
+        legend.title = element_text(size = 7.5)
+  )
+```
+As opposed to the covid vaccine, tue repsonding parent's partial and full vaccination of the COI's responding parent are both associated with the uptake of the covid vaccine in the COI
+
 
 ### Recency of parent's covid vaccination
 
 -   Does the recency of a child's parent's covid vaccination affect:
 
+
 ### Child's parent's yearly vaccination intention
 
 -   Does the child's parent's intention to get the covid vaccine every year affect:
 
+### Father or Mother's Employment Status
+***Does the parent's child's employment status affect the COI's upake of***
+***The influenza vaccine***
+
+### Father or mother being a stay home parent

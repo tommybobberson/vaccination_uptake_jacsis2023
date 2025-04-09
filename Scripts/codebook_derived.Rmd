@@ -66,7 +66,7 @@ library(tidyverse)
     -   2 = full (2 doses for those >= 3y/o and < 13 y/o and >= 1 dose for those 6 months to 3 y/o or those >= 1 dose for those >= 13y/o to < 18 y/o)
 
 *note that individuals below 6 months should not be counted to avoid skewing the number of individuals who have received 0 doses*
-**all derivationis of coverage were inferred from Vaccination Schedule Recommended by the Japan Pediatric Society as of October 27, 2024
+**all derivationis of coverage were inferred from Vaccination Schedule Recommended by the Japan Pediatric Society as of October 27, 2024 and MHLW Q&A on Influenza
 
 
 ## Covid vaccination coverage
@@ -177,6 +177,12 @@ library(tidyverse)
 -   Respondent's sexual orientation, `sexual_orientation`
     -   1 = Heterosexual = different sex
     -   2 = Homosexual = same sex
+    -   3 = Bisexuals
+    -   4 = Other
+    -   5 = Haven't decid\ed
+    -   6 = Don't know
+    
+    
 
 ### Variables derived
 
@@ -184,11 +190,11 @@ library(tidyverse)
     -   0 = married
     -   1 = bereaved
     -   2 = divorced
-    -   4 = unmarried
+    -   3 = unmarried
 
 -   Couple's sexual orientation/make-up, `parents_sexual_make_up`
-    -   1 = different sex couple
-    -   2 = same sex couple
+    -   0 = different sex couple
+    -   1 = same sex couple
 
 ## Sex and age of responding parent
 
@@ -306,9 +312,9 @@ categories:
 -   Presence of chronic illness in the parent, `parent_chronic_illness`
     
 categories:
-    -   1 = Never
-    -   2 = No longer
-    -   3 = Yes
+    -   0 = Never
+    -   1 = No longer
+    -   2 = Yes
 
 *To qualify as never having had a chronic illness, respondents must answer 1 for all questions*
 

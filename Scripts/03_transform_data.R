@@ -449,10 +449,10 @@ independent_variable_data <- readRDS(
 independent_variable_data <- independent_variable_data |> 
   mutate(
     parents_marital_status = case_when(
-    marital_status %in% 1:3 ~ 1, # married
-    marital_status %in% 5:7 ~ 2, # bereaved
-    marital_status %in% 8:10 ~ 3, # divorced
-    marital_status == 4 ~ 4 # unmarried
+    marital_status %in% 1:3 ~ 0, # married
+    marital_status %in% 5:7 ~ 1, # bereaved
+    marital_status %in% 8:10 ~ 2, # divorced
+    marital_status == 4 ~ 3 # unmarried
     ) |>
       
       # factorise variables
@@ -508,7 +508,17 @@ independent_variable_data <-independent_variable_data |>
 # parent_1_age
 # age of responding parent/individual
 independent_variable_data <- independent_variable_data |>
-  mutate(parent_1_age = respondent_age)
+  mutate(
+    
+    # parent_1_age only valid if child of interest is present
+    parent_1_age = ifelse(
+      child_of_interest == 1,
+      respondent_age,
+      NA
+    )
+  )
+         
+         
 
 
 # household_income
@@ -535,12 +545,16 @@ independent_variable_data <- independent_variable_data |>
     parent_chronic_illness = case_when(
       
       # filter out individuals who currently have a chronic illness
-      if_any(respondent_hypertension:respondent_psychiatric_other, .fns = ~. %in% 3:5) == 1 ~ 3, # current chronic illness
+      if_any(respondent_hypertension:respondent_psychiatric_other, .fns = ~. %in% 3:5) == 1 ~ 2, # current chronic illness
       
       # filter out individuals who currently do not have chronic illnesses
-      if_any(respondent_hypertension:respondent_psychiatric_other, .fns = ~. %in% 1:2) ~ case_when(
-        if_all(respondent_hypertension:respondent_psychiatric_other, .fns = ~. == 1) ~ 1, # never had a chronic illness
-        if_all(respondent_hypertension:respondent_psychiatric_other, .fns = ~. == 2) ~ 2 # have had a chronic illness in the past
+      if_all(respondent_hypertension:respondent_psychiatric_other, .fns = ~. %in% 1:2) ~ case_when(
+        
+        # never had a chronic illness
+        if_all(respondent_hypertension:respondent_psychiatric_other, .fns = ~. == 1) ~ 0, 
+        
+        # have had ANY chronic illness in the past
+        if_any(respondent_hypertension:respondent_psychiatric_other, .fns = ~. == 2) ~ 1 
       )
     ) |>
       
@@ -569,8 +583,8 @@ independent_variable_data <- independent_variable_data |>
         respondent_employment_status %in% c(7:10, 12) ~ 3 # part-time & temp
       ),
       
-      # When the respondent is the mother
-      parent_1_sex == 1 ~ case_when(
+      # When the partner is the father
+      parent_2_sex == 0 ~ case_when(
         
         # partner's employment status is father's employment status
         partner_employment_status %in% c(13:16) ~ 0, # unemployed
@@ -605,8 +619,8 @@ independent_variable_data <- independent_variable_data |>
         respondent_employment_status %in% c(7:10, 12) ~ 3 # part-time & temp
       ),
       
-      # When respondent is the father
-      parent_1_sex ==  0 ~ case_when(
+      # When the partner is the mother
+      parent_2_sex ==  1 ~ case_when(
         
         # partner's employment status is mother's employment status
         partner_employment_status %in% c(13:16) ~ 0, # unemployed
@@ -726,7 +740,9 @@ independent_variable_data <- independent_variable_data |>
 # a variable that describes the highest educational attainment of a COI's father
 independent_variable_data <- independent_variable_data |>
   mutate(
-    father_highest_education = case_when(
+    father_highest_education = ifelse(
+      child_of_interest == 1,
+      case_when(
       
       # filter out same-sex couples
       parents_sexual_make_up == 2 ~ NA,  
@@ -748,8 +764,9 @@ independent_variable_data <- independent_variable_data |>
         highest_education_partner == 9 ~ 3, # post-graduate qualification
         highest_education_partner %in% 10:11 ~ NA # no response 
       )
-    ) |>
-      factor()
+    ),
+    NA
+    )
   )
 
 
@@ -757,7 +774,9 @@ independent_variable_data <- independent_variable_data |>
 # a variable that describes the highest educational attainment of a COI's mother
 independent_variable_data <- independent_variable_data |>
   mutate(
-    mother_highest_education = case_when(
+    mother_highest_education = ifelse(
+      child_of_interest == 1,
+      case_when(
       
       # filter out same-sex couples
       parents_sexual_make_up == 2 ~ NA,
@@ -779,8 +798,9 @@ independent_variable_data <- independent_variable_data |>
         highest_education_partner == 9 ~ 3, # post-graduate qualification
         highest_education_partner %in% 10:11 ~ NA # no response 
       )
-    ) |>
-      factor()
+    ),
+    NA
+    )
   )
 
 
@@ -790,7 +810,7 @@ independent_variable_data <- independent_variable_data |>
 # extract a dataframe that contains the educational statuses
 # of the responding parent and their partner (if applicable)
 edu <- independent_variable_data |>
-  select(c("highest_education", "highest_education_partner"))
+  select(c("mother_highest_education", "father_highest_education"))
 
 # compare educational attainments and extract the highest one
 independent_variable_data$edu <- 
@@ -799,19 +819,14 @@ independent_variable_data$edu <-
 # assign the highest educational attainment achieved by both parents combined
 independent_variable_data <- independent_variable_data |>
   mutate(
-    parents_highest_education = case_when(
-      edu == 1 ~ 0, # junior high qualification
-      edu %in% 2:3 ~ 1, # high school qualification
-      edu %in% 4:8 ~ 2, # tertiary qualification
-      edu == 9 ~ 3, # post-graduate qualification
-      edu %in% 10:11 ~ NA # no response
-    ) |>
+    parents_highest_education = ifelse(
+      child_of_interest == 1 & edu != -Inf,
+      edu,
+      NA
+    ),
       
-      # factorise educational classes
-      factor(),
-      
-    # drop edu
-    .keep = "unused"
+    # drop edu - but how not to drop child_of_interest either???
+    #.keep = "unused"
   )
 
 
