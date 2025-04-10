@@ -1,6 +1,9 @@
 ---
 title: "04_Exploratory_Data_Analysis"
-format: html
+format: 
+  html:
+      self-contained: true
+      
 execute:
   eval: true
   echo: true
