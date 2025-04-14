@@ -1,0 +1,644 @@
+---
+title: "04_exploratory_test"
+format: 
+  html:
+      self-contained: true
+      
+execute:
+  eval: true
+  echo: true
+  warning: false
+---
+
+## Load Packages
+These are the packages that have been used throughout the following document: `here`, `tidyverse`, `lubridate`, `knitr`
+```{r}
+#| echo: false
+#| warning: false
+library(here)
+library(tidyverse)
+library(lubridate)
+library(knitr)
+library(reshape2)
+library(kableExtra)
+```
+
+## Reading data and combining
+```{r}
+# transformed independent variable data
+ivd <-
+  readRDS(
+    here(
+      "Data",
+      "JACSIS2023", 
+      "processed", 
+      "transformed_independent_variable_data.RDS"
+      )
+    )
+
+# transformed covid data
+cov <-
+  readRDS(
+    here(
+      "Data",
+      "JACSIS2023", 
+      "processed", 
+      "transformed_covid_data.RDS"
+    )
+  )
+
+# transformed influenza data
+inf <-
+  readRDS(
+    here(
+      "Data",
+      "JACSIS2023", 
+      "processed", 
+      "transformed_influenza_data.RDS"
+    )
+  )
+
+
+# Factorising the data
+
+cov <- cov |>
+  mutate(covid_coverage_dosage = factor(covid_coverage_dosage, levels = c(0, 1, 2, 3)))
+
+inf <- inf |>
+  mutate(influenza_coverage_dosage = factor(influenza_coverage_dosage, levels = c(0, 1, 2)))
+
+
+# Creating data frames for bivariate and multivariate analysis
+# influenza and independent variable data
+inf_ivd <- bind_cols(inf, ivd)
+
+# covid and independent variable data
+cov_ivd <- bind_cols(cov, ivd)
+```
+
+## parent's age
+Examining how the upatke of the influenza and covid vaccines by the COI varies with the responding parent's age
+
+```{r}
+cov_ivd |>
+  filter(!is.na(covid_coverage_age)) |>
+  summarise(count = n(), .by = c(parent_1_age, covid_coverage_age)) |>
+  mutate(proportion = count/sum(count), .by = parent_1_age) |>
+  
+  ggplot(aes(x = parent_1_age, y = proportion)) +
+  geom_point(aes(colour = covid_coverage_age)) +
+  xlim(NA, 60) +
+  geom_smooth(aes(colour = covid_coverage_age), method = "loess")
+
+inf_ivd |>
+  filter(!is.na(influenza_coverage_age)) |>
+  summarise(count = n(), .by = c(parent_1_age, influenza_coverage_age)) |>
+  mutate(proportion = count/sum(count), .by = parent_1_age) |>
+  
+  ggplot(aes(x = parent_1_age, y = proportion)) +
+  geom_point(aes(colour = influenza_coverage_age)) +
+  xlim(NA, 60) +
+  geom_smooth(aes(colour = influenza_coverage_age), method = "loess")
+```
+
+## chronic illnesses
+Looking at chronic illness status by the age of the parent
+```{r}
+# chronic illness status as a proportion for parents of each age
+cov_ivd |>
+  filter(!is.na(parent_chronic_illness) & child_of_interest == 1) |>
+  
+  # group variables for <18y/o and > 60y/o
+  mutate(parent_1_age = case_when(
+    parent_1_age <= 18 ~ 18,
+    parent_1_age > 18 & parent_1_age < 60 ~ parent_1_age,
+    parent_1_age >= 60 ~ 60
+  )) |>
+  summarise(count = n(), .by = c(parent_chronic_illness, parent_1_age)) |>
+  mutate(proportion = count/sum(count), .by = (parent_1_age)) |>
+  
+
+  
+  ggplot() +
+  geom_point(aes(x = parent_1_age, y = proportion, colour = parent_chronic_illness))
+  #facet_wrap(vars(parent_chronic_illness))
+
+cov_ivd |>
+filter(!is.na(covid_coverage_age) & child_of_interest == 1) |>
+  mutate(count = n(), .by = c(parent_1_age, parent_chronic_illness)) |>
+  ggplot() +
+  geom_histogram(aes(x = parent_1_age, fill = covid_coverage_age), position = "fill", binwidth = 3) +
+  facet_wrap(vars(parent_chronic_illness))
+
+inf_ivd |>
+filter(!is.na(influenza_coverage_age) & child_of_interest == 1) |>
+  mutate(count = n(), .by = c(parent_1_age, parent_chronic_illness)) |>
+  ggplot() +
+  geom_histogram(aes(x = parent_1_age, fill = influenza_coverage_age), position = "fill", binwidth = 3) +
+  facet_wrap(vars(parent_chronic_illness))
+```
+How chronic illness status varies in the responding parent based on the number of paretns in the same household
+```{r}
+cov_ivd |>
+  filter(child_of_interest == 1) |>
+  summarise(count = n(), .by = c(child_parents, parent_chronic_illness)) |>
+  mutate(child_parents = factor(child_parents)) |>
+  mutate(proportion = count/sum(count), .by = child_parents) |>
+  ggplot(aes(x = parent_chronic_illness, y = proportion)) +
+  geom_col(aes(fill = child_parents), position = "dodge")
+```
+
+Looknig at how vaccine uptake varies with every single chronic illnesss
+```{r}
+# dosage
+cov_ivd |>
+  filter(!is.na(covid_coverage_dosage)) |>
+  select(c(starts_with("respondent_"), covid_coverage_dosage)) |>
+  select(- c(respondent_employment_status, respondent_industry_of_work, respondent_sex, respondent_age)) |>
+#  select(
+#    all_of(c("covid_coverage_dosage", chronic_illnesses))
+#  ) |>
+  pivot_longer(
+    cols = -covid_coverage_dosage, 
+    names_to = "illness", 
+    values_to = "status",
+    values_ptypes = list(status = integer())
+  ) |>
+  mutate(
+    illness_experience = case_when(
+      status == 1 ~ "Never", # never had a chronic illness
+      status == 2 ~ "Previously" ,# previous illness
+      status %in% 3:5 ~ "Currently"# current chronic illness
+    ) |>
+    factor(
+      levels = c("Never", "Previously", "Currently")
+    )
+  ) |>
+  # number of children of each dosage for each status of their parent's chronic illness for each illness
+  summarise(
+    count = n(), .by = c(illness, illness_experience, covid_coverage_dosage)
+  ) |>
+  
+  # calculate proportions of each disease and each dosage by status
+  mutate(
+    proportions = count/sum(count),
+    .by = c(illness, illness_experience)
+  ) |>
+  
+  ggplot(aes(x = covid_coverage_dosage, y = proportions)) +
+  geom_col(aes(fill = illness_experience), position = "dodge") +
+  facet_wrap(vars(illness))
+```
+```{r}
+# coverage
+cov_ivd |>
+  filter(!is.na(covid_coverage_age)) |>
+  select(c(starts_with("respondent_"), covid_coverage_age)) |>
+  select(- c(respondent_employment_status, respondent_industry_of_work, respondent_sex, respondent_age)) |>
+#  select(
+#    all_of(c("covid_coverage_dosage", chronic_illnesses))
+#  ) |>
+  pivot_longer(
+    cols = -covid_coverage_age, 
+    names_to = "illness", 
+    values_to = "status",
+    values_ptypes = list(status = integer())
+  ) |>
+  mutate(
+    illness_experience = case_when(
+      status == 1 ~ "Never", # never had a chronic illness
+      status == 2 ~ "Previously" ,# previous illness
+      status %in% 3:5 ~ "Currently"# current chronic illness
+    ) |>
+    factor(
+      levels = c("Never", "Previously", "Currently")
+    )
+  ) |>
+  # number of children of each dosage for each status of their parent's chronic illness for each illness
+  summarise(
+    count = n(), .by = c(illness, illness_experience, covid_coverage_age)
+  ) |>
+  
+  # calculate proportions of each disease and each dosage by status
+  mutate(
+    proportions = count/sum(count),
+    .by = c(illness, illness_experience)
+  ) |>
+  
+  ggplot(aes(x = covid_coverage_age, y = proportions)) +
+  geom_col(aes(fill = illness_experience), position = "dodge") +
+  facet_wrap(vars(illness))
+```
+
+_**Categories for the Covid vaccine**_
+1. Expereince with a chronic illnes detracts from the likelihood of being vaccinated. The more recent the experience with the chronic illness, the less likely that the COI is going to get vaccinated with the influena vaccine, Never > Prev > Current
+  
+    
+2. No experience with X chronic illness results in higher vaccine uptake than any sort of experience with the chronic illness irregardless of previous or current
+    -   allergic rhinitis
+    -   Cancer
+
+3. Experience with a chronic illness results in a higher vaccine uptake but previous illness is a stronger predictor than current illness 
+    -   Depression
+    -   Cataract
+    -   Hypertension
+  
+4. Current experience results in lower uptake as compareed to never having experienced a chronic illness or previous experience
+    -   Asthmaa
+    
+5. Prev Experience is a predictor of increased uptake (relative to no experience) whilst current experience is a negative predictor of increased uptake
+    -   Angina
+    -   Atopic Derma
+    -   COPD
+    -   Abnormalities
+    -   Kidney Disease
+    -   Pneumonia
+    -   Psychiatric other
+    -   Stroke
+    
+    
+6. Any experience with a chronic illness results in a higher vaccine uptake with no difference between the prev and current
+    -   Hepatitis cirrhosis
+    -   Periodontitis
+    
+7. Experience with chronic illness results in a higher vaccine uptake with the more current experience resulting in a higher uptake
+    -   Chronic Pain
+    -   Caries
+    -   Diabetes
+    -   Dyslipdemia
+    
+Looking at how uptake of the influenza vaccine varies with each illness
+```{r}
+# dosage
+inf_ivd |>
+  filter(!is.na(influenza_coverage_dosage)) |>
+  select(c(starts_with("respondent_"), influenza_coverage_dosage)) |>
+  select(- c(respondent_employment_status, respondent_industry_of_work, respondent_sex, respondent_age)) |>
+#  select(
+#    all_of(c("covid_coverage_dosage", chronic_illnesses))
+#  ) |>
+  pivot_longer(
+    cols = -influenza_coverage_dosage, 
+    names_to = "illness", 
+    values_to = "status",
+    values_ptypes = list(status = integer())
+  ) |>
+  mutate(
+    illness_experience = case_when(
+      status == 1 ~ "Never", # never had a chronic illness
+      status == 2 ~ "Previously" ,# previous illness
+      status %in% 3:5 ~ "Currently"# current chronic illness
+    ) |>
+    factor(
+      levels = c("Never", "Previously", "Currently")
+    )
+  ) |>
+  # number of children of each dosage for each status of their parent's chronic illness for each illness
+  summarise(
+    count = n(), .by = c(illness, illness_experience, influenza_coverage_dosage)
+  ) |>
+  
+  # calculate proportions of each disease and each dosage by status
+  mutate(
+    proportions = count/sum(count),
+    .by = c(illness, illness_experience)
+  ) |>
+  
+  ggplot(aes(x = influenza_coverage_dosage, y = proportions)) +
+  geom_col(aes(fill = illness_experience), position = "dodge") +
+  facet_wrap(vars(illness))
+```
+
+```{r}
+# age
+inf_ivd |>
+  filter(!is.na(influenza_coverage_age)) |>
+  select(c(starts_with("respondent_"), influenza_coverage_age)) |>
+  select(- c(respondent_employment_status, respondent_industry_of_work, respondent_sex, respondent_age)) |>
+#  select(
+#    all_of(c("covid_coverage_dosage", chronic_illnesses))
+#  ) |>
+  pivot_longer(
+    cols = -influenza_coverage_age, 
+    names_to = "illness", 
+    values_to = "status",
+    values_ptypes = list(status = integer())
+  ) |>
+  mutate(
+    illness_experience = case_when(
+      status == 1 ~ "Never", # never had a chronic illness
+      status == 2 ~ "Previously" ,# previous illness
+      status %in% 3:5 ~ "Currently"# current chronic illness
+    ) |>
+    factor(
+      levels = c("Never", "Previously", "Currently")
+    )
+  ) |>
+  # number of children of each dosage for each status of their parent's chronic illness for each illness
+  summarise(
+    count = n(), .by = c(illness, illness_experience, influenza_coverage_age)
+  ) |>
+  
+  # calculate proportions of each disease and each dosage by status
+  mutate(
+    proportions = count/sum(count),
+    .by = c(illness, illness_experience)
+  ) |>
+  
+  ggplot(aes(x = influenza_coverage_age, y = proportions)) +
+  geom_col(aes(fill = illness_experience), position = "dodge") +
+  facet_wrap(vars(illness))
+```
+
+_**Categories for the influenza vaccine**_
+1. Expereince with a chronic illnes detracts from the likelihood of being vaccinated. The more recent the experience with the chronic illness, the less likely that the COI is going to get vaccinated with the influena vaccine, Never > Prev > Current
+    -   Angina
+    -   Asthma
+    -   Atopic dermatitis
+    -   Cancer
+    -   Cataract
+    -   Chronic Pain
+    -   COPD
+    -   Dyslipidemia
+    -   Immune abnormalities
+    -   Kidney Disease
+    -   Stroke
+
+*Characteristics*
+    Current < Never
+    Prev < Never
+    Current < Prev
+    
+    
+
+2. No experience with X chronic illness results in higher vaccine uptake than any sort of experience with the chronic illness irregardless of previous or current
+    -   Allergic Rhinitis
+
+*Characteristics*
+    Current < Never
+    Prev< Never
+    Current == Prev
+    
+3. Experience with a chronic illness results in a higher vaccine uptake but previous illness is a stronger predictor than current illness
+    -   Diabetes
+    -   Hypertension
+    -   Periodontitis
+    -   Pneumonia
+    
+*Characteristics*
+    Current > Never
+    Prev > Never
+    Current < Prev
+    
+4. Current experience results in lower uptake as compareed to never having experienced a chronic illness or previous experience
+
+*Characteristics*
+    Current < Never
+    Prev == Never
+    Current < Prev
+
+5. Prev Experience is a predictor of increased uptake (relative to no experience) whilst current experience is a negative predictor of increased uptake
+    -   Caries
+    -   Hepatitis cirrhosis
+    -   Other Psychiatric disorders
+    
+*Characteristics*
+    Current < Never
+    Prev > Never
+    Current < Prev
+    
+6. Any experience with a chronic illness results in a higher vaccine uptake with no difference between the prev and current
+
+*Characteristics*
+    Current > Never
+    Prev > Never
+    Current == Prev
+    
+7. Experience with chronic illness results in a higher vaccine uptake with the more current experience resulting in a higher uptake
+    -   Depression
+    
+    Current > Never 
+    Prev > Never
+    Current > Prev
+**Comparison of trends**
+```{r}
+# select only columns that correspond to chronic illness names
+respondent_chronic_illnesses <- cov_ivd |>
+  select(starts_with("respondent_")) |>
+  select(- c(respondent_age, respondent_sex, respondent_employment_status, respondent_industry_of_work)) |>
+  colnames() 
+
+chronic_illnesses <- c()
+
+# extract names for chronic illnesses
+for(i in seq_along(respondent_chronic_illnesses)) {
+  str_split_1(respondent_chronic_illnesses[i], pattern = "_") -> x
+  chronic_illnesses [i] <- x [[2]] 
+}
+
+# manually input categories for influenza and covid vaccine uptake wrt to chronic illnesses
+cov_chronic_illness_response <-
+  c(3, 7, 7, 5, 4, 5, 2, 6, 7, 3, 5, 5, 5, 5, 6, 5, 2, 7, 3, 5)
+
+inf_chronic_illness_response <-
+  c(3, 3, 1, 3, 4, 1, 2, 3, 5, 1, 1, 1, 1, 1, 5 , 1, 1, 1, 7, 5)
+
+chronic_illness_comparison <- data.frame(
+  chronic_illnesses, cov_chronic_illness_response, inf_chronic_illness_response
+)
+
+chronic_illness_comparison <- chronic_illness_comparison |>
+  mutate(
+    same_effect = case_when(
+    cov_chronic_illness_response == inf_chronic_illness_response ~ "Yes",
+    cov_chronic_illness_response != inf_chronic_illness_response ~ "No"
+    ),
+    
+    # covid    
+    # how currently having each chronic illness impacts the COI's covid
+    # vax uptake compared to those who've never had the specific illness
+    cov_current_v_never = case_when(
+      cov_chronic_illness_response %in% c(1, 2, 4 ,5) ~ "C<N",
+      cov_chronic_illness_response %in% c(3, 6 ,7) ~ "C>N"
+    ),
+    
+    # how previously having each chronic illness impacts the COI's covid
+    # vax uptake compared to those who've never had the specific illness
+    cov_previous_v_never = case_when(
+      cov_chronic_illness_response %in% c(1, 2) ~ "P<N",
+      cov_chronic_illness_response %in% c(3, 5, 6, 7) ~ "P>N",
+      cov_chronic_illness_response == 4 ~ "P=N"
+    ),
+    
+    # how currently having each chronic illness impacts the COI's covid vax
+    # uptake compared to those who previously had the chronic illness
+    cov_current_v_prev = case_when(
+      cov_chronic_illness_response %in% c(1, 3, 4, 5) ~ "C<P",
+      cov_chronic_illness_response == 7 ~ "C>P",
+      cov_chronic_illness_response %in% c(2, 6) ~ "C=P"
+    ),
+    
+    # Influenza
+    # how currently having each chronic illness impacts the COI's influenza
+    # vax uptake compared to those who've never had the specific illness 
+    inf_current_v_never = case_when(
+      inf_chronic_illness_response %in% c(1, 2, 4 ,5) ~ "C<N",
+      inf_chronic_illness_response %in% c(3, 6 ,7) ~ "C>N"
+    ),
+    
+    # how previously having each chronic illness impacts the COI's influneza
+    # vax uptake compared to those who've never had the specific illness
+    inf_previous_v_never = case_when(
+      inf_chronic_illness_response %in% c(1, 2) ~ "P<N",
+      inf_chronic_illness_response %in% c(3, 5, 6, 7) ~ "P>N",
+      inf_chronic_illness_response == 4 ~ "P=N"
+    ),
+    
+    # how currently having each chronic illness impacts the COI's influenza vax
+    # uptake compared to those who previously had the chronic illness
+    cov_current_v_prev = case_when(
+      cov_chronic_illness_response %in% c(1, 3, 4, 5) ~ "C<P",
+      cov_chronic_illness_response == 7 ~ "C>P",
+      cov_chronic_illness_response %in% c(2, 6) ~ "C=P"
+    )
+  )
+
+kable(chronic_illness_comparison, "html")
+```
+
+
+-   **influenza**: A chronic illness is a predictor of lower vaccine uptake in their children, with the usual order of vaccine uptake being Never > Prev > Curr
+    -     Given that influenza is a endemic disease, it would make sense that individuals who are more health cautious are less likely to get the disease and thus, will be more willing to vaccinate
+    -     This is applicable to the following (catgory 1): dyslipedemia, atopic dermatitis, cataract, angina, stroke, copd, kidney disease, immune abnormalities, cnacer, chronic pain, depression
+
+-   **cov**: Previously having a chronic illness is a predictor of higher vaccine uptake in the coi,
+the most common order is Prev > Never > Curr sometimes followed by Prev > Curr > Nev
+    -   Perhaps previous uptake has taugth them to be more wary? whilst those currently affected are more cautious of serious impacts 
+
+
+# education
+Exploring the breakdown of education categories between moms and dads
+```{r}
+ivd |> 
+  filter(child_of_interest == 1 & !is.na(mother_highest_education)) |>
+  summarise(count = n(), .by = mother_highest_education) |>
+  arrange(mother_highest_education)
+
+ivd |>
+  filter(child_of_interest == 1 & !is.na(father_highest_education)) |>
+  summarise(count = n(), .by = father_highest_education) |>
+  arrange(father_highest_education)
+```
+
+Examining how the mother and father's highest educational attainments affect the uptake of vaccines indepdendently
+```{r}
+# educational attainment function
+test_function_stratify_data <- function(dataset, variable, coverage) {
+  
+  dataset |>
+    filter(!is.na(coverage) & !is.na(variable)) |>
+    summarise(count = n(), .by = c(variable, coverage)) |>
+    mutate(proportion = count/sum(count), .by = variable) ->
+    stratified_data
+  
+  return(stratified_data)
+}
+
+
+test_function_stratify_data(cov_ivd, mother_highest_education, covid_coverage_age) |>
+  ggplot(aes(x = covid_coverage_age, y = proportion)) +
+  geom_col(aes(fill = mother_highest_education), position = "dodge")
+
+#-----------------------------------------------------------------------------
+# covid vaccine
+# covid vax coverage with mothers' educational attainments
+cov_ivd |>
+  filter(!is.na(covid_coverage_age) & !is.na(mother_highest_education)) |>
+  summarise(count = n(), .by = c(mother_highest_education, covid_coverage_age)) |>
+  mutate(proportion = count/sum(count), .by = mother_highest_education) |>
+
+  ggplot(aes(x = covid_coverage_age, y = proportion)) +
+  geom_col(aes(fill = mother_highest_education), position = "dodge")
+
+# covid vax coverage with fathers' highest educational attainments
+cov_ivd |>
+  filter(!is.na(covid_coverage_age) & !is.na(father_highest_education)) |>
+  summarise(count = n(), .by = c(father_highest_education, covid_coverage_age)) |>
+  mutate(proportion = count/sum(count), .by = father_highest_education) |>
+
+  ggplot(aes(x = covid_coverage_age, y = proportion)) +
+  geom_col(aes(fill = father_highest_education), position = "dodge")
+
+# influenza vaccine
+# covid vax coverage with mothers' educational attainments
+inf_ivd |>
+  filter(!is.na(influenza_coverage_age) & !is.na(mother_highest_education)) |>
+  summarise(count = n(), .by = c(mother_highest_education, influenza_coverage_age)) |>
+  mutate(proportion = count/sum(count), .by = mother_highest_education) |>
+
+  ggplot(aes(x = influenza_coverage_age, y = proportion)) +
+  geom_col(aes(fill = mother_highest_education), position = "dodge")
+
+# influenza vax coverage with father's highest educatioinal attainment
+inf_ivd |>
+  filter(!is.na(influenza_coverage_age) & !is.na(father_highest_education)) |>
+  summarise(count = n(), .by = c(father_highest_education, influenza_coverage_age)) |>
+  mutate(proportion = count/sum(count), .by = father_highest_education) |>
+
+  ggplot(aes(x = influenza_coverage_age, y = proportion)) +
+  geom_col(aes(fill = father_highest_education), position = "dodge")
+```
+
+Now Examining how different combinations of highest educational attainments in mothers and fathers affects the uptake of vaccines in the COI
+```{r}
+# examine how covid vaccine coverage in the COI varies with different combinations of educational attainment
+cov_ivd |> 
+  filter(
+    child_of_interest == 1 & !is.na(covid_coverage_age)
+  ) |>
+  summarise(count = n(), .by = c(mother_highest_education, father_highest_education, covid_coverage_age)) |>
+  mutate(proportion = count/sum(count), .by = c(mother_highest_education, father_highest_education)) -> cov_age_father_mother_ed
+
+# Covid vax uptake, varying mother's highest educational attainment for each educational attainment of the father
+cov_age_father_mother_ed |>
+  ggplot() +
+  geom_col(aes(x = father_highest_education , y = proportion, fill = covid_coverage_age)) +
+  facet_grid(cols = vars(mother_highest_education)) +
+  labs(title = "COI's Covid vaccine coverage with age depending on their mother (each column) \n and father's (x) maximum education")
+
+# Covid vax uptake, varying father's highest educational attainment for each educational attainment of the mother
+cov_age_father_mother_ed |>
+  ggplot() +
+  geom_col(aes(x = mother_highest_education , y = proportion, fill = covid_coverage_age)) +
+  facet_grid(cols = vars(father_highest_education)) +
+  labs(title = "COI's Covid vaccine coverage with age depending on their father (each column) \n and mother's (x) maximum education")
+
+# examine how influenza vaccine coverage in the COI varies with different combinations of educational attainment
+inf_ivd |> 
+  filter(
+    child_of_interest == 1 & !is.na(influenza_coverage_age)) |>
+  mutate(
+    mother_highest_education = factor(mother_highest_education),
+    father_highest_education = factor(father_highest_education)
+  ) |>
+  summarise(count = n(), .by = c(mother_highest_education, father_highest_education, influenza_coverage_age)) |>
+  mutate(proportion = count/sum(count), .by = c(mother_highest_education, father_highest_education)) -> inf_age_father_mother_ed
+
+# influenza vax uptake, varying mother's highest educational attainment for each educational attainment of the father
+inf_age_father_mother_ed |>
+  ggplot() +
+  geom_col(aes(x = father_highest_education , y = proportion, fill = influenza_coverage_age)) +
+  facet_grid(cols = vars(mother_highest_education), drop = TRUE) +
+  labs(title = "COI's Influenza vaccine coverage with age depending on their \n mother (each column)  and father's (x) maximum education")
+
+# influenza vax uptake, varying father's highest educational attainment for each educational attainment of the mother
+inf_age_father_mother_ed |>
+  ggplot() +
+  geom_col(aes(x = mother_highest_education , y = proportion, fill = influenza_coverage_age)) +
+  facet_grid(cols = vars(father_highest_education), drop = TRUE) +
+  labs(title = "COI's Influenza vaccine coverage with age depending on their \n father's (each column) and mother's (x) maximum education")
+```
+Looking at the influenza data it seems as if the proportion of children vaccinated increases much more with respect to the mother's highest educational attainment as opposed to the father's highest educational attainment - as can be seen from the steeper increases in propritions within each father education band, or the uniform rise in influenza vaccination levles moving across columns of differing highest mother educations
+
+Furthermore, education elvels do seem to have a greater impact on the uptake of influenza vaccines as opposed to the uptake of covid vaccines.
+

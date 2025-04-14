@@ -163,7 +163,10 @@ influenza_data <- influenza_data |>
       ) |>
       
       # factorise results
-      factor()
+      factor(
+        levels = c(0, 1, 2),
+        labels = c("no coverage", "partial coverage", "full coverage")
+      )
   )
 
 # select prepared columns of data for analysis
@@ -273,7 +276,10 @@ covid_data <- covid_data |>
     ) |>
       
       # factorise results
-      factor()
+      factor(
+        levels = c(0, 1, 2),
+        labels = c("no coverage", "partial coverage", "full coverage")
+      )
   )
 
 
@@ -362,8 +368,9 @@ independent_variable_data <- readRDS(
   sexes[is.na(sex_indexing_vector) | sex_indexing_vector == FALSE] <- NA # assign NA values to sex values (for children of non interest)
   
   # assign the sex of the child of interest to the relevant column
+  # apply function row wise
   independent_variable_data$sex_of_interest <- apply(
-    sexes, 1, function(sexes) { # apply function row wise
+    sexes, 1, function(sexes) { 
       sex_of_interest <- sexes[!is.na(sexes)] # filter out the sex value 
         
       # return the sex indicator or NA if there are no eligible children
@@ -459,6 +466,19 @@ independent_variable_data <- independent_variable_data |>
       factor()
   )
 
+# test_parents_marital_status
+# parent's marital status but combining everythin that isn't married tgth
+independent_variable_data <- independent_variable_data |> 
+  mutate(
+    parents_marital_status = case_when(
+      marital_status %in% 1:3 ~ 0, # married
+      marital_status %in% 4:10 ~ 1, # unmarried
+    ) |>
+      
+      # factorise variables
+      factor()
+  )
+
 # parents_sexual_orientation
 independent_variable_data <- independent_variable_data |>
   mutate(
@@ -486,21 +506,17 @@ independent_variable_data <- independent_variable_data |>
 # sex of the other parent
 independent_variable_data <-independent_variable_data |>
   mutate(
-    parent_2_sex =  case_when(
+    parent_2_sex = case_when(
     
       # unmarried individuals
-      parents_marital_status != 1 ~ NA, # no parent_2
+      parents_marital_status != 0 ~ NA, # no parent_2
       
       # married individuals
-      # different sex couples
-      parents_marital_status == 1 & parents_sexual_make_up == 0 ~ 
+      parents_marital_status == 0 ~ 
         case_when(
           parent_1_sex == 1 ~ 0, # father as second parent
           parent_1_sex == 0 ~ 1  # mother is second parent
-        ),
-      
-      # same sex couples
-      parents_marital_status == 1 & parents_sexual_make_up == 1 ~ parent_1_sex
+        )
     )
   )
 
@@ -535,6 +551,19 @@ independent_variable_data <- independent_variable_data |>
       factor()
   )
 
+# test_household_income
+# fleshing out all categories of household income
+independent_variable_data <- independent_variable_data |>
+  mutate(
+    household_income = case_when(
+      household_income_annual %in% 1:18 ~ household_income_annual, # retain categories
+      household_income_annual %in% 19:20 ~ NA, # people who refused to or didn't know how to answer
+    ) |>
+      
+      # factorise variables
+      factor()
+  )
+
 
 # parent_chronic_illness
 # describes whether the parent of the child who  
@@ -558,9 +587,13 @@ independent_variable_data <- independent_variable_data |>
       )
     ) |>
       
-      # factorise parent_chronic_variables
+      # factorise parent_chronic_illness
       factor()
   )
+
+# test_parent_chronic_illness_type
+# stratifies the chronic illness by the type of illness
+
 
 
 # father_employment_status
@@ -571,7 +604,7 @@ independent_variable_data <- independent_variable_data |>
     father_employment_status = case_when(
       
       # ignore same sex couples
-      parents_sexual_make_up == 1 ~ NA,
+      #parents_sexual_make_up == 1 ~ NA,
       
       # When the respondent is the father
       parent_1_sex == 0 ~ case_when(
@@ -607,7 +640,7 @@ independent_variable_data <- independent_variable_data |>
     mother_employment_status = case_when(
       
       # ignore same sex couples
-      parents_sexual_make_up == 1 ~ NA,
+      #parents_sexual_make_up == 1 ~ NA,
       
       # When respondent is the mother
       parent_1_sex == 1 ~ case_when(
@@ -729,8 +762,8 @@ independent_variable_data <- independent_variable_data |>
     
     # seperate individuals who work in healthcare and non-healthcare sectors
     respondent_industry_of_work %in% c(1:14, 17:20) ~ 0, # non-healthcare
-    respondent_industry_of_work %in% 15:16 & parent_1_sex ~ 1, # responding father in HC
-    respondent_industry_of_work %in% 15:16 & parent_1_sex ~ 2, # responding mother in HC
+    respondent_industry_of_work %in% 15:16 & parent_1_sex == 0 ~ 1, # responding father in HC
+    respondent_industry_of_work %in% 15:16 & parent_1_sex == 1 ~ 2, # responding mother in HC
     ) |>
       factor()
   )
@@ -745,7 +778,7 @@ independent_variable_data <- independent_variable_data |>
       case_when(
       
       # filter out same-sex couples
-      parents_sexual_make_up == 2 ~ NA,  
+      #parents_sexual_make_up == 2 ~ NA,  
       
       # father is respondent
       parent_1_sex == 0 ~ case_when(
@@ -766,6 +799,10 @@ independent_variable_data <- independent_variable_data |>
       )
     ),
     NA
+    ) |>
+    factor(
+      levels = c(0, 1, 2, 3),
+      labels = c("Junior High", "Highsch", "Tertiary", "Postgrad")
     )
   )
 
@@ -800,7 +837,11 @@ independent_variable_data <- independent_variable_data |>
       )
     ),
     NA
-    )
+    ) |>
+      factor(
+        levels = c(0, 1, 2, 3),
+        labels = c("Junior High", "Highsch", "Tertiary", "Postgrad")
+      )
   )
 
 
@@ -1002,7 +1043,7 @@ independent_variable_data <- independent_variable_data |>
   # i.e. all columns from independent_variables
   to_remove_independent <- colnames(
     select(
-      independent_variables, !starts_with("perception_")
+      independent_variables, !starts_with("perception_") & !starts_with("respondent_")
     )
   )
     
