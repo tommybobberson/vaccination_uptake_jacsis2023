@@ -21,6 +21,9 @@ library(lubridate)
 library(knitr)
 library(reshape2)
 library(kableExtra)
+
+# custom functions
+source(here("Scripts", "functions", "exploratory functions.R"))
 ```
 
 ## Reading data and combining
@@ -89,6 +92,8 @@ cov_ivd |>
   geom_point(aes(colour = covid_coverage_age)) +
   xlim(NA, 60) +
   geom_smooth(aes(colour = covid_coverage_age), method = "loess")
+
+
 
 inf_ivd |>
   filter(!is.na(influenza_coverage_age)) |>
@@ -515,8 +520,37 @@ kable(chronic_illness_comparison, "html")
 the most common order is Prev > Never > Curr sometimes followed by Prev > Curr > Nev
     -   Perhaps previous uptake has taugth them to be more wary? whilst those currently affected are more cautious of serious impacts 
 
+## Marital status combining all unmarried categories vs marital status by all categories
+```{r}
+# covid vaccine
+# un-combined marital statuses
+function_data_stratify(cov_ivd, parents_marital_status, as.factor, covid_coverage_age) |>
+  function_plot_proportion_cols(parents_marital_status, covid_coverage_age) +
+  function_plot_label_count(parents_marital_status, covid_coverage_age) +
+  scale_fill_discrete(labels = c("married", "bereaved", "divorced", "unmarried"))
 
-# education
+# combined marital statuses
+function_data_stratify(cov_ivd, test_parents_marital_status, as.factor, covid_coverage_age) |>
+  function_plot_proportion_cols(test_parents_marital_status, covid_coverage_age) +
+  function_plot_label_count(test_parents_marital_status, covid_coverage_age) +
+  scale_fill_discrete(labels = c("married", "not married"))
+
+# influenza vaccine
+# un-combined marital statuses
+function_data_stratify(inf_ivd, parents_marital_status, as.factor, influenza_coverage_age) |>
+  function_plot_proportion_cols(parents_marital_status, influenza_coverage_age) +
+  function_plot_label_count(parents_marital_status, influenza_coverage_age) +
+  scale_fill_discrete(labels = c("married", "bereaved", "divorced", "unmarried"))
+
+# combined marital statuses
+function_data_stratify(inf_ivd, test_parents_marital_status, as.factor, influenza_coverage_age) |>
+  function_plot_proportion_cols(test_parents_marital_status, influenza_coverage_age) +
+  function_plot_label_count(test_parents_marital_status, influenza_coverage_age) +
+  scale_fill_discrete(labels = c("married", "not married"))
+```
+As is consistent when using either combined or uncombined marital statuses, being divorced or unmarried (uncombined) or not married (combined) are both positively assocaited with higher uptake of full covid vacination as compareid to being married. This trend is either reversed for the covid vaccination or negilgible .(we have excluded COI associated with bereavement due to the small sample size)
+
+## Parent's education
 Exploring the breakdown of education categories between moms and dads
 ```{r}
 ivd |> 
@@ -532,24 +566,6 @@ ivd |>
 
 Examining how the mother and father's highest educational attainments affect the uptake of vaccines indepdendently
 ```{r}
-# educational attainment function
-test_function_stratify_data <- function(dataset, variable, coverage) {
-  
-  dataset |>
-    filter(!is.na(coverage) & !is.na(variable)) |>
-    summarise(count = n(), .by = c(variable, coverage)) |>
-    mutate(proportion = count/sum(count), .by = variable) ->
-    stratified_data
-  
-  return(stratified_data)
-}
-
-
-test_function_stratify_data(cov_ivd, mother_highest_education, covid_coverage_age) |>
-  ggplot(aes(x = covid_coverage_age, y = proportion)) +
-  geom_col(aes(fill = mother_highest_education), position = "dodge")
-
-#-----------------------------------------------------------------------------
 # covid vaccine
 # covid vax coverage with mothers' educational attainments
 cov_ivd |>
@@ -558,7 +574,11 @@ cov_ivd |>
   mutate(proportion = count/sum(count), .by = mother_highest_education) |>
 
   ggplot(aes(x = covid_coverage_age, y = proportion)) +
-  geom_col(aes(fill = mother_highest_education), position = "dodge")
+  geom_col(aes(fill = mother_highest_education), position = "dodge") +
+  function_plot_label_count(mother_highest_education, coverage = covid_coverage_age) +
+  labs(title = "proportion of COI who have obtained no, partial and full coverage of the covid\nvaccination with respect to the highest educational attainment of their mother") +
+  xlab("degree of coverage from the covid vaccine")
+
 
 # covid vax coverage with fathers' highest educational attainments
 cov_ivd |>
@@ -567,7 +587,10 @@ cov_ivd |>
   mutate(proportion = count/sum(count), .by = father_highest_education) |>
 
   ggplot(aes(x = covid_coverage_age, y = proportion)) +
-  geom_col(aes(fill = father_highest_education), position = "dodge")
+  geom_col(aes(fill = father_highest_education), position = "dodge") +
+  function_plot_label_count(father_highest_education, coverage = covid_coverage_age) +
+  labs(title = "proportion of COI who have obtained no, partial and full coverage of the covid\nvaccination with respect to the highest educational attainment of their father") +
+  xlab("degree of coverage from the covid vaccine")
 
 # influenza vaccine
 # covid vax coverage with mothers' educational attainments
@@ -577,7 +600,10 @@ inf_ivd |>
   mutate(proportion = count/sum(count), .by = mother_highest_education) |>
 
   ggplot(aes(x = influenza_coverage_age, y = proportion)) +
-  geom_col(aes(fill = mother_highest_education), position = "dodge")
+  geom_col(aes(fill = mother_highest_education), position = "dodge") +
+  function_plot_label_count(mother_highest_education, influenza_coverage_age) +
+  labs(title = "proportion of COI who have obtained no, partial and full coverage of the influenza\nvaccination with respect to the highest educational attainment of their mother") +
+  xlab("degree of coverage from the influenza vaccine")
 
 # influenza vax coverage with father's highest educatioinal attainment
 inf_ivd |>
@@ -586,7 +612,10 @@ inf_ivd |>
   mutate(proportion = count/sum(count), .by = father_highest_education) |>
 
   ggplot(aes(x = influenza_coverage_age, y = proportion)) +
-  geom_col(aes(fill = father_highest_education), position = "dodge")
+  geom_col(aes(fill = father_highest_education), position = "dodge") +
+  function_plot_label_count(father_highest_education, coverage = influenza_coverage_age) +
+  labs(title = "proportion of COI who have obtained no, partial and full coverage of the influenza\nvaccination with respect to the highest educational attainment of their fathers") +
+  xlab("degree of coverage from the influenza vaccine")
 ```
 
 Now Examining how different combinations of highest educational attainments in mothers and fathers affects the uptake of vaccines in the COI
@@ -594,29 +623,33 @@ Now Examining how different combinations of highest educational attainments in m
 # examine how covid vaccine coverage in the COI varies with different combinations of educational attainment
 cov_ivd |> 
   filter(
-    child_of_interest == 1 & !is.na(covid_coverage_age)
+    child_of_interest == 1 & !is.na(covid_coverage_age) &
+    !is.na(mother_highest_education) & !is.na(father_highest_education)
   ) |>
   summarise(count = n(), .by = c(mother_highest_education, father_highest_education, covid_coverage_age)) |>
   mutate(proportion = count/sum(count), .by = c(mother_highest_education, father_highest_education)) -> cov_age_father_mother_ed
 
 # Covid vax uptake, varying mother's highest educational attainment for each educational attainment of the father
 cov_age_father_mother_ed |>
-  ggplot() +
-  geom_col(aes(x = father_highest_education , y = proportion, fill = covid_coverage_age)) +
+  ggplot(aes(x = father_highest_education , y = proportion)) +
+  geom_col(aes(fill = covid_coverage_age)) +
   facet_grid(cols = vars(mother_highest_education)) +
-  labs(title = "COI's Covid vaccine coverage with age depending on their mother (each column) \n and father's (x) maximum education")
+  labs(title = "COI's Covid vaccine coverage with age depending on their mother (each column) \n and father's (x) maximum education") +
+  geom_text(aes(group = covid_coverage_age, label = count), position = position_fill(vjust = 0.5), size = 3)
 
 # Covid vax uptake, varying father's highest educational attainment for each educational attainment of the mother
 cov_age_father_mother_ed |>
-  ggplot() +
-  geom_col(aes(x = mother_highest_education , y = proportion, fill = covid_coverage_age)) +
+  ggplot(aes(x = mother_highest_education , y = proportion)) +
+  geom_col(aes(fill = covid_coverage_age)) +
   facet_grid(cols = vars(father_highest_education)) +
-  labs(title = "COI's Covid vaccine coverage with age depending on their father (each column) \n and mother's (x) maximum education")
+  labs(title = "COI's Covid vaccine coverage with age depending on their father (each column) \n and mother's (x) maximum education") +
+  geom_text(aes(group = covid_coverage_age, label = count), position = position_fill(vjust = 0.5), size = 3)
 
 # examine how influenza vaccine coverage in the COI varies with different combinations of educational attainment
 inf_ivd |> 
   filter(
-    child_of_interest == 1 & !is.na(influenza_coverage_age)) |>
+    child_of_interest == 1 & !is.na(influenza_coverage_age) &
+    !is.na(mother_highest_education) & !is.na(father_highest_education)) |>
   mutate(
     mother_highest_education = factor(mother_highest_education),
     father_highest_education = factor(father_highest_education)
@@ -626,19 +659,61 @@ inf_ivd |>
 
 # influenza vax uptake, varying mother's highest educational attainment for each educational attainment of the father
 inf_age_father_mother_ed |>
-  ggplot() +
-  geom_col(aes(x = father_highest_education , y = proportion, fill = influenza_coverage_age)) +
+  ggplot(aes(x = father_highest_education , y = proportion)) +
+  geom_col(aes(fill = influenza_coverage_age)) +
   facet_grid(cols = vars(mother_highest_education), drop = TRUE) +
-  labs(title = "COI's Influenza vaccine coverage with age depending on their \n mother (each column)  and father's (x) maximum education")
+  labs(title = "COI's Influenza vaccine coverage with age depending on their \n mother (each column)  and father's (x) maximum education") +
+  geom_text(aes(group = influenza_coverage_age, label = count), position = position_fill(vjust = 0.5), size = 3)
 
 # influenza vax uptake, varying father's highest educational attainment for each educational attainment of the mother
 inf_age_father_mother_ed |>
-  ggplot() +
+  ggplot(aes(x = mother_highest_education, y = proportion)) +
   geom_col(aes(x = mother_highest_education , y = proportion, fill = influenza_coverage_age)) +
   facet_grid(cols = vars(father_highest_education), drop = TRUE) +
-  labs(title = "COI's Influenza vaccine coverage with age depending on their \n father's (each column) and mother's (x) maximum education")
+  labs(title = "COI's Influenza vaccine coverage with age depending on their \n father's (each column) and mother's (x) maximum education") +
+  geom_text(aes(group = influenza_coverage_age, label = count), position = position_fill(vjust = 0.5), size = 3)
 ```
 Looking at the influenza data it seems as if the proportion of children vaccinated increases much more with respect to the mother's highest educational attainment as opposed to the father's highest educational attainment - as can be seen from the steeper increases in propritions within each father education band, or the uniform rise in influenza vaccination levles moving across columns of differing highest mother educations
 
 Furthermore, education elvels do seem to have a greater impact on the uptake of influenza vaccines as opposed to the uptake of covid vaccines.
+
+## Unstratified Household Income vs stratifiged household income
+```{r}
+# comparing gruoping and ungrouping of household income and how it differs for influenza vax uptake
+# extended plot of how covid coverage varies with test household income (ungrouped)
+function_data_stratify(cov_ivd, test_household_income, as.numeric, covid_coverage_age) |>
+
+  # dot plot of proportion of COI with each coverage status for each income bracket
+  function_plot_proportion_dots(test_household_income, covid_coverage_age) +
+  geom_smooth(aes(colour = covid_coverage_age), method = "lm")
+
+# unextended plot of grouped household income
+function_data_stratify(cov_ivd, household_income, as.numeric, covid_coverage_age) |>
+
+  # dot plot of proportion of COI with each coverage status for each income bracket
+  function_plot_proportion_dots(household_income, covid_coverage_age) +
+  geom_smooth(aes(colour = covid_coverage_age), method = "lm")
+
+
+
+
+# comparing gruoping and ungrouping of household income and how it differs for influenza vax uptake
+# extended plot of how influenza coverage varies with test household income (ungrouped)
+function_data_stratify(inf_ivd, test_household_income, as.numeric, influenza_coverage_age) |>
+  
+  # dot plot of proportion of COI with each influenza vax coverage status by income bracket
+  function_plot_proportion_dots(test_household_income, influenza_coverage_age) +
+  geom_smooth(aes(colour = influenza_coverage_age), method = "lm")
+
+
+# unextended plot of grouped household income
+function_data_stratify(inf_ivd, household_income, as.numeric, influenza_coverage_age) |>
+
+  # dot plot of proportion of COI with each coverage status for each income bracket
+  function_plot_proportion_dots(household_income, influenza_coverage_age) +
+  geom_smooth(aes(colour = influenza_coverage_age), method = "lm")
+
+
+```
+When we don't stratify and keep the top 10% of earners together, we see that there is a continuous increase in the uptake of both the covid and vaccinatiosn as we move to higher income brackets
 

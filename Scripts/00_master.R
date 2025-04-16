@@ -7,7 +7,16 @@ library(here)
 library(knitr)
 library(GGally)
 
+# source custom functions
+functions <- list.files(
+  here("Scripts", "functions"),
+  full.names = TRUE
+)
+
+for(f in functions) {source(f)}
+
 # run scripts in order
-source("Scripts/01_read_data.R") # source data
-source("Scripts/02_clean_data.R") # clean data
-source("Scripts/03_transform_data.R") # transform data
+source(here("Scripts", "01_read_data.R")) # source data
+source(here("Scripts", "02_clean_data.R")) # clean data
+source(here("Scripts", "03_transform_data.R")) # transform data
+

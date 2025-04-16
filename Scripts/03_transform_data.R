@@ -164,8 +164,8 @@ influenza_data <- influenza_data |>
       
       # factorise results
       factor(
-        levels = c(0, 1, 2),
-        labels = c("no coverage", "partial coverage", "full coverage")
+        levels = c(0, 1, 2)#,
+        #labels = c("no coverage", "partial coverage", "full coverage")
       )
   )
 
@@ -277,8 +277,8 @@ covid_data <- covid_data |>
       
       # factorise results
       factor(
-        levels = c(0, 1, 2),
-        labels = c("no coverage", "partial coverage", "full coverage")
+        levels = c(0, 1, 2)#,
+        # = c("no coverage", "partial coverage", "full coverage")
       )
   )
 
@@ -362,10 +362,20 @@ independent_variable_data <- readRDS(
   # create a vector that contains the sexes of the children of interest, by
   # indexing it with a vector with their corresponding ages
   
-  sexes <- independent_variable_data[, sex_indexing] # choose the columns containing sex 
-  ages <- transformed_age_data[, age_indexing] # choose the corresponding age columns
-  sex_indexing_vector <- ages == transformed_age_data$age_of_interest # match location of sex of interest to location of age of interest
-  sexes[is.na(sex_indexing_vector) | sex_indexing_vector == FALSE] <- NA # assign NA values to sex values (for children of non interest)
+  # choose the columns containing sex
+  sexes <- 
+    independent_variable_data[, sex_indexing]  
+  
+  # choose the corresponding age columns
+  ages <- 
+    transformed_age_data[, age_indexing] 
+  
+  # match location of sex of interest to location of age of interest
+  sex_indexing_vector <- 
+    ages == transformed_age_data$age_of_interest
+  
+  # assign NA values to sex values (for children of non interest)
+  sexes[is.na(sex_indexing_vector) | sex_indexing_vector == FALSE] <- NA
   
   # assign the sex of the child of interest to the relevant column
   # apply function row wise
@@ -470,7 +480,7 @@ independent_variable_data <- independent_variable_data |>
 # parent's marital status but combining everythin that isn't married tgth
 independent_variable_data <- independent_variable_data |> 
   mutate(
-    parents_marital_status = case_when(
+    test_parents_marital_status = case_when(
       marital_status %in% 1:3 ~ 0, # married
       marital_status %in% 4:10 ~ 1, # unmarried
     ) |>
@@ -555,13 +565,11 @@ independent_variable_data <- independent_variable_data |>
 # fleshing out all categories of household income
 independent_variable_data <- independent_variable_data |>
   mutate(
-    household_income = case_when(
+    test_household_income = case_when(
       household_income_annual %in% 1:18 ~ household_income_annual, # retain categories
       household_income_annual %in% 19:20 ~ NA, # people who refused to or didn't know how to answer
     ) |>
-      
-      # factorise variables
-      factor()
+      as.numeric()
   )
 
 
@@ -590,10 +598,6 @@ independent_variable_data <- independent_variable_data |>
       # factorise parent_chronic_illness
       factor()
   )
-
-# test_parent_chronic_illness_type
-# stratifies the chronic illness by the type of illness
-
 
 
 # father_employment_status
@@ -699,18 +703,10 @@ independent_variable_data <- independent_variable_data |>
       
       # neither are retired
       # only true if both parents aren't retired
-      all(
-        
-        # check to see if each parent is NOT retired
-        c(respondent_employment_status, partner_employment_status) != 14
-      ) ~ 0,
+      respondent_employment_status != 14 & partner_employment_status != 14 ~ 0,
       
       # both retired
-      all(
-        
-        # check if each parent is retired
-        c(respondent_employment_status, partner_employment_status) == 14
-      ) ~ 3,
+      respondent_employment_status == 14 & partner_employment_status == 14 ~ 3,
       
       # father retired
       parent_1_sex == 0 & respondent_employment_status == 14 ~ 1,
@@ -731,24 +727,41 @@ independent_variable_data <- independent_variable_data |>
     parents_stay_home = case_when(
       
       # neither are stay home parents
-      all(
-        c(respondent_employment_status & partner_employment_status) != 15
-      ) ~ 0,
+      respondent_employment_status != 15 & partner_employment_status !=15 ~ 0,
       
       # both parents are stay home parents
-      all(
-        c(respondent_employment_status & partner_employment_status) == 15
-      ) ~ 3,
+      respondent_employment_status == 15 & partner_employment_status ==15 ~ 3,
       
-      # father is the stay home parent
+      # only father is the stay home parent
       parent_1_sex == 0 & respondent_employment_status == 15 ~ 1,
       parent_2_sex == 0 & partner_employment_status == 15 ~ 1,
       
-      # mother is the stay home parent
+      # only mother is the stay home parent
       parent_1_sex == 1 & respondent_employment_status == 15 ~ 2,
       parent_2_sex == 1 & partner_employment_status == 15 ~ 2,
     ) |>
       factor()
+  )
+
+# mother_stay_home
+# indicates whether the child's mother is a stay home parent
+independent_variable_data <- independent_variable_data |>
+  mutate(
+    mother_stay_home = case_when(
+  # mother doesn't stay home
+      # responding parent is the mother
+      parent_1_sex == 1 & respondent_employment_status != 15 ~ 0,
+      
+      # partner is the mother
+      parent_2_sex == 1 & partner_employment_status != 15 ~ 0,
+      
+  # mother stays home
+      # responding parent is the mother
+      parent_1_sex == 1 & respondent_employment_status == 15 ~ 1,
+      
+      # partner is the mother
+      parent_2_sex == 1 & partner_employment_status == 15 ~ 1
+    )
   )
 
 
