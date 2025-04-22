@@ -79,8 +79,6 @@ saveRDS(
   here("Data", "JACSIS2023", "processed", "transformed_age_data.RDS")
   )
 
-
-
 # transform influenza data ------------------------------------------------
 
 # read influenza_data
@@ -128,6 +126,9 @@ influenza_data <- influenza_data |>
           influenza_first_dose == 1 & influenza_second_dose >= 2 ~ 1, # 1 dose of influenza 
           influenza_second_dose == 1 ~ 2 # 2 doses of influenza
         )
+      ) |>
+      factor(
+        levels = c(0, 1, 2)
       )
   )
 
@@ -169,19 +170,14 @@ influenza_data <- influenza_data |>
       )
   )
 
-# select prepared columns of data for analysis
-  # read RAW CLEANED influenza variables
-  influenza_variables <- readRDS(
-    here("Data", "JACSIS2023", "processed", "influenza_data.RDS")
+# select prepared columns of data to save to transformed data set to be used for analysis
+transformed_influenza_data <- influenza_data |>
+  select(
+    influenza_first_dose_date,
+    influenza_second_dose_date,
+    influenza_coverage_dosage,
+    influenza_coverage_age
   )
-
-  # create a vector to index RAW CLEANED influenza data
-  to_remove_influenza <- colnames(influenza_variables)
-  
-  # remove redundant data columns
-  transformed_influenza_data <- influenza_data |>
-    select(!all_of(to_remove_influenza))
-
   
 # save transformed influenza data
   saveRDS(
@@ -245,7 +241,10 @@ covid_data <- covid_data |>
             covid_second_dose == 1 & covid_third_dose >= 2 ~ 2, # 2 doses of the covid vax 
             covid_third_dose == 1 ~ 3 # 3 doses of the covid vax
          )
-      ) 
+      ) |>
+      factor(
+        levels = c(1, 2, 3)
+      )
   )
 
 
@@ -283,20 +282,16 @@ covid_data <- covid_data |>
   )
 
 
-# select prepared columns for data analysis
-  # read RAW CLEANED covid variables
-  covid_variables <- readRDS(
-    here("Data", "JACSIS2023", "processed", "covid_data.RDS")
+# select prepared columns of data to save as transformed data to be used for analysis
+transformed_covid_data <- covid_data |>
+  select(
+    covid_first_dose_date,
+    covid_second_dose_date,
+    covid_third_dose_date,
+    covid_coverage_dosage,
+    covid_coverage_age
   )
-  
-  # create a vector to index RAW CLEANED covid data
-  to_remove_covid <- colnames(covid_variables)
-  
-  # remove redundant columns
-  transformed_covid_data <- covid_data |>
-    select(!all_of(to_remove_covid))
 
-  
 # save the transformed covid data
   saveRDS(
     transformed_covid_data, 
@@ -319,11 +314,11 @@ independent_variable_data <- readRDS(
   independent_variable_data <- 
     mutate(
       independent_variable_data,
-      child_parents = spouses + 1
+      child_parents = spouses + 1L
     )
   
   # replace NA values with 0
-  independent_variable_data$child_parents[is.na(independent_variable_data$child_parents)] <- 0
+  independent_variable_data$child_parents[is.na(independent_variable_data$child_parents)] <- 0L
 
 
 # child_auntcles
@@ -410,7 +405,8 @@ independent_variable_data <- readRDS(
       child_of_interest = case_when(
         !is.na(sex_of_interest) ~ 1, # child of interest
         is.na(sex_of_interest) ~ 0 # no child of interest
-      )
+      ) |>
+        factor()
     )
   
   
@@ -466,6 +462,7 @@ independent_variable_data <- readRDS(
 independent_variable_data <- independent_variable_data |> 
   mutate(
     parents_marital_status = case_when(
+    child_of_interest == 0 ~ NA, # no eligibile child of interest
     marital_status %in% 1:3 ~ 0, # married
     marital_status %in% 5:7 ~ 1, # bereaved
     marital_status %in% 8:10 ~ 2, # divorced
@@ -481,6 +478,7 @@ independent_variable_data <- independent_variable_data |>
 independent_variable_data <- independent_variable_data |> 
   mutate(
     test_parents_marital_status = case_when(
+      child_of_interest == 0 ~ NA, # no eligbile child of interest
       marital_status %in% 1:3 ~ 0, # married
       marital_status %in% 4:10 ~ 1, # unmarried
     ) |>
@@ -489,18 +487,19 @@ independent_variable_data <- independent_variable_data |>
       factor()
   )
 
-# parents_sexual_orientation
+if(FALSE) {
+# parents_sexual_makeup    
 independent_variable_data <- independent_variable_data |>
   mutate(
     parents_sexual_make_up = case_when(
-      sexual_orientation == 1 ~ 0, # different sex
+      sexual_orientation != 2 & !is.na(sexual_orientation) ~ 0, # different sex
       sexual_orientation == 2 ~ 1, # same sex
     ) |>
       
       # factorise variables
       factor()
   )
-
+}
 
 # parent_1_sex
 # sex of the responding parent/individual
@@ -508,7 +507,8 @@ independent_variable_data <- independent_variable_data |>
   mutate(parent_1_sex = case_when(
     respondent_sex == 1 ~ 0, # male (father) respondent
     respondent_sex == 2 ~ 1 # female (mother) respondent
-    )
+    ) |>
+      factor()
   )
 
 
@@ -527,7 +527,8 @@ independent_variable_data <-independent_variable_data |>
           parent_1_sex == 1 ~ 0, # father as second parent
           parent_1_sex == 0 ~ 1  # mother is second parent
         )
-    )
+    ) |>
+      factor()
   )
 
 
@@ -569,7 +570,7 @@ independent_variable_data <- independent_variable_data |>
       household_income_annual %in% 1:18 ~ household_income_annual, # retain categories
       household_income_annual %in% 19:20 ~ NA, # people who refused to or didn't know how to answer
     ) |>
-      as.numeric()
+      as.factor()
   )
 
 
@@ -580,6 +581,9 @@ independent_variable_data <- independent_variable_data |>
 independent_variable_data <- independent_variable_data |>
   mutate(
     parent_chronic_illness = case_when(
+      
+      # ignore cases where there are no children of interest
+      child_of_interest == 0 ~ NA,
       
       # filter out individuals who currently have a chronic illness
       if_any(respondent_hypertension:respondent_psychiatric_other, .fns = ~. %in% 3:5) == 1 ~ 2, # current chronic illness
@@ -606,9 +610,9 @@ independent_variable_data <- independent_variable_data |>
 independent_variable_data <- independent_variable_data |>
   mutate(
     father_employment_status = case_when(
-      
-      # ignore same sex couples
-      #parents_sexual_make_up == 1 ~ NA,
+    
+      # ignore cases where there are no children of interest
+      child_of_interest == 0 ~ NA,
       
       # When the respondent is the father
       parent_1_sex == 0 ~ case_when(
@@ -643,8 +647,8 @@ independent_variable_data <- independent_variable_data |>
   mutate(
     mother_employment_status = case_when(
       
-      # ignore same sex couples
-      #parents_sexual_make_up == 1 ~ NA,
+      # ignore cases where there are no children of interest
+      child_of_interest == 0 ~ NA,
       
       # When respondent is the mother
       parent_1_sex == 1 ~ case_when(
@@ -676,6 +680,9 @@ independent_variable_data <- independent_variable_data |>
   mutate(
     parents_student_status = case_when(
       
+      # ignore cases where there are no children of interest
+      child_of_interest == 0 ~ NA,
+      
       # none are students
       !(respondent_employment_status %in% c(12:13)) & 
       !(partner_employment_status %in% c(12:13)) ~ 0,
@@ -700,6 +707,9 @@ independent_variable_data <- independent_variable_data |>
 independent_variable_data <- independent_variable_data |>
   mutate(
     parents_retired_status = case_when(
+      
+      # ignore cases where there are no children of interest
+      child_of_interest == 0 ~ NA,
       
       # neither are retired
       # only true if both parents aren't retired
@@ -726,6 +736,9 @@ independent_variable_data <- independent_variable_data |>
   mutate(
     parents_stay_home = case_when(
       
+      # ignore cases where there are no children of interest
+      child_of_interest == 0 ~ NA,
+      
       # neither are stay home parents
       respondent_employment_status != 15 & partner_employment_status !=15 ~ 0,
       
@@ -748,6 +761,10 @@ independent_variable_data <- independent_variable_data |>
 independent_variable_data <- independent_variable_data |>
   mutate(
     mother_stay_home = case_when(
+      
+      # ignore cases where there are no children of interest
+      child_of_interest == 0 ~ NA,
+      
   # mother doesn't stay home
       # responding parent is the mother
       parent_1_sex == 1 & respondent_employment_status != 15 ~ 0,
@@ -761,7 +778,8 @@ independent_variable_data <- independent_variable_data |>
       
       # partner is the mother
       parent_2_sex == 1 & partner_employment_status == 15 ~ 1
-    )
+    ) |>
+    factor()
   )
 
 
@@ -772,7 +790,10 @@ independent_variable_data <- independent_variable_data |>
 independent_variable_data <- independent_variable_data |>
   mutate(
     parents_healthcare = case_when(
-    
+      
+    # ignore cases where there are no children of interest
+    child_of_interest == 0 ~ NA,
+      
     # seperate individuals who work in healthcare and non-healthcare sectors
     respondent_industry_of_work %in% c(1:14, 17:20) ~ 0, # non-healthcare
     respondent_industry_of_work %in% 15:16 & parent_1_sex == 0 ~ 1, # responding father in HC
@@ -787,12 +808,12 @@ independent_variable_data <- independent_variable_data |>
 independent_variable_data <- independent_variable_data |>
   mutate(
     father_highest_education = ifelse(
+      
+      # valid status must be confirmed by the presence of COI
       child_of_interest == 1,
       case_when(
-      
-      # filter out same-sex couples
-      #parents_sexual_make_up == 2 ~ NA,  
-      
+        
+  
       # father is respondent
       parent_1_sex == 0 ~ case_when(
         highest_education == 1 ~ 0, # junior high qualification
@@ -814,8 +835,8 @@ independent_variable_data <- independent_variable_data |>
     NA
     ) |>
     factor(
-      levels = c(0, 1, 2, 3),
-      labels = c("Junior High", "Highsch", "Tertiary", "Postgrad")
+      levels = c(0, 1, 2, 3)#,
+      #labels = c("Junior High", "Highsch", "Tertiary", "Postgrad")
     )
   )
 
@@ -828,8 +849,8 @@ independent_variable_data <- independent_variable_data |>
       child_of_interest == 1,
       case_when(
       
-      # filter out same-sex couples
-      parents_sexual_make_up == 2 ~ NA,
+      # ignore cases where there are no children of interest
+      child_of_interest == 0 ~ NA,
       
       # mother is respondent
       parent_1_sex == 1 ~ case_when(
@@ -852,8 +873,8 @@ independent_variable_data <- independent_variable_data |>
     NA
     ) |>
       factor(
-        levels = c(0, 1, 2, 3),
-        labels = c("Junior High", "Highsch", "Tertiary", "Postgrad")
+        levels = c(0, 1, 2, 3)#,
+        #labels = c("Junior High", "Highsch", "Tertiary", "Postgrad")
       )
   )
 
@@ -877,7 +898,8 @@ independent_variable_data <- independent_variable_data |>
       child_of_interest == 1 & edu != -Inf,
       edu,
       NA
-    ),
+    ) |>
+      factor()
       
     # drop edu - but how not to drop child_of_interest either???
     #.keep = "unused"
@@ -889,7 +911,11 @@ independent_variable_data <- independent_variable_data |>
 # has received the flu vaccine in the past year
 independent_variable_data <- independent_variable_data |>
   mutate(
-    parent_influenza = case_when(
+      parent_influenza = case_when(
+        
+      # ignore cases where there are no children of interest
+      child_of_interest == 0 ~ NA,
+        
       influenza_vaccination_respondent == 2 ~ 0, # has not received the influenza vaccine in the past year
       influenza_vaccination_respondent == 1 ~ 1 # received the influenza vacicine in the past year
     ) |>
@@ -903,7 +929,12 @@ independent_variable_data <- independent_variable_data |>
 # the numerical number of doses of the responding parent
 independent_variable_data <- independent_variable_data |>
   mutate(
+    
     parent_covid_doses = case_when(
+      
+      # ignore cases where there are no children of interest
+      child_of_interest == 0 ~ NA,
+      
       covid_vaccination_respondent %in% 8:10 ~ 0, # no doses
       covid_vaccination_respondent == 6 ~ 1, # 1 dose
       covid_vaccination_respondent == 5 ~ 2, # 2 doses
@@ -911,7 +942,7 @@ independent_variable_data <- independent_variable_data |>
       covid_vaccination_respondent == 3 ~ 4, # 4 doses
       covid_vaccination_respondent == 2 ~ 5, # 5 doses
       covid_vaccination_respondent == 1 ~ 6, # 6 doses
-      covid_vaccination_respondent == 7 ~ NA # ineligible
+      covid_vaccination_respondent == 7 ~ 7 # ineligible
     )
   )
 
@@ -920,6 +951,10 @@ independent_variable_data <- independent_variable_data |>
 independent_variable_data <- independent_variable_data |>
   mutate(
     parent_covid_coverage = case_when(
+      
+      # ignore cases where there are no children of interest
+      child_of_interest == 0 ~ NA,
+      
       covid_vaccination_respondent == 7 ~ 0, # ineligible
       covid_vaccination_respondent %in% 5:6 ~ 1, # partially vaxxed
       covid_vaccination_respondent %in% 1:4 ~ 2, # fully vaccinated
@@ -938,6 +973,10 @@ independent_variable_data <- independent_variable_data |>
 independent_variable_data <- independent_variable_data |>
   mutate(
     parents_time_since_covvax = case_when(
+      
+      # ignore cases where there are no children of interest
+      child_of_interest == 0 ~ NA,
+      
       covid_vaccination_within1y == 2 &
       covid_vaccination_within6m == 2 ~ 0, # more than a year ago
       
@@ -950,7 +989,11 @@ independent_variable_data <- independent_variable_data |>
       # factorise time since parents' last covid vaccine
       factor()
   )
-    
+
+
+# Disable code start ------------------------------------------------------
+
+if (FALSE) {
 ######## WORK FROM HERE ################
 
 # parent_covid_exp_time
@@ -1043,27 +1086,82 @@ independent_variable_data <- independent_variable_data |>
 
 # parent_covid_exp_severity
 # the severity of their/someone affected's experience with covid
+}
+
+
+# End of disabled code ----------------------------------------------------
 
 
 
-# select all columns that have been derived and prepared for use
-  # load original CLEANED RAW data
-  independent_variables <- readRDS(
-    here("Data", "JACSIS2023", "processed", "independent_variable_data.RDS")
+
+
+# select all columns that have been derived and prepared for use in analysis
+# to transformed data
+transformed_independent_variable_data <- independent_variable_data |>
+  select(
+    respondent_hypertension,
+    respondent_diabetes,
+    respondent_dyslipidemia,
+    respondent_pneumonia,
+    respondent_asthma,
+    respondent_atopic_dermatitis,
+    respondent_allergic_rhinitis,
+    respondent_periodontitis,
+    respondent_caries,
+    respondent_cataract,
+    respondent_angina,
+    respondent_stroke,
+    respondent_COPD,
+    respondent_kidney_disease,
+    respondent_hepatitis_cirrhosis,
+    respondent_immune_abnormalities,
+    respondent_cancer,
+    respondent_chronic_pain,
+    respondent_depression,
+    respondent_psychiatric_other,
+    respondent_employment_status,
+    respondent_industry_of_work,
+    perception_safety,
+    perception_infection_danger,
+    perception_immunisation_importance,
+    perception_immunisation_benefits,
+    perception_collective_immunisation,
+    perception_immunisation_sanctions,
+    perception_immunisation_adverse,
+    perception_immunisation_herd,
+    child_parents,
+    child_auntcles,
+    vulnerable_individuals,
+    household_total,
+    child_grand,
+    sex_of_interest,
+    child_of_interest,
+    child_sisters,
+    child_brothers,
+    child_siblings,
+    parents_marital_status,
+    test_parents_marital_status,
+    parent_1_sex,
+    parent_2_sex,
+    parent_1_age,
+    household_income,
+    test_household_income,
+    parent_chronic_illness,
+    father_employment_status,
+    mother_employment_status,
+    parents_student_status,
+    parents_retired_status,
+    parents_stay_home,
+    mother_stay_home,
+    parents_healthcare,
+    father_highest_education,
+    mother_highest_education,
+    parents_highest_education,
+    parent_influenza,
+    parent_covid_doses,
+    parent_covid_coverage,
+    parents_time_since_covvax
   )
-
-  # obtain a vector of the column names in the CLEANED RAW data 
-  # i.e. all columns from independent_variables
-  to_remove_independent <- colnames(
-    select(
-      independent_variables, !starts_with("perception_") & !starts_with("respondent_")
-    )
-  )
-    
-  # choose variables that have been derived for use
-  transformed_independent_variable_data <- independent_variable_data |>
-    select(!all_of(to_remove_independent))
-    
 
 # save the transformed independent variable data
 saveRDS(
@@ -1078,3 +1176,4 @@ saveRDS(
 
 
 
+ #
