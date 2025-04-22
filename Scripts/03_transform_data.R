@@ -245,7 +245,7 @@ covid_data <- covid_data |>
          )
       ) |>
       factor(
-        levels = c(1, 2, 3)
+        levels = c(0, 1, 2, 3)
       )
   )
 
