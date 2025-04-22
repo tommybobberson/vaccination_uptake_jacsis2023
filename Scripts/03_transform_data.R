@@ -59,20 +59,22 @@ age_data$age_of_interest <- apply(
 )
 
 
-# select relevant columns for data analysis
-  # read RAW CLEANED age variables
-  age_variables <- readRDS(
-    here("Data", "JACSIS2023", "processed", "age_data.RDS")
+# select relevant columns to transformed data that will be used for analysis
+transformed_age_data <- age_data |>
+  select(
+    child_1_DOB,
+    child_2_DOB,
+    child_3_DOB,
+    child_4_DOB,
+    child_5_DOB,
+    child_1_age,
+    child_2_age,
+    child_3_age,
+    child_4_age,
+    child_5_age,
+    age_of_interest,
   )
-  
-  # create a vector to index redundant columns
-  to_remove_age <- colnames(age_variables)
-  
-  # remove redundant columns
-  transformed_age_data <- age_data |>
-    select(!all_of(to_remove_age))
 
-  
 # save the transformed age data
 saveRDS(
   transformed_age_data,
