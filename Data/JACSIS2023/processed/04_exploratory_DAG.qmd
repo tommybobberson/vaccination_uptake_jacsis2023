@@ -65,7 +65,7 @@ parents_healthcare -> "parent covid doses"
 parents_healthcare -> "vaccine uptake"
 parents_healthcare -> parent_covid_coverage
 parents_healthcare -> parent_inluenza
-parents_healthcare -> parents_time_since_covvax
+# parents_healthcare -> parents_time_since_covvax
 parents_highest_education -> child_siblings
 parents_highest_education -> household_income
 parents_highest_education -> household_total
