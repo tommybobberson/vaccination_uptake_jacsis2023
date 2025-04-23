@@ -1,0 +1,260 @@
+---
+title: \"03_data_proessing_daigram\"
+format: html
+execute: 
+  echo: FALSE
+---
+Sourcing the appropriate scripts
+```{r}
+library(dagitty)
+library(ggdag)
+```
+The following is a diagram to visualise how data, from `age_data`, was processed, to give the final age data in `transformed_age_data`.
+```{r}
+dagitty(
+  "dag {
+    bb=\"-4.639,-4.786,5.298,5.158\"
+    age_data [pos=\"-4.226,0.103\"]
+    age_of_interest [pos=\"2.652,-4.010\"]
+    child_1_DOB [pos=\"-0.380,-3.762\"]
+    child_1_DOB_Month [pos=\"-2.445,-3.200\"]
+    child_1_DOB_Year [pos=\"-2.497,-3.960\"]
+    child_2_DOB [pos=\"-0.484,-1.747\"]
+    child_2_DOB_Month [pos=\"-2.419,-1.284\"]
+    child_2_DOB_Year [pos=\"-2.523,-2.176\"]
+    child_3_DOB [pos=\"-0.290,-0.161\"]
+    child_3_DOB_Month [pos=\"-2.432,0.368\"]
+    child_3_DOB_Year [pos=\"-2.445,-0.425\"]
+    child_4_DOB [pos=\"-0.290,1.673\"]
+    child_4_DOB_Month [pos=\"-2.368,1.904\"]
+    child_4_DOB_Year [pos=\"-2.432,1.161\"]
+    child_5_DOB [pos=\"1.168,3.820\"]
+    child_5_DOB_Month [pos=\"-2.342,3.737\"]
+    child_5_DOB_Year [pos=\"-2.381,2.895\"]
+    transformed_age_data [pos=\"3.659,-1.185\"]
+    
+    age_data -> child_1_DOB_Month [pos=\"-3.826,-2.589\"]
+    age_data -> child_1_DOB_Year [pos=\"-4.626,-2.870\"]
+    age_data -> child_2_DOB_Month
+    age_data -> child_2_DOB_Year [pos=\"-3.749,-1.681\"]
+    age_data -> child_3_DOB_Month
+    age_data -> child_3_DOB_Year
+    age_data -> child_4_DOB_Month [pos=\"-3.916,1.194\"]
+    age_data -> child_4_DOB_Year
+    age_data -> child_5_DOB_Month [pos=\"-4.342,2.878\"]
+    age_data -> child_5_DOB_Year [pos=\"-4.123,1.755\"]
+    
+    child_1_DOB_Month -> child_1_DOB
+    child_1_DOB_Year -> child_1_DOB
+    child_2_DOB_Month -> child_2_DOB
+    child_2_DOB_Year -> child_2_DOB
+    child_3_DOB_Month -> child_3_DOB
+    child_3_DOB_Year -> child_3_DOB
+    child_4_DOB_Month -> child_4_DOB
+    child_4_DOB_Year -> child_4_DOB
+    child_5_DOB_Month -> child_5_DOB
+    child_5_DOB_Year -> child_5_DOB
+    
+    age_of_interest -> transformed_age_data
+    child_1_DOB -> age_of_interest
+    child_1_DOB -> transformed_age_data
+    child_2_DOB -> age_of_interest
+    child_2_DOB -> transformed_age_data
+    child_3_DOB -> age_of_interest
+    child_3_DOB -> transformed_age_data
+    child_4_DOB -> age_of_interest
+    child_4_DOB -> transformed_age_data
+    child_5_DOB -> age_of_interest
+    child_5_DOB -> transformed_age_data
+  }"
+) |>
+  tidy_dagitty() |>
+  ggdag() +
+  geom_dag_text(colour = "grey") +
+  theme_dag(base_size = 4)
+```
+
+The following is a diagram that depicts how data from `influenza_data`, was processed to data saved in, `transformed_influenza_data`.
+```{r}
+dagitty(
+  "dag {
+    bb=\"-0.5,-0.5,0.5,0.5\"
+    age_of_interest [pos=\"-0.054,0.157\"]
+    influenza_coverage_age [pos=\"0.192,0.029\"]
+    influenza_coverage_dosage [pos=\"0.210,-0.153\"]
+    influenza_data [pos=\"-0.401,-0.210\"]
+    influenza_first_dose [pos=\"-0.174,-0.062\"]
+    influenza_first_dose_date [pos=\"0.220,-0.394\"]
+    influenza_first_dose_month [pos=\"-0.219,-0.357\"]
+    influenza_first_dose_year [pos=\"-0.279,-0.439\"]
+    influenza_second_dose [pos=\"-0.172,0.036\"]
+    influenza_second_dose_date [pos=\"0.224,-0.253\"]
+    influenza_second_dose_month [pos=\"-0.131,-0.185\"]
+    influenza_second_dose_year [pos=\"-0.142,-0.283\"]
+    transformed_age_data [pos=\"-0.367,0.283\"]
+    transformed_influenza_data [pos=\"0.332,0.286\"]
+    age_of_interest -> influenza_coverage_age
+    age_of_interest -> transformed_influenza_data
+    influenza_coverage_age -> transformed_influenza_data
+    influenza_coverage_dosage -> transformed_influenza_data [pos=\"0.363,0.006\"]
+    influenza_data -> influenza_first_dose [pos=\"-0.401,-0.064\"]
+    influenza_data -> influenza_first_dose_month
+    influenza_data -> influenza_first_dose_year [pos=\"-0.499,-0.246\"]
+    influenza_data -> influenza_second_dose [pos=\"-0.435,-0.017\"]
+    influenza_data -> influenza_second_dose_month [pos=\"-0.365,-0.124\"]
+    influenza_data -> influenza_second_dose_year
+    influenza_first_dose -> influenza_coverage_age
+    influenza_first_dose -> influenza_coverage_dosage
+    influenza_first_dose_date -> transformed_influenza_data [pos=\"0.495,-0.195\"]
+    influenza_first_dose_month -> influenza_first_dose_date
+    influenza_first_dose_year -> influenza_first_dose_date
+    influenza_second_dose -> influenza_coverage_age
+    influenza_second_dose -> influenza_coverage_dosage
+    influenza_second_dose_date -> transformed_influenza_data [pos=\"0.469,-0.062\"]
+    influenza_second_dose_month -> influenza_second_dose_date
+    influenza_second_dose_year -> influenza_second_dose_date
+    transformed_age_data -> age_of_interest
+  }"
+) |>
+  tidy_dagitty() |>
+  ggdag() +
+  geom_dag_text(colour = "grey") +
+  theme_dag(base_size = 4)
+```
+
+The following is a diagram that depicts how data from `covid_data` was processed to become data in `transformed_covid_data`:
+1. An arrow from A -> B means that A was used to derive B
+```{r}
+dagitty(
+  "dag {
+    bb=\"-0.5,-0.5,0.5,0.5\"
+    age_of_interest [pos=\"-0.033,0.347\"]
+    covid_coverage_age [pos=\"0.223,0.077\"]
+    covid_coverage_dosage [pos=\"0.127,-0.044\"]
+    covid_data [pos=\"-0.470,-0.091\"]
+    covid_first_dose [pos=\"-0.323,0.085\"]
+    covid_first_dose_date [pos=\"0.021,-0.385\"]
+    covid_first_dose_month [pos=\"-0.283,-0.337\"]
+    covid_first_dose_year [pos=\"-0.290,-0.434\"]
+    covid_second_dose [pos=\"-0.315,0.177\"]
+    covid_second_dose_date [pos=\"0.062,-0.288\"]
+    covid_second_dose_month [pos=\"-0.259,-0.163\"]
+    covid_second_dose_year [pos=\"-0.263,-0.246\"]
+    covid_third_dose [pos=\"-0.365,0.256\"]
+    covid_third_dose_date [pos=\"0.062,-0.187\"]
+    covid_third_dose_month [pos=\"-0.207,-0.029\"]
+    covid_third_dose_year [pos=\"-0.270,-0.097\"]
+    transformed_age_data [pos=\"-0.302,0.362\"]
+    transformed_covid_data [pos=\"0.343,-0.203\"]
+    age_of_interest -> covid_coverage_age
+    age_of_interest -> transformed_covid_data [pos=\"0.457,0.183\"]
+    covid_coverage_age -> transformed_covid_data
+    covid_coverage_dosage -> transformed_covid_data
+    covid_data -> covid_first_dose [pos=\"-0.497,0.148\"]
+    covid_data -> covid_first_dose_month [pos=\"-0.419,-0.201\"]
+    covid_data -> covid_first_dose_year [pos=\"-0.496,-0.208\"]
+    covid_data -> covid_second_dose [pos=\"-0.497,0.142\"]
+    covid_data -> covid_second_dose_month
+    covid_data -> covid_second_dose_year
+    covid_data -> covid_third_dose [pos=\"-0.492,0.138\"]
+    covid_data -> covid_third_dose_month [pos=\"-0.386,0.099\"]
+    covid_data -> covid_third_dose_year [pos=\"-0.468,0.131\"]
+    covid_first_dose -> covid_coverage_age
+    covid_first_dose -> covid_coverage_dosage [pos=\"0.047,-0.021\"]
+    covid_first_dose_date -> transformed_covid_data [pos=\"0.474,-0.366\"]
+    covid_first_dose_month -> covid_first_dose_date
+    covid_first_dose_year -> covid_first_dose_date
+    covid_second_dose -> covid_coverage_age
+    covid_second_dose -> covid_coverage_dosage
+    covid_second_dose_date -> transformed_covid_data
+    covid_second_dose_month -> covid_second_dose_date
+    covid_second_dose_year -> covid_second_dose_date
+    covid_third_dose -> covid_coverage_age
+    covid_third_dose -> covid_coverage_dosage [pos=\"-0.132,0.211\"]
+    covid_third_dose_date -> transformed_covid_data
+    covid_third_dose_month -> covid_third_dose_date
+    covid_third_dose_year -> covid_third_dose_date
+    transformed_age_data -> age_of_interest
+    }
+  "
+) |>
+  tidy_dagitty() |>
+  ggdag() +
+  geom_dag_text(colour = "grey") +
+  theme_dag(base_size = 4)
+```
+
+The following is a diagram that depicts how data from `independent_variable_data` was processed to become `transformed_independent_variable_data`
+
+```{r}
+dag {
+bb="-0.5,-0.5,0.5,0.5"
+"STOPPED AT PARENT CHRONIC ILLNESS" [pos="0.215,-0.439"]
+bedridden [pos="-0.193,-0.117"]
+child_1_sex [pos="-0.499,0.115"]
+child_2_sex [pos="-0.493,0.198"]
+child_3_sex [pos="-0.475,0.271"]
+child_4_sex [pos="-0.458,0.351"]
+child_5_sex [pos="-0.465,0.437"]
+child_auntcles [pos="-0.175,-0.384"]
+child_brothers [pos="-0.106,0.371"]
+child_grand [pos="0.166,-0.050"]
+child_of_interest [pos="-0.093,0.303"]
+child_parents [pos="-0.206,-0.459"]
+child_siblings [pos="0.070,0.410"]
+child_sisters [pos="-0.098,0.462"]
+grandparents [pos="-0.027,0.003"]
+household_income [pos="0.164,0.061"]
+household_total [pos="0.089,-0.239"]
+independent_variable_data [pos="-0.344,0.021"]
+need_feeding [pos="-0.201,-0.185"]
+need_ventilation [pos="-0.196,-0.255"]
+parent_1_age [pos="-0.236,0.211"]
+parent_1_sex [pos="-0.062,0.225"]
+parent_2_sex [pos="-0.305,0.274"]
+parents_in_law [pos="-0.015,-0.069"]
+parents_marital_status [pos="0.207,0.228"]
+sex_of_interest [pos="-0.297,0.387"]
+siblings [pos="-0.336,-0.336"]
+spouses [pos="-0.422,-0.435"]
+total_individuals [pos="0.016,-0.159"]
+vulnerable_individuals [pos="0.031,-0.316"]
+bedridden -> vulnerable_individuals [pos="-0.073,-0.149"]
+child_1_sex -> sex_of_interest
+child_2_sex -> sex_of_interest
+child_3_sex -> sex_of_interest
+child_4_sex -> sex_of_interest
+child_5_sex -> sex_of_interest
+child_brothers -> child_siblings
+child_sisters -> child_siblings
+grandparents -> child_grand
+independent_variable_data -> bedridden
+independent_variable_data -> child_1_sex
+independent_variable_data -> child_2_sex [pos="-0.421,0.153"]
+independent_variable_data -> child_3_sex
+independent_variable_data -> child_4_sex
+independent_variable_data -> child_5_sex
+independent_variable_data -> grandparents
+independent_variable_data -> household_income
+independent_variable_data -> need_feeding [pos="-0.328,-0.079"]
+independent_variable_data -> need_ventilation [pos="-0.334,-0.178"]
+independent_variable_data -> parent_1_age
+independent_variable_data -> parent_1_sex
+independent_variable_data -> parent_2_sex [pos="-0.357,0.110"]
+independent_variable_data -> parents_in_law
+independent_variable_data -> parents_marital_status
+independent_variable_data -> siblings
+independent_variable_data -> spouses
+independent_variable_data -> total_individuals [pos="-0.164,-0.062"]
+need_feeding -> vulnerable_individuals [pos="-0.075,-0.219"]
+need_ventilation -> vulnerable_individuals
+parents_in_law -> child_grand
+sex_of_interest -> child_brothers
+sex_of_interest -> child_of_interest
+sex_of_interest -> child_sisters
+siblings -> child_auntcles
+spouses -> child_parents
+total_individuals -> household_total
+}
+
+```
