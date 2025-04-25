@@ -18,10 +18,49 @@ data <- readRDS(
   )
 
 
+# exclude invalid responses -----------------------------------------------
+
+# first exclusion, exclude invalid responses from the checking variable
+# based on Q22, "Please select the second-to-last option from the following options."
+
+  # document the number of initial responses
+  nresponses_before_first_exclusion <- nrow(data)
+  paste(
+    "There are a total of",
+    nresponses_before_first_exclusion,
+    "responses"
+  )
+  
+  # filter only for variables which proided a valid response in the checking variable
+  cleaned_data <- data |>
+    filter(Q22 == 4)
+  
+  # document the number of responses after the checking variable
+  nresponses_after_first_exclusion <- nrow(data)
+  
+  # the number of responses removed by the first exclusion
+  nresponses_removed_first_exclusion <- 
+    nresponses_before_first_exclusion - nresponses_after_first_exclusion
+  
+  # print number of responses excluded by the first exclusion
+  paste(
+    "The 1st exclusion, 'please select the second-to-last option from the following options', removed:", 
+    nresponses_removed_first_exclusion,
+    "responses"
+    )
+  
+  # print the number of responses before and prior
+  paste(
+    "After exclusion there are now",
+    nresponses_after_first_exclusion,
+    "responses"
+  )
+  
+
 # create age_data ---------------------------------------------------------
 # Select the columns of interest
 
-age_data <- data |>
+age_data <- cleaned_data |>
   select(
     # Year of birth of each child (yyyy)
     child_1_DOB_year = Q4.1,
@@ -55,7 +94,7 @@ saveRDS(
 # Select the columns of interest and combine them into a data frame
 # for the influenza vaccine:
 
-influenza_data <- data |>
+influenza_data <- cleaned_data |>
   select(
     #status of each dose
     influenza_first_dose = Q65.32,
@@ -81,20 +120,20 @@ saveRDS(
 # select the columns of interest and combine them into a data frame
 # for the covid vaccine:
 
-covid_data <- data |>
+covid_data <- cleaned_data |>
   select(
-        # status of each dose
-        covid_first_dose = Q65.34,
-        covid_second_dose = Q65.35,
-        covid_third_dose = Q65.36,
-        
-        # date of each dose 
-        covid_first_dose_year = Q65S1.67,
-        covid_first_dose_month = Q65S1.68,
-        covid_second_dose_year = Q65S1.69,
-        covid_second_dose_month = Q65S1.70,
-        covid_third_dose_year = Q65S1.71,
-        covid_third_dose_month = Q65S1.72,
+    # status of each dose
+    covid_first_dose = Q65.34,
+    covid_second_dose = Q65.35,
+    covid_third_dose = Q65.36,
+    
+    # date of each dose 
+    covid_first_dose_year = Q65S1.67,
+    covid_first_dose_month = Q65S1.68,
+    covid_second_dose_year = Q65S1.69,
+    covid_second_dose_month = Q65S1.70,
+    covid_third_dose_year = Q65S1.71,
+    covid_third_dose_month = Q65S1.72
   )
 
 # save cleaned covid data
@@ -109,7 +148,7 @@ saveRDS(
 
 # Selecting and renaming columns of interest
 
-independent_variables <- data |>
+independent_variables <- cleaned_data |>
   select(
     # Sex of each child
     child_1_sex = Q4S1.1,
