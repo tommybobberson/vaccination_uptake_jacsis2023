@@ -29,14 +29,15 @@ data <- readRDS(
     "There are a total of",
     nresponses_before_first_exclusion,
     "responses"
-  )
+  ) |>
+    print()
   
   # filter only for variables which proided a valid response in the checking variable
   cleaned_data <- data |>
     filter(Q22 == 4)
   
   # document the number of responses after the checking variable
-  nresponses_after_first_exclusion <- nrow(data)
+  nresponses_after_first_exclusion <- nrow(cleaned_data)
   
   # the number of responses removed by the first exclusion
   nresponses_removed_first_exclusion <- 
@@ -47,14 +48,16 @@ data <- readRDS(
     "The 1st exclusion, 'please select the second-to-last option from the following options', removed:", 
     nresponses_removed_first_exclusion,
     "responses"
-    )
+    ) |>
+    print()
   
   # print the number of responses before and prior
   paste(
     "After exclusion there are now",
     nresponses_after_first_exclusion,
     "responses"
-  )
+  ) |>
+    print()
   
 
 # create age_data ---------------------------------------------------------
