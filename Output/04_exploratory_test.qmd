@@ -21,6 +21,7 @@ library(lubridate)
 library(knitr)
 library(reshape2)
 library(kableExtra)
+library(binom)
 
 # custom functions
 source(here("Scripts", "functions", "exploratory functions.R"))
@@ -79,8 +80,56 @@ inf_ivd <- bind_cols(inf, ivd)
 cov_ivd <- bind_cols(cov, ivd)
 ```
 
+## child's number of parents, stratified by single mother or single father
+examinig how the number of parents a child has (2, single father or single mother) affects the child's uptake of the:
+
+covid vaccine
+```{r}
+
+
+function_stratify_child_parents <- 
+function(data) {
+  mutate(
+    data,
+    child_parents_strat = case_when(
+      child_parents == 2 ~ "both",
+      child_parents == 1 & parent_1_sex == 0 ~ "father only",
+      child_parents == 1 & parent_1_sex == 1 ~ "mother only"
+    ) 
+  )
+}
+
+cov_ivd |> 
+  function_stratify_child_parents() -> cov_child_parents_strat
+
+inf_ivd |>
+  function_stratify_child_parents() -> inf_child_parents_strat
+
+  
+cov_child_parents_strat |>
+  function_data_stratify(child_parents_strat, as.factor, covid_coverage_age) |>
+  function_plot_proportion_cols(child_parents_strat, covid_coverage_age) +
+  function_plot_label_count(child_parents_strat, covid_coverage_age)
+
+cov_child_parents_strat |>
+  function_data_stratify(child_parents_strat, as.factor, covid_coverage_dosage) |>
+  function_plot_proportion_cols(child_parents_strat, covid_coverage_dosage) +
+  function_plot_label_count(child_parents_strat, covid_coverage_dosage)
+
+inf_child_parents_strat |>
+  function_data_stratify(child_parents_strat, as.factor, influenza_coverage_age) |>
+  function_plot_proportion_cols(child_parents_strat, influenza_coverage_age) +
+  function_plot_label_count(child_parents_strat, influenza_coverage_age)
+
+inf_child_parents_strat |>
+  function_data_stratify(child_parents_strat, as.factor, influenza_coverage_dosage) |>
+  function_plot_proportion_cols(child_parents_strat, influenza_coverage_dosage) +
+  function_plot_label_count(child_parents_strat, influenza_coverage_dosage)
+```
+For the covid vaccine, children with single mothers and fathers both display an increased uptake of the covid vaccination as compare to children with both parents. However, for the influenza vaccine, children with single mothers display a lower uptake of the vaccine as compared to children with a single father and with both parents
+
 ## parent's age
-Examining how the upatke of the influenza and covid vaccines by the COI varies with the responding parent's age
+Examining how the uptake of the influenza and covid vaccines by the COI varies with the responding parent's age
 
 ```{r}
 cov_ivd |>
@@ -121,7 +170,6 @@ cov_ivd |>
   )) |>
   summarise(count = n(), .by = c(parent_chronic_illness, parent_1_age)) |>
   mutate(proportion = count/sum(count), .by = (parent_1_age)) |>
-  
 
   
   ggplot() +
@@ -159,7 +207,7 @@ Looknig at how vaccine uptake varies with every single chronic illnesss
 cov_ivd |>
   filter(!is.na(covid_coverage_dosage)) |>
   select(c(starts_with("respondent_"), covid_coverage_dosage)) |>
-  select(- c(respondent_employment_status, respondent_industry_of_work, respondent_sex, respondent_age)) |>
+  select(- c(respondent_employment_status, respondent_industry_of_work)) |>
 #  select(
 #    all_of(c("covid_coverage_dosage", chronic_illnesses))
 #  ) |>
@@ -190,16 +238,61 @@ cov_ivd |>
     .by = c(illness, illness_experience)
   ) |>
   
+   # calculate proportions of each disease and each dosage by status
+  mutate(
+    proportions = count/sum(count),
+    
+    # variables for confidence intervals of proportions, x = successful cases, n = total cases
+    x = count, 
+    n = sum(count),
+    .by = c(illness, illness_experience)
+  ) -> covid_dosage_stratified_chronic_illnesses
+  
+# agresti coulli confidence intervals
+covid_dosage_stratified_chronic_illnesses |>
+  
+  #caluclate the confidence intervals
+  mutate(
+    lower_CI_agresti = binom.agresti.coull(x, n)$lower,
+    upper_CI_agresti = binom.agresti.coull(x, n)$upper
+  ) |>
+ 
   ggplot(aes(x = covid_coverage_dosage, y = proportions)) +
   geom_col(aes(fill = illness_experience), position = "dodge") +
-  facet_wrap(vars(illness))
+  geom_errorbar(
+    aes(ymin = lower_CI_agresti, ymax = upper_CI_agresti, group = illness_experience),
+    position = "dodge"
+  ) +
+  function_plot_label_count(illness_experience, covid_coverage_dosage) +
+  facet_wrap(vars(illness)) +
+  labs(title = "with agresti coulli intervals")
+
+# wilson confidence intervals
+covid_dosage_stratified_chronic_illnesses |>
+  
+  #caluclate the confidence intervals
+  mutate(
+    lower_CI_wilson = binom.wilson(x, n)$lower,
+    upper_CI_wilson = binom.wilson(x, n)$upper
+  ) |>
+ 
+  ggplot(aes(x = covid_coverage_dosage, y = proportions)) +
+  geom_col(aes(fill = illness_experience), position = "dodge") +
+  geom_errorbar(
+    aes(ymin = lower_CI_wilson, ymax = upper_CI_wilson, group = illness_experience),
+    position = "dodge"
+  ) +
+  function_plot_label_count(illness_experience, covid_coverage_dosage) +
+  facet_wrap(vars(illness)) +
+  labs(title = "with wilson intervals")
 ```
+
 ```{r}
 # coverage
 cov_ivd |>
   filter(!is.na(covid_coverage_age)) |>
   select(c(starts_with("respondent_"), covid_coverage_age)) |>
-  select(- c(respondent_employment_status, respondent_industry_of_work, respondent_sex, respondent_age)) |>
+  select(- c(respondent_employment_status, respondent_industry_of_work)) |>
 #  select(
 #    all_of(c("covid_coverage_dosage", chronic_illnesses))
 #  ) |>
@@ -227,12 +320,50 @@ cov_ivd |>
   # calculate proportions of each disease and each dosage by status
   mutate(
     proportions = count/sum(count),
+    
+    # variables for confidence intervals of proportions, x = successful cases, n = total cases
+    x = count, 
+    n = sum(count),
     .by = c(illness, illness_experience)
-  ) |>
+  ) -> covid_age_stratified_chronic_illnesses
+ 
+# agresti coulli confidence intervals
+covid_age_stratified_chronic_illnesses |>
   
+  #caluclate the confidence intervals
+  mutate(
+    lower_CI_agresti = binom.agresti.coull(x, n)$lower,
+    upper_CI_agresti = binom.agresti.coull(x, n)$upper
+  ) |>
+ 
   ggplot(aes(x = covid_coverage_age, y = proportions)) +
   geom_col(aes(fill = illness_experience), position = "dodge") +
-  facet_wrap(vars(illness))
+  geom_errorbar(
+    aes(ymin = lower_CI_agresti, ymax = upper_CI_agresti, group = illness_experience),
+    position = "dodge"
+  ) +
+  function_plot_label_count(illness_experience, covid_coverage_age) +
+  facet_wrap(vars(illness)) +
+  labs(title = "with agresti coulli intervals")
+
+# wilson confidence intervals
+covid_age_stratified_chronic_illnesses |>
+  
+  #caluclate the confidence intervals
+  mutate(
+    lower_CI_wilson = binom.wilson(x, n)$lower,
+    upper_CI_wilson = binom.wilson(x, n)$upper
+  ) |>
+ 
+  ggplot(aes(x = covid_coverage_age, y = proportions)) +
+  geom_col(aes(fill = illness_experience), position = "dodge") +
+  geom_errorbar(
+    aes(ymin = lower_CI_wilson, ymax = upper_CI_wilson, group = illness_experience),
+    position = "dodge"
+  ) +
+  function_plot_label_count(illness_experience, covid_coverage_age) +
+  facet_wrap(vars(illness)) +
+  labs(title = "with wilson intervals")
 ```
 
 _**Categories for the Covid vaccine**_
@@ -278,7 +409,7 @@ Looking at how uptake of the influenza vaccine varies with each illness
 inf_ivd |>
   filter(!is.na(influenza_coverage_dosage)) |>
   select(c(starts_with("respondent_"), influenza_coverage_dosage)) |>
-  select(- c(respondent_employment_status, respondent_industry_of_work, respondent_sex, respondent_age)) |>
+  select(- c(respondent_employment_status, respondent_industry_of_work)) |>
 #  select(
 #    all_of(c("covid_coverage_dosage", chronic_illnesses))
 #  ) |>
@@ -306,12 +437,51 @@ inf_ivd |>
   # calculate proportions of each disease and each dosage by status
   mutate(
     proportions = count/sum(count),
+    
+    # variables for confidence intervals of proportions, x = successful cases, n = total cases
+    x = count, 
+    n = sum(count),
     .by = c(illness, illness_experience)
-  ) |>
+  ) -> influenza_dosage_stratified_chronic_illnesses
+ 
+# agresti coulli confidence intervals
+influenza_dosage_stratified_chronic_illnesses |>
   
+  #caluclate the confidence intervals
+  mutate(
+    lower_CI_agresti = binom.agresti.coull(x, n)$lower,
+    upper_CI_agresti = binom.agresti.coull(x, n)$upper
+  ) |>
+ 
   ggplot(aes(x = influenza_coverage_dosage, y = proportions)) +
   geom_col(aes(fill = illness_experience), position = "dodge") +
-  facet_wrap(vars(illness))
+  geom_errorbar(
+    aes(ymin = lower_CI_agresti, ymax = upper_CI_agresti, group = illness_experience),
+    position = "dodge"
+  ) +
+  function_plot_label_count(illness_experience, influenza_coverage_dosage) +
+  facet_wrap(vars(illness)) +
+  labs(title = "with agresti coulli intervals")
+
+# wilson confidence intervals
+influenza_dosage_stratified_chronic_illnesses |>
+  
+  #caluclate the confidence intervals
+  mutate(
+    lower_CI_wilson = binom.wilson(x, n)$lower,
+    upper_CI_wilson = binom.wilson(x, n)$upper
+  ) |>
+ 
+  ggplot(aes(x = influenza_coverage_dosage, y = proportions)) +
+  geom_col(aes(fill = illness_experience), position = "dodge") +
+  geom_errorbar(
+    aes(ymin = lower_CI_wilson, ymax = upper_CI_wilson, group = illness_experience),
+    position = "dodge"
+  ) +
+  function_plot_label_count(illness_experience, influenza_coverage_dosage) +
+  facet_wrap(vars(illness)) +
+  labs(title = "with wilson intervals")
+  
 ```
 
 ```{r}
@@ -319,7 +489,7 @@ inf_ivd |>
 inf_ivd |>
   filter(!is.na(influenza_coverage_age)) |>
   select(c(starts_with("respondent_"), influenza_coverage_age)) |>
-  select(- c(respondent_employment_status, respondent_industry_of_work, respondent_sex, respondent_age)) |>
+  select(- c(respondent_employment_status, respondent_industry_of_work)) |>
 #  select(
 #    all_of(c("covid_coverage_dosage", chronic_illnesses))
 #  ) |>
@@ -347,12 +517,50 @@ inf_ivd |>
   # calculate proportions of each disease and each dosage by status
   mutate(
     proportions = count/sum(count),
+    
+    # variables for confidence intervals of proportions, x = successful cases, n = total cases
+    x = count, 
+    n = sum(count),
     .by = c(illness, illness_experience)
-  ) |>
+  ) -> influenza_age_stratified_chronic_illnesses
+ 
+# agresti coulli confidence intervals
+influenza_age_stratified_chronic_illnesses |>
   
+  #caluclate the confidence intervals
+  mutate(
+    lower_CI_agresti = binom.agresti.coull(x, n)$lower,
+    upper_CI_agresti = binom.agresti.coull(x, n)$upper
+  ) |>
+ 
   ggplot(aes(x = influenza_coverage_age, y = proportions)) +
   geom_col(aes(fill = illness_experience), position = "dodge") +
-  facet_wrap(vars(illness))
+  geom_errorbar(
+    aes(ymin = lower_CI_agresti, ymax = upper_CI_agresti, group = illness_experience),
+    position = "dodge"
+  ) +
+  function_plot_label_count(illness_experience, influenza_coverage_age) +
+  facet_wrap(vars(illness)) +
+  labs(title = "with agresti coulli intervals")
+
+# wilson confidence intervals
+influenza_age_stratified_chronic_illnesses |>
+  
+  #caluclate the confidence intervals
+  mutate(
+    lower_CI_wilson = binom.wilson(x, n)$lower,
+    upper_CI_wilson = binom.wilson(x, n)$upper
+  ) |>
+ 
+  ggplot(aes(x = influenza_coverage_age, y = proportions)) +
+  geom_col(aes(fill = illness_experience), position = "dodge") +
+  geom_errorbar(
+    aes(ymin = lower_CI_wilson, ymax = upper_CI_wilson, group = illness_experience),
+    position = "dodge"
+  ) +
+  function_plot_label_count(illness_experience, influenza_coverage_age) +
+  facet_wrap(vars(illness)) +
+  labs(title = "with wilson intervals")
 ```
 
 _**Categories for the influenza vaccine**_
@@ -430,7 +638,7 @@ _**Categories for the influenza vaccine**_
 # select only columns that correspond to chronic illness names
 respondent_chronic_illnesses <- cov_ivd |>
   select(starts_with("respondent_")) |>
-  select(- c(respondent_age, respondent_sex, respondent_employment_status, respondent_industry_of_work)) |>
+  select(- c(respondent_employment_status, respondent_industry_of_work)) |>
   colnames() 
 
 chronic_illnesses <- c()
@@ -525,27 +733,35 @@ the most common order is Prev > Never > Curr sometimes followed by Prev > Curr >
 # covid vaccine
 # un-combined marital statuses
 function_data_stratify(cov_ivd, parents_marital_status, as.factor, covid_coverage_age) |>
+  function_calculate_confidence_intervals(parents_marital_status, "wilson") |>
   function_plot_proportion_cols(parents_marital_status, covid_coverage_age) +
+  function_plot_confidence_intervals(parents_marital_status) +
   function_plot_label_count(parents_marital_status, covid_coverage_age) +
   scale_fill_discrete(labels = c("married", "bereaved", "divorced", "unmarried"))
 
 # combined marital statuses
 function_data_stratify(cov_ivd, test_parents_marital_status, as.factor, covid_coverage_age) |>
+  function_calculate_confidence_intervals(test_parents_marital_status, "wilson") |>
   function_plot_proportion_cols(test_parents_marital_status, covid_coverage_age) +
   function_plot_label_count(test_parents_marital_status, covid_coverage_age) +
+  function_plot_confidence_intervals(test_parents_marital_status) +
   scale_fill_discrete(labels = c("married", "not married"))
 
 # influenza vaccine
 # un-combined marital statuses
 function_data_stratify(inf_ivd, parents_marital_status, as.factor, influenza_coverage_age) |>
+  function_calculate_confidence_intervals(parents_marital_status, "wilson") |>
   function_plot_proportion_cols(parents_marital_status, influenza_coverage_age) +
   function_plot_label_count(parents_marital_status, influenza_coverage_age) +
+  function_plot_confidence_intervals(parents_marital_status) +
   scale_fill_discrete(labels = c("married", "bereaved", "divorced", "unmarried"))
 
 # combined marital statuses
 function_data_stratify(inf_ivd, test_parents_marital_status, as.factor, influenza_coverage_age) |>
+  function_calculate_confidence_intervals(test_parents_marital_status, "wilson") |>  
   function_plot_proportion_cols(test_parents_marital_status, influenza_coverage_age) +
   function_plot_label_count(test_parents_marital_status, influenza_coverage_age) +
+  function_plot_confidence_intervals(test_parents_marital_status) +
   scale_fill_discrete(labels = c("married", "not married"))
 ```
 As is consistent when using either combined or uncombined marital statuses, being divorced or unmarried (uncombined) or not married (combined) are both positively assocaited with higher uptake of full covid vacination as compareid to being married. This trend is either reversed for the covid vaccination or negilgible .(we have excluded COI associated with bereavement due to the small sample size)
@@ -676,6 +892,38 @@ inf_age_father_mother_ed |>
 Looking at the influenza data it seems as if the proportion of children vaccinated increases much more with respect to the mother's highest educational attainment as opposed to the father's highest educational attainment - as can be seen from the steeper increases in propritions within each father education band, or the uniform rise in influenza vaccination levles moving across columns of differing highest mother educations
 
 Furthermore, education elvels do seem to have a greater impact on the uptake of influenza vaccines as opposed to the uptake of covid vaccines.
+
+## Parents education, but with JC and VC seperated from tertiary with
+mothers' highest education
+```{r}
+# covid coverage by age by mothers' higest education
+cov_ivd |>
+  function_data_stratify(test_mother_highest_education, as.factor, covid_coverage_age) |>
+  function_calculate_confidence_intervals(test_mother_highest_education, "wilson") |>
+  function_plot_proportion_cols(test_mother_highest_education, covid_coverage_age) +
+  function_plot_label_count(test_mother_highest_education, covid_coverage_age) +
+  function_plot_confidence_intervals(test_mother_highest_education)
+
+inf_ivd |>
+  function_data_stratify(test_mother_highest_education, as.factor, influenza_coverage_age) |>
+  function_calculate_confidence_intervals(test_mother_highest_education, "wilson") |>
+  function_plot_proportion_cols(test_mother_highest_education, influenza_coverage_age) +
+  function_plot_label_count(test_mother_highest_education, influenza_coverage_age) +
+  function_plot_confidence_intervals(test_mother_highest_education)
+```
+father's highest education
+```{r}
+# covid coverage by age by mothers' higest education
+cov_ivd |>
+  function_data_stratify(test_father_highest_education, as.factor, covid_coverage_age) |>
+  function_plot_proportion_cols(test_father_highest_education, covid_coverage_age) +
+  function_plot_label_count(test_father_highest_education, covid_coverage_age)
+
+inf_ivd |>
+  function_data_stratify(test_father_highest_education, as.factor, influenza_coverage_age) |>
+  function_plot_proportion_cols(test_father_highest_education, influenza_coverage_age) +
+  function_plot_label_count(test_father_highest_education, influenza_coverage_age)
+```
 
 ## Unstratified Household Income vs stratifiged household income
 ```{r}

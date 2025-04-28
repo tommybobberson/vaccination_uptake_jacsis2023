@@ -19,6 +19,7 @@ library(tidyverse)
 library(lubridate)
 library(knitr)
 library(reshape2)
+library(binom)
 
 # custom functions
 source(here("Scripts", "functions", "exploratory functions.R"))
@@ -1382,6 +1383,8 @@ inf_sex_age_dosage |>
 ```
 What could account for the increase in proportion of female children (aged 6-10) who received 0 doses of the influenza vaccine? And subsequently, lack of females aged 6 to 8, who received 2 doses of the influenza vaccine
 
+# BEGIN COMPARISON HERE
+
 ##Parents
 
 ### Number of parents
@@ -1400,11 +1403,13 @@ cov_ivd |>
   filter(!is.na(covid_coverage_age)) |>
   summarise(count = n(), .by = c(child_parents, covid_coverage_age)) |>
   mutate(proportion = count/sum(count), .by = child_parents) |>
+  function_calculate_confidence_intervals(child_parents, "wilson") |>
   mutate(child_parents = factor(child_parents)) |>
   
   ggplot(aes(x = covid_coverage_age, y = proportion)) +
   geom_col(aes(fill = child_parents), position = "dodge") +
   geom_text(aes(label = count, group = child_parents), position = position_dodge(width = 0.9), vjust = - 0.2) +
+  function_plot_confidence_intervals(child_parents) +
   labs(
     title = "Proportion of children with different coverages \n from the covid vaccine by number of parents"
   )
@@ -1415,11 +1420,13 @@ cov_ivd |>
   filter(!is.na(covid_coverage_dosage)) |>
   summarise(count = n(), .by = c(child_parents, covid_coverage_dosage)) |>
   mutate(proportion = count/sum(count), .by = child_parents) |>
+  function_calculate_confidence_intervals(child_parents, "wilson") |>
   mutate(child_parents = factor(child_parents)) |>
   
   ggplot(aes(x = covid_coverage_dosage, y = proportion)) +
   geom_col(aes(fill = child_parents), position = "dodge") +
   geom_text(aes(label = count, group = child_parents), position = position_dodge(width = 0.9), vjust = - 0.2) +
+  function_plot_confidence_intervals(child_parents) +
   labs(
     title = "Proportion of children receiving each dose of \n the vaccine by  number of parents"
   )
@@ -1432,11 +1439,13 @@ inf_ivd |>
   filter(!is.na(influenza_coverage_age)) |>
   summarise(count = n(), .by = c(child_parents, influenza_coverage_age)) |>
   mutate(proportion = count/sum(count), .by = child_parents) |>
+  function_calculate_confidence_intervals(child_parents, "wilson") |>
   mutate(child_parents = factor(child_parents)) |>
   
   ggplot(aes(x = influenza_coverage_age, y = proportion)) +
   geom_col(aes(fill = child_parents), position = "dodge") +
   geom_text(aes(label = count, group = child_parents), position = position_dodge(width = 0.9), vjust = - 0.2) +
+  function_plot_confidence_intervals(child_parents) +
   labs(
     title = "Proportion of children with different coverages \n from the influenza vaccine by number of parents"
   )
@@ -1624,18 +1633,22 @@ cov_ivd |>
   filter(!is.na(covid_coverage_dosage) & !is.na(parent_chronic_illness)) |>
   summarise(count = n(), .by = c(covid_coverage_dosage, parent_chronic_illness)) |>
   mutate(proportion = count/sum(count), .by = parent_chronic_illness) |>
+  function_calculate_confidence_intervals(parent_chronic_illness, "wilson") |>
   
   ggplot(aes(x = covid_coverage_dosage, y = proportion)) +
   geom_col(aes(fill = parent_chronic_illness), position = "dodge") +
+  function_plot_confidence_intervals(parent_chronic_illness) +
   labs(title = "uptake of the covid vaccination (doses) in children by \n their parent's chronic illness status", subtitle = "0 = Never, 1 = No longer, 2 = Yes")
 
 cov_ivd |>
   filter(!is.na(covid_coverage_age) & !is.na(parent_chronic_illness)) |>
   summarise(count = n(), .by = c(covid_coverage_age, parent_chronic_illness)) |>
   mutate(proportion = count/sum(count), .by = parent_chronic_illness) |>
+  function_calculate_confidence_intervals(parent_chronic_illness, "wilson") |>
   
   ggplot(aes(x = covid_coverage_age, y = proportion)) +
   geom_col(aes(fill = parent_chronic_illness), position = "dodge") +
+  function_plot_confidence_intervals(parent_chronic_illness) +
   labs(title = "covid vaccination status in children by \n their parent's chronic illnes status", subtitle = "0 = Never, 1 = No longer, 2 = Yes")
         
 ```
@@ -1718,9 +1731,11 @@ inf_ivd |>
   filter(!is.na(influenza_coverage_age) & child_parents == 1 & !is.na(parent_chronic_illness)) |>
   summarise(count = n(), .by = c(influenza_coverage_age, parent_chronic_illness)) |>
   mutate(proportion = count/sum(count), .by = parent_chronic_illness) |>
+  function_calculate_confidence_intervals(parent_chronic_illness, "wilson") |>
   
   ggplot(aes(x = influenza_coverage_age, y = proportion)) +
   geom_col(aes(fill = parent_chronic_illness), position = "dodge") +
+  function_plot_confidence_intervals(parent_chronic_illness) +
   labs(title = "influenza vaccination status in children by \n their parent's chronic illnes status", subtitle = "0 = Never, 1 = No longer, 2 = Yes")
         
 ```
@@ -1737,19 +1752,33 @@ cov_ivd |>
   filter(!is.na(covid_coverage_dosage) & !is.na(parents_healthcare)) |>
   summarise(count = n(), .by = c(covid_coverage_dosage, parents_healthcare)) |>
   mutate(proportion = count/sum(count), .by = parents_healthcare) |>
+  function_calculate_confidence_intervals(parents_healthcare, "wilson") |>
   
   ggplot(aes(x = covid_coverage_dosage, y = proportion)) +
   geom_col(aes(fill = parents_healthcare), position = "dodge") +
-  labs(title = "Uptake of the covid vaccine by doses for children \n whose parents work or don't work in healthcare")
+  function_plot_confidence_intervals(parents_healthcare) +
+  labs(title = "Uptake of the covid vaccine by doses for children \n whose parents work or don't work in healthcare") +
+  scale_fill_discrete(
+    labels = c(
+    "0" = "neither work in healthcare", "1" = "responding father works in health", "2" = "responding mother works in healthcare"
+    )
+  )
 
 cov_ivd |>
   filter(!is.na(covid_coverage_age) & !is.na(parents_healthcare)) |>
   summarise(count = n(), .by = c(covid_coverage_age, parents_healthcare)) |>
   mutate(proportion = count/sum(count), .by = parents_healthcare) |>
+  function_calculate_confidence_intervals(parents_healthcare, "wilson") |>
   
   ggplot(aes(x = covid_coverage_age, y = proportion)) +
   geom_col(aes(fill = parents_healthcare), position = "dodge") +
-  labs(title = "Uptake of the covid vaccine by coverage for children \n whose parents work or don't work in healthcare")
+  function_plot_confidence_intervals(parents_healthcare) +
+  labs(title = "Uptake of the covid vaccine by coverage for children \n whose parents work or don't work in healthcare") +
+  scale_fill_discrete(
+    labels = c(
+    "0" = "neither work in healthcare", "1" = "responding father works in health", "2" = "responding mother works in healthcare"
+    )
+  )
 ```
 ***The influenza vaccine***
 ```{r}
@@ -1760,19 +1789,33 @@ inf_ivd |>
   
   ggplot(aes(x = influenza_coverage_dosage, y = proportion)) +
   geom_col(aes(fill = parents_healthcare), position = "dodge") +
-  labs(title = "Uptake of the influenza vaccine by doses for children \n whose parents work or don't work in healthcare")
+  labs(title = "Uptake of the influenza vaccine by doses for children \n whose parents work or don't work in healthcare") +
+  scale_fill_discrete(
+    labels = c(
+    "0" = "neither work in healthcare", "1" = "responding father works in health", "2" = "responding mother works in healthcare"
+    )
+  )
 
 inf_ivd |>
   filter(!is.na(influenza_coverage_age) & !is.na(parents_healthcare)) |>
   summarise(count = n(), .by = c(influenza_coverage_age, parents_healthcare)) |>
   mutate(proportion = count/sum(count), .by = parents_healthcare) |>
+  function_calculate_confidence_intervals(parents_healthcare, "agresti-coull") |>
   
   ggplot(aes(x = influenza_coverage_age, y = proportion)) +
   geom_col(aes(fill = parents_healthcare), position = "dodge") +
-  labs(title = "Uptake of the influenza vaccination by coverage for children \n whose parents work or don't work in healthcare")
+  function_plot_confidence_intervals(parents_healthcare) +
+  labs(title = "Uptake of the influenza vaccination by coverage for children \n whose parents work or don't work in healthcare") +
+  scale_fill_discrete(
+    labels = c(
+    "0" = "neither work in healthcare", "1" = "responding father works in health", "2" = "responding mother works in healthcare"
+    )
+  )
 ```
 
-Whilst a child's **responding parent** working in healthcare is strongly correlated with an increase in the uptake of both the covid and influenza vaccines in the child, this is especially pronounced with regards to the influenza vaccine
+Whilst a child's **responding parent** working in healthcare is strongly correlated with an increase in the uptake of both the covid and influenza vaccines in the child, this is especially pronounced with regards to the influenza vaccine.
+
+Once again, a child's mother working in healthcare is associated with a greater willingess to vaccinate their children as opposed to a child's father working in healthcare. Furthermore, it can be seen that a child's father working in healthcare has a negative effect on the vaccination uptake of a child.
 
 
 
@@ -1985,7 +2028,8 @@ inf_ivd |>
     father_highest_education = factor(father_highest_education)
   ) |>
   summarise(count = n(), .by = c(mother_highest_education, father_highest_education, influenza_coverage_age)) |>
-  mutate(proportion = count/sum(count), .by = c(mother_highest_education, father_highest_education)) -> inf_age_father_mother_ed
+  mutate(proportion = count/sum(count), .by = c(mother_highest_education, father_highest_education)) ->
+  inf_age_father_mother_ed
 
 # influenza vax uptake, varying mother's highest educational attainment for each educational attainment of the father
 inf_age_father_mother_ed |>
@@ -2015,7 +2059,7 @@ Furthermore, education elvels do seem to have a greater impact on the uptake of 
 **The child's influenza vaccination status**
 ```{r}
 inf_ivd |>
-  filter(!is.na(parent_influenza) & !is.na(influenza_coverage_dosage)) |>
+  filter(!is.na(parent_influenza) & !is.na(influenza_coverage_age)) |>
   pivot_longer(
     cols = c(influenza_coverage_dosage, influenza_coverage_age),
     values_to = "degree",
@@ -2023,10 +2067,22 @@ inf_ivd |>
   ) |>
   summarise(count = n(), .by = c(degree, type_of_coverage, parent_influenza)) |>
   mutate(proportion = count/sum(count), .by = c(type_of_coverage, parent_influenza)) |>
-  
+  mutate(
+    CI_max = binom.agresti.coull(
+      x = count,
+      n = sum(count)
+      )$upper,
+    CI_min = binom.agresti.coull(
+      x = count,
+      n = sum(count)
+    )$lower,
+    .by = c(type_of_coverage, parent_influenza)
+  ) |>
+
   ggplot(aes(x = degree, y = proportion)) +
   facet_wrap(vars(type_of_coverage)) +
   geom_col(aes(fill = parent_influenza), position = "dodge") +
+  function_plot_confidence_intervals(parent_influenza) +
   geom_text(aes(group = parent_influenza, label = count), position = position_dodge(width = 0.9), vjust = -0.3) +
   scale_fill_discrete(
     labels = c("0" = "No",
@@ -2045,10 +2101,23 @@ cov_ivd |>
   ) |>
   summarise(count = n(), .by = c(degree, type_of_coverage, parent_influenza)) |>
   mutate(proportion = count/sum(count), .by = c(type_of_coverage, parent_influenza)) |>
+  mutate(
+    CI_max = binom.agresti.coull(
+      x = count,
+      n = sum(count)
+      )$upper,
+    CI_min = binom.agresti.coull(
+      x = count,
+      n = sum(count)
+    )$lower,
+    .by = c(type_of_coverage,parent_influenza)
+  ) |>
+
   
   ggplot(aes(x = degree, y = proportion)) +
   facet_wrap(vars(type_of_coverage)) +
   geom_col(aes(fill = parent_influenza), position = "dodge") +
+  function_plot_confidence_intervals(parent_influenza) +
   geom_text(aes(group = parent_influenza, label = count), position = position_dodge(width = 0.9), vjust = -0.3) +
   scale_fill_discrete(
     labels = c("0" = "No",
@@ -2071,10 +2140,22 @@ cov_ivd |>
   ) |>
   summarise(count = n(), .by = c(degree, type_of_coverage, parent_covid_coverage)) |>
   mutate(proportion = count/sum(count), .by = c(type_of_coverage, parent_covid_coverage)) |>
+  mutate(
+    CI_max = binom.agresti.coull(
+      x = count,
+      n = sum(count)
+      )$upper,
+    CI_min = binom.agresti.coull(
+      x = count,
+      n = sum(count)
+    )$lower,
+    .by = c(type_of_coverage, parent_covid_coverage)
+  ) |>
   
   ggplot(aes(x = degree, y = proportion)) +
   facet_wrap(vars(type_of_coverage)) +
   geom_col(aes(fill = parent_covid_coverage), position = "dodge") +
+  function_plot_confidence_intervals(parent_covid_coverage) +
   geom_text(aes(group = parent_covid_coverage, label = count), position = position_dodge(width = 0.9), vjust = -0.3, size = 2) +
   scale_fill_discrete(
     labels = c("0" = "ineligible",
@@ -2101,10 +2182,22 @@ inf_ivd |>
   ) |>
   summarise(count = n(), .by = c(degree, type_of_coverage, parent_covid_coverage)) |>
   mutate(proportion = count/sum(count), .by = c(type_of_coverage, parent_covid_coverage)) |>
+  mutate(
+    CI_max = binom.agresti.coull(
+      x = count,
+      n = sum(count)
+      )$upper,
+    CI_min = binom.agresti.coull(
+      x = count,
+      n = sum(count)
+    )$lower,
+    .by = c(type_of_coverage, parent_covid_coverage)
+  ) |>
   
   ggplot(aes(x = degree, y = proportion)) +
   facet_wrap(vars(type_of_coverage)) +
   geom_col(aes(fill = parent_covid_coverage), position = "dodge") +
+  function_plot_confidence_intervals(parent_covid_coverage) +
   geom_text(aes(group = parent_covid_coverage, label = count), position = position_dodge(width = 0.9), vjust = -0.3, size = 2) +
   scale_fill_discrete(
     labels = c("0" = "ineligible",
@@ -2118,21 +2211,8 @@ inf_ivd |>
         legend.title = element_text(size = 7.5)
   )
 ```
-As opposed to the covid vaccine, tue repsonding parent's partial and full vaccination of the COI's responding parent are both associated with the uptake of the covid vaccine in the COI
+As opposed to the covid vaccine, the repsonding parent's partial and full vaccination of the COI's responding parent are both associated with the uptake of the covid vaccine in the COI
 
-
-### Recency of parent's covid vaccination
-
--   Does the recency of a child's parent's covid vaccination affect:
-***the child's covid vaccination status***
-```{r}
-function_data_stratify(cov_ivd, parents_time_since_covvax, as.factor, covid_coverage_age) |>
-  function_plot_proportion_cols(parents_time_since_covvax, covid_coverage_age)
-```
-
-### Child's parent's yearly vaccination intention
-
--   Does the child's parent's intention to get the covid vaccine every year affect:
 
 ### Father or Mother's Employment Status
 ***Does the parent's child's employment status affect the COI's upake of***
@@ -2140,26 +2220,37 @@ function_data_stratify(cov_ivd, parents_time_since_covvax, as.factor, covid_cove
 ```{r}
 # Father's employment and mother's employment status
 function_data_stratify(cov_ivd, father_employment_status, as.factor, covid_coverage_age) |>
-  #mutate(across(father_employment_status, ~ factor(.x, labels = c("unemployed", "regular job/family employed", "self-employed/freelance", "part-time/temp")))) |>
-  function_plot_proportion_cols(father_employment_status, covid_coverage_age)
+  function_calculate_confidence_intervals(father_employment_status, "agresti-coull") |>
+  mutate(across(father_employment_status, ~ factor(.x, labels = c("unemployed", "regular job/family employed", "self-employed/freelance", "part-time/temp")))) |>
+  function_plot_proportion_cols(father_employment_status, covid_coverage_age) +
+  function_plot_confidence_intervals(father_employment_status)
 
 # Mother's employment
 function_data_stratify(cov_ivd, mother_employment_status, as.factor, covid_coverage_age) |>
+  function_calculate_confidence_intervals(mother_employment_status, "agresti-coull") |>
   mutate(across(mother_employment_status, ~ factor(.x, labels = c("unemployed", "regular job/family employed", "self-employed/freelance", "part-time/temp")))) |>
-  function_plot_proportion_cols(mother_employment_status, covid_coverage_age)
+  function_plot_proportion_cols(mother_employment_status, covid_coverage_age) +
+  function_plot_confidence_intervals(mother_employment_status)
 ```
 
 ***The influenza vaccine***
 ```{r}
 # Father's employment
 function_data_stratify(inf_ivd, father_employment_status, as.factor, influenza_coverage_age) |>
+  function_calculate_confidence_intervals(father_employment_status, "agresti-coull") |>
   mutate(across(father_employment_status, ~ factor(.x, labels = c("unemployed", "regular job/family employed", "self-employed/freelance", "part-time/temp")))) |>
-  function_plot_proportion_cols(father_employment_status, influenza_coverage_age)
+  function_plot_proportion_cols(father_employment_status, influenza_coverage_age) +
+  function_plot_confidence_intervals(father_employment_status) +
+  function_plot_label_count(father_employment_status, influenza_coverage_age)
+
 
 # Mother's employment
 function_data_stratify(inf_ivd, mother_employment_status, as.factor, influenza_coverage_age) |>
+  function_calculate_confidence_intervals(mother_employment_status, "agresti-coull") |>
   mutate(across(mother_employment_status, ~ factor(.x, labels = c("unemployed", "regular job/family employed", "self-employed/freelance", "part-time/temp")))) |>
-  function_plot_proportion_cols(mother_employment_status, influenza_coverage_age)
+  function_plot_proportion_cols(mother_employment_status, influenza_coverage_age) +
+  function_plot_confidence_intervals(mother_employment_status) +
+  function_plot_label_count(mother_employment_status, influenza_coverage_age)
 ```
 
 ### Mother being a stay home parent
@@ -2168,8 +2259,10 @@ function_data_stratify(inf_ivd, mother_employment_status, as.factor, influenza_c
 ***The covid vaccine***
 ```{r}
 function_data_stratify(cov_ivd, parents_stay_home, as.factor, covid_coverage_age) |>
-  #mutate(across(parents_stay_home, ~factor(.x, labels = c("Neither", "Father", #"Mother", "Both")))) |>
+  mutate(across(parents_stay_home, ~factor(.x, labels = c("Neither", "Father", "Mother", "Both")))) |>
+  function_calculate_confidence_intervals(parents_stay_home) |>
   function_plot_proportion_cols(parents_stay_home, covid_coverage_age) +
+  function_plot_confidence_intervals(parents_stay_home) +
   function_plot_label_count(parents_stay_home, covid_coverage_age)
 
 function_data_stratify(inf_ivd, parents_stay_home, as.factor, influenza_coverage_age) |>
@@ -2181,14 +2274,18 @@ function_data_stratify(inf_ivd, parents_stay_home, as.factor, influenza_coverage
 ```{r}
 # the covid vaccine
 function_data_stratify(cov_ivd, mother_stay_home, as.factor, covid_coverage_age) |>
+  function_calculate_confidence_intervals(mother_stay_home, "asymptotic") |>
   function_plot_proportion_cols(mother_stay_home, covid_coverage_age) +
   function_plot_label_count(mother_stay_home, covid_coverage_age) +
+  function_plot_confidence_intervals(mother_stay_home) +
   scale_fill_manual(values = c("0" = "lightblue", "1" = "grey"), labels = c("doesn't stay home", "stays home"))
 
 # the influenza vaccine
 function_data_stratify(inf_ivd, mother_stay_home, as.factor, influenza_coverage_age) |>
+  function_calculate_confidence_intervals(mother_stay_home, "asymptotic") |>
   function_plot_proportion_cols(mother_stay_home, influenza_coverage_age) +
   function_plot_label_count(mother_stay_home, influenza_coverage_age) +
+  function_plot_confidence_intervals(mother_stay_home) +
   scale_fill_manual(values = c("0" = "lightblue", "1" = "grey"), labels = c("doesn't stay home", "stays home"))
 ``` 
 As can be seen, a COI's mother being a stay home mother has a negligible impact on their uptake of the covid vaccine but it is associated with an increased uptake of the influenza vaccine
@@ -2206,10 +2303,44 @@ function_data_stratify(cov_ivd, parents_student_status, as.factor, covid_coverag
 Unfortunately due to the small sample size of retired parents responding to the survey, it is difficult to assess the impact of retirement on the COI's vaccine uptake
 ```{r}
 function_data_stratify(cov_ivd, parents_retired_status, as.factor, covid_coverage_age) |>
+  function_calculate_confidence_intervals(parents_retired_status, "agresti-coull") |>
   function_plot_proportion_cols(parents_retired_status, covid_coverage_age) +
-  function_plot_label_count(parents_retired_status, covid_coverage_age)
+  function_plot_label_count(parents_retired_status, covid_coverage_age) +
+  function_plot_confidence_intervals(parents_retired_status)
 
 function_data_stratify(inf_ivd, parents_retired_status, as.factor, influenza_coverage_age) |>
+  function_calculate_confidence_intervals(parents_retired_status, "agresti-coull") |>
   function_plot_proportion_cols(parents_retired_status, influenza_coverage_age) +
-  function_plot_label_count(parents_retired_status, influenza_coverage_age)
+  function_plot_label_count(parents_retired_status, influenza_coverage_age) +
+  function_plot_confidence_intervals(parents_retired_status)
 ```
+
+
+### Recency of parent's covid vaccination
+*Doesn't seem particularly relevant or reproducible given it's only relevant to data in 2022/23*
+-   Does the recency of a child's parent's covid vaccination affect:
+***the child's covid vaccination status***
+```{r}
+function_data_stratify(cov_ivd, parents_time_since_covvax, as.factor, covid_coverage_age) |>
+  function_calculate_confidence_intervals(parents_time_since_covvax, "asymptotic") |>
+    mutate(across(parents_time_since_covvax, ~factor(.x, labels = c("0" = "more than a year ago", "1" = "within a year but more than 6 months ago", "2" = "less than 6 months ago")))) |>
+  function_plot_proportion_cols(parents_time_since_covvax, covid_coverage_age) +
+  function_plot_label_count(parents_time_since_covvax, covid_coverage_age) +
+  function_plot_confidence_intervals(parents_time_since_covvax) 
+
+
+function_data_stratify(inf_ivd, parents_time_since_covvax, as.factor, influenza_coverage_age) |>
+  function_calculate_confidence_intervals(parents_time_since_covvax, "asymptotic") |>
+  mutate(across(parents_time_since_covvax, ~factor(.x, labels = c("0" = "more than a year ago", "1" = "within a year but more than 6 months ago", "2" = "less than 6 months ago")))) |>
+  function_plot_proportion_cols(parents_time_since_covvax, influenza_coverage_age) +
+  function_plot_label_count(parents_time_since_covvax, influenza_coverage_age) +
+  function_plot_confidence_intervals(parents_time_since_covvax)
+```
+To investigate the dose received associated with each time to covid vaccine, let's plot the number of doses that parents have received by the time since their most recent covid vaccine
+```{r}
+function_data_stratify(cov_ivd, parent_covid_doses, as.factor, parents_time_since_covvax) |>
+  function_calculate_confidence_intervals(parent_covid_doses, "wilson") |>
+  function_plot_proportion_cols(parent_covid_doses, parents_time_since_covvax) +
+  function_plot_confidence_intervals(parent_covid_doses)
+```
+In general, the longer the time since the parents last received a dose of the covid vaccine, the lower the number of doses of the covid vaccine they have. Indicating that a recent covid dose is associated with more consistent and thus greater uptake of the covid vaccination on the parents' part

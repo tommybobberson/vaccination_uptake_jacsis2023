@@ -2,6 +2,9 @@
 # all functions will be prep-ended with the "function_" prefix for clarity
 
 
+# function wrapper --------------------------------------------------------
+# this function serves to hold all the variables to pass to each subsequent function
+
 # data stratification -----------------------------------------------------
 # to stratify coverage (by age or dosage) for a certain vaccine (cov or inf)
 # by a variable of interest - in essence we are investigating how varying a 
@@ -31,8 +34,33 @@ function_data_stratify <-
   return(stratified_data)
 }
 
-function_data_convert_class <-
-  function(dataset, variable)
+# function to calculate the 95% confidence intervals
+function_calculate_confidence_intervals <-
+  function(dataset, variable, method, ...) {
+    dataset |>
+      mutate(
+        # calculate maximum confidence interval
+        CI_max = binom.confint(
+          x = count,
+          n = sum(count),
+          methods = method,
+          ...
+        )$upper,
+        
+        # calculate minimum confidence interval
+        CI_min = binom.confint(
+          x = count,
+          n = sum(count),
+          methods = method,
+          ...
+        )$lower,
+        
+        .by = c({{variable}})
+      ) -> confidence_interval_data
+    
+    return(confidence_interval_data)
+  }
+  
 
 test_function_data_multi_stratify <-
   function(dataset, variables, coverage, dependent_var) {
@@ -74,8 +102,20 @@ function_plot_proportion_dots  <-
 # adding labels of n for each data point
 function_plot_label_count <-
   function(variable, coverage) {
-  
     geom_text(
       aes(group = {{variable}}, label = count), 
       position = position_dodge(width = 0.9), size = 3, vjust = -0.5)
+  }
+
+# plotting confidence intervals
+function_plot_confidence_intervals <-
+  function(variable) {
+    geom_errorbar(
+      aes(
+        ymin = CI_min,
+        ymax = CI_max,
+        group = {{variable}}
+      ),
+      position = "dodge"
+    )
   }
