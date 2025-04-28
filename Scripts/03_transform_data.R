@@ -145,7 +145,7 @@ influenza_data <- influenza_data |>
         # degree of coverage for those aged 6 months to less than 3 y/o
         age_of_interest < 3 & age_of_interest >= 0.5 ~ case_when(
           influenza_coverage_dosage == 0 ~ 0, # no coverage, 0 doses
-          influenza_coverage_dosage >= 1 ~ 2 # full coverage, 1 or more doses
+          influenza_coverage_dosage %in% 1:2 ~ 2 # full coverage, 1 or more doses
         ),
         
         # degree of coverage for those aged 3y/o to less than 13y/o
@@ -264,7 +264,7 @@ covid_data <- covid_data |>
       
       # children less than 5 years of age
       age_of_interest >= 0.5 & age_of_interest < 5 ~ case_when(
-        covid_coverage_dosage >= 1  ~ 2, # full coverage
+        covid_coverage_dosage %in% 1:3 ~ 2, # full coverage, use != 0 cause dosage is a factor
         covid_coverage_dosage == 0 ~ 0  # no coverage at all
       ),
       
@@ -907,6 +907,159 @@ independent_variable_data <- independent_variable_data |>
     #.keep = "unused"
   )
 
+# father_highest_education
+# a variable that describes the highest educational attainment of a COI's father
+independent_variable_data <- independent_variable_data |>
+  mutate(
+    father_highest_education = ifelse(
+      
+      # valid status must be confirmed by the presence of COI
+      child_of_interest == 1,
+      case_when(
+        
+        
+        # father is respondent
+        parent_1_sex == 0 ~ case_when(
+          highest_education == 1 ~ 0, # junior high qualification
+          highest_education %in% 2:3 ~ 1, # high school qualification
+          highest_education %in% 4:8 ~ 2, # tertiary qualification
+          highest_education == 9 ~ 3, # post-graduate qualification
+          highest_education %in% 10:11 ~ NA # no response 
+        ),
+        
+        # father is respondent's partner
+        parent_2_sex == 0 ~ case_when(
+          highest_education_partner == 1 ~ 0, # junior high qualification
+          highest_education_partner %in% 2:3 ~ 1, # high school qualification
+          highest_education_partner %in% 4:8 ~ 2, # tertiary qualification
+          highest_education_partner == 9 ~ 3, # post-graduate qualification
+          highest_education_partner %in% 10:11 ~ NA # no response 
+        )
+      ),
+      NA
+    ) |>
+      factor(
+        levels = c(0, 1, 2, 3)#,
+        #labels = c("Junior High", "Highsch", "Tertiary", "Postgrad")
+      )
+  )
+
+
+# mother_highest_education
+# a variable that describes the highest educational attainment of a COI's mother
+independent_variable_data <- independent_variable_data |>
+  mutate(
+    mother_highest_education = ifelse(
+      child_of_interest == 1,
+      case_when(
+        
+        # ignore cases where there are no children of interest
+        child_of_interest == 0 ~ NA,
+        
+        # mother is respondent
+        parent_1_sex == 1 ~ case_when(
+          highest_education == 1 ~ 0, # junior high qualification
+          highest_education %in% 2:3 ~ 1, # high school qualification
+          highest_education %in% 4:8 ~ 2, # tertiary qualification
+          highest_education == 9 ~ 3, # post-graduate qualification
+          highest_education %in% 10:11 ~ NA # no response 
+        ),
+        
+        #  mother is respondent's partner
+        parent_2_sex == 1 ~ case_when(
+          highest_education_partner == 1 ~ 0, # junior high qualification
+          highest_education_partner %in% 2:3 ~ 1, # high school qualification
+          highest_education_partner %in% 4:8 ~ 2, # tertiary qualification
+          highest_education_partner == 9 ~ 3, # post-graduate qualification
+          highest_education_partner %in% 10:11 ~ NA # no response 
+        )
+      ),
+      NA
+    ) |>
+      factor(
+        levels = c(0, 1, 2, 3)#,
+        #labels = c("Junior High", "Highsch", "Tertiary", "Postgrad")
+      )
+  )
+
+# test_father_highest_education
+# a variable that describes the highest educational attainment of a COI's father
+independent_variable_data <- independent_variable_data |>
+  mutate(
+    test_father_highest_education = ifelse(
+      
+      # valid status must be confirmed by the presence of COI
+      child_of_interest == 1,
+      case_when(
+        
+        
+        # father is respondent
+        parent_1_sex == 0 ~ case_when(
+          highest_education == 1 ~ 0, # junior high qualification
+          highest_education %in% 2:3 ~ 1, # high school qualification
+          highest_education %in% 4:5 ~ 2, # junior college/technical colleges
+          highest_education %in% 6:8 ~ 3, # tertiary qualification
+          highest_education == 9 ~ 4, # post-graduate qualification
+          highest_education %in% 10:11 ~ NA # no response 
+        ),
+        
+        # father is respondent's partner
+        parent_2_sex == 0 ~ case_when(
+          highest_education_partner == 1 ~ 0, # junior high qualification
+          highest_education_partner %in% 2:3 ~ 1, # high school qualification
+          highest_education %in% 4:5 ~ 2, # junior college/technical colleges
+          highest_education %in% 6:8 ~ 3, # tertiary qualification
+          highest_education == 9 ~ 4, # post-graduate qualification
+          highest_education %in% 10:11 ~ NA # no response 
+        )
+      ),
+      NA
+    ) |>
+      factor(
+        levels = c(0, 1, 2, 3, 4),
+        labels = c("Junior High", "Highsch", "Junior/Technical College", "Tertiary", "Postgrad")
+      )
+  )
+
+
+# test_mother_highest_education
+# a variable that describes the highest educational attainment of a COI's mother
+independent_variable_data <- independent_variable_data |>
+  mutate(
+    test_mother_highest_education = ifelse(
+      child_of_interest == 1,
+      case_when(
+        
+        # ignore cases where there are no children of interest
+        child_of_interest == 0 ~ NA,
+        
+        # mother is respondent
+        parent_1_sex == 1 ~ case_when(
+          highest_education == 1 ~ 0, # junior high qualification
+          highest_education %in% 2:3 ~ 1, # high school qualification
+          highest_education %in% 4:5 ~ 2, # junior college/technical colleges
+          highest_education %in% 6:8 ~ 3, # tertiary qualification
+          highest_education == 9 ~ 4, # post-graduate qualification
+          highest_education %in% 10:11 ~ NA # no response 
+        ),
+        
+        #  mother is respondent's partner
+        parent_2_sex == 1 ~ case_when(
+          highest_education_partner == 1 ~ 0, # junior high qualification
+          highest_education_partner %in% 2:3 ~ 1, # high school qualification
+          highest_education %in% 4:5 ~ 2, # junior college/technical colleges
+          highest_education %in% 6:8 ~ 3, # tertiary qualification
+          highest_education == 9 ~ 4, # post-graduate qualification
+          highest_education %in% 10:11 ~ NA # no response 
+        )
+      ),
+      NA
+    ) |>
+      factor(
+        levels = c(0, 1, 2, 3, 4),
+        labels = c("Junior High", "Highsch", "Junior/Technical College", "Tertiary", "Postgrad")
+      )
+  )
 
 # parent_influenza
 # variable that indicates whether the child's (responding parent)
@@ -1054,6 +1207,8 @@ transformed_independent_variable_data <- independent_variable_data |>
     parents_healthcare,
     father_highest_education,
     mother_highest_education,
+    test_father_highest_education,
+    test_mother_highest_education,
     parents_highest_education,
     parent_influenza,
     parent_covid_doses,
