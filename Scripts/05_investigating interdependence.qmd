@@ -1,0 +1,93 @@
+---
+title: "05_investigating interdependence"
+format: html
+execute: 
+  eval: true
+  echo: false
+---
+
+Libraries
+```{r}
+#| echo: false
+#| warning: false
+library(here)
+library(tidyverse)
+library(lubridate)
+library(knitr)
+library(reshape2)
+library(binom)
+library(ggcorrplot)
+
+# custom functions
+source(here("Scripts", "functions", "exploratory functions.R"))
+```
+
+Data
+```{r}
+# transformed independent variable data
+ivd <-
+  readRDS(
+    here(
+      "Data",
+      "JACSIS2023", 
+      "processed", 
+      "transformed_independent_variable_data.RDS"
+      )
+    )
+
+# transformed covid data
+cov <-
+  readRDS(
+    here(
+      "Data",
+      "JACSIS2023", 
+      "processed", 
+      "transformed_covid_data.RDS"
+    )
+  )
+
+# transformed influenza data
+inf <-
+  readRDS(
+    here(
+      "Data",
+      "JACSIS2023", 
+      "processed", 
+      "transformed_influenza_data.RDS"
+    )
+  )
+
+
+# Creating data frames for bivariate and multivariate analysis
+# influenza and independent variable data
+inf_ivd <- bind_cols(inf, ivd)
+
+# covid and independent variable data
+cov_ivd <- bind_cols(cov, ivd)
+```
+This document will be used to analyse the interdependencies between variables we have processed thusfar,
+to help us determine the sort of relationships that exist between them, and aid us in choosing a model to use.
+
+## Section 1 - collinearity between independent (explanatory) variables
+Check if any of the continuous numerical variables are collinear
+
+```{r}
+# extract all numerical variables
+ivd |>
+  filter(child_of_interest == 1) |>
+  select(!where(is.factor) & !starts_with("respondent_") & !starts_with("perception")) |>
+  
+  # calculate correlation matrix for cases with a COI
+  cor() |>
+  
+  # plot the correlation plot
+  ggcorrplot(method = "square", lab = TRUE, lab_size = 3)
+```
+The variables that display the most collinearity are:
+household total
+1. child siblings
+2. child_borthers
+3. child_sisters
+4. child_grand
+
+Furthermore, child_siblngs is associated withthe number of brothers and the number of sisters
