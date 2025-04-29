@@ -1312,6 +1312,63 @@ inf_COI_age_age |>
 ```
 There is a peak in the influenza vaccination (give it's yearly) for children who are going into primary school
 
+### Birth order of the child
+the following is a breakdown of the birth order of the child
+```{r}
+cov_ivd |>
+  filter(!is.na(covid_coverage_age)) |>
+  summarise(n(), .by = birth_order)
+```
+Examine how vaccine uptake differs with the birth order of the child
+```{r}
+cov_ivd |>
+    
+    # group birth orders of 3 and above together
+    mutate(
+      birth_order = case_when(
+        birth_order <= 2 ~ factor(birth_order),
+        birth_order > 2 ~ "3+"
+      )
+    ) -> covid_birth_order
+
+covid_birth_order |>     
+  function_data_stratify(birth_order, as.factor, covid_coverage_age) |>
+  function_calculate_confidence_intervals(birth_order, "wilson") |>
+  function_plot_proportion_cols(birth_order, covid_coverage_age) +
+  function_plot_confidence_intervals(birth_order) +
+  function_plot_label_count(birth_order, covid_coverage_age)
+
+covid_birth_order |>
+  function_data_stratify(birth_order, as.factor, covid_coverage_dosage) |>
+  function_calculate_confidence_intervals(birth_order, "wilson") |>
+  function_plot_proportion_cols(birth_order, covid_coverage_dosage) +
+  function_plot_confidence_intervals(birth_order) +
+  function_plot_label_count(birth_order, covid_coverage_dosage)
+
+inf_ivd |>
+  
+  # group birth orders of 3 and above together
+    mutate(
+      birth_order = case_when(
+        birth_order <= 2 ~ factor(birth_order),
+        birth_order > 2 ~ "3+"
+      )
+    ) -> influenza_birth_order
+
+influenza_birth_order |>     
+  function_data_stratify(birth_order, as.factor, influenza_coverage_age) |>
+  function_calculate_confidence_intervals(birth_order, "wilson") |>
+  function_plot_proportion_cols(birth_order, influenza_coverage_age) +
+  function_plot_confidence_intervals(birth_order) +
+  function_plot_label_count(birth_order, influenza_coverage_age)
+
+influenza_birth_order |>
+  function_data_stratify(birth_order, as.factor, influenza_coverage_dosage) |>
+  function_calculate_confidence_intervals(birth_order, "wilson") |>
+  function_plot_proportion_cols(birth_order, influenza_coverage_dosage) +
+  function_plot_confidence_intervals(birth_order) +
+  function_plot_label_count(birth_order, influenza_coverage_dosage)
+```
 ### Gender of the child
 ***investigating how the gender of the child of interest affects their uptake of:***
 **1. the covid vaccine**
@@ -2344,3 +2401,4 @@ function_data_stratify(cov_ivd, parent_covid_doses, as.factor, parents_time_sinc
   function_plot_confidence_intervals(parent_covid_doses)
 ```
 In general, the longer the time since the parents last received a dose of the covid vaccine, the lower the number of doses of the covid vaccine they have. Indicating that a recent covid dose is associated with more consistent and thus greater uptake of the covid vaccination on the parents' part
+

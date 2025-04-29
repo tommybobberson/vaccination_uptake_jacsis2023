@@ -58,8 +58,35 @@ age_data$age_of_interest <- apply(
   }
 )
 
-
-# select relevant columns to transformed data that will be used for analysis
+# determine the birth order of the child
+  # select the position of the child which mathces the age of interest
+  ages == age_data$age_of_interest -> birth_order_indexing
+  birth_order_indexing[is.na(birth_order_indexing) | birth_order_indexing == FALSE] <- NA
+  
+  # create a matrix that represent the birth order for each child
+  birth_order_matrix <- matrix(
+    c(1, 2, 3, 4, 5),
+    nrow = nrow(birth_order_indexing),
+    ncol = 5,
+    byrow = TRUE
+  )
+  
+  # replace the values with the birth order values
+  birth_order_indexing[!is.na(birth_order_indexing)] <- birth_order_matrix[!is.na(birth_order_indexing)]
+  
+  # replace NA values with 100 (for later selection)
+  birth_order_indexing[is.na(birth_order_indexing)] <- 100
+  
+  # select only the birth order of the COI (smallest number)
+  apply(birth_order_indexing, 1, min) -> birth_order
+  
+  # set birth orders to be NA
+  birth_order[birth_order == 100] <- NA
+  
+  # add birth order to data 
+  age_data$birth_order <- birth_order
+ 
+  # select relevant columns to transformed data that will be used for analysis
 transformed_age_data <- age_data |>
   select(
     child_1_DOB,
@@ -73,6 +100,7 @@ transformed_age_data <- age_data |>
     child_4_age,
     child_5_age,
     age_of_interest,
+    birth_order
   )
 
 # save the transformed age data
@@ -399,7 +427,9 @@ independent_variable_data <- readRDS(
         factor()
     )
 
-
+# birth_order
+  independent_variable_data$birth_order <- age_data$birth_order
+  
 # child_of_interest
   # create a variable to indicate whether a response includes a child < 18y/o
   independent_variable_data <- independent_variable_data |>
@@ -1186,6 +1216,7 @@ transformed_independent_variable_data <- independent_variable_data |>
     household_total,
     child_grand,
     sex_of_interest,
+    birth_order,
     child_of_interest,
     child_sisters,
     child_brothers,

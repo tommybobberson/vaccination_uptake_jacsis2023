@@ -31,6 +31,8 @@ library(tidyverse)
 -   Age of child of interest
     -   `age_of_interest`
     -   *Date of response* - *Date of child birth* and choose the largest value \<= 18 y/o
+-   birth order of child of interest
+    -   `birth_order`
 
 ## Influenza vaccination coverage
 
@@ -155,6 +157,7 @@ library(tidyverse)
     -   0 = male
     -   1 = female
 -   Number of children of interest (<18y/o), `child_of_interest`
+-   birth order of child of interest, `birth_order`
 -   Number of sisters and/or brothers
     -   No. of sisters, `child_sisters`
     -   No. of brothers, `child_brothers`

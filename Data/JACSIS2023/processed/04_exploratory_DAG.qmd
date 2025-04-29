@@ -7,15 +7,16 @@ This document serves to store the dagitty code for the DAG to illustrate the cod
 ```{r}
 dag {
 "COI's familial factors" [exposure,pos="-1.053,-0.783"]
-"parent covid doses" [pos="1.184,-0.744"]
+"parent covid doses" [pos="1.368,-0.818"]
 "vaccine uptake" [outcome,pos="0.206,-0.328"]
 age_of_interest [pos="1.036,0.423"]
+birth_order [pos="-0.641,2.081"]
 child_grand [pos="-1.921,-0.871"]
 child_parents [pos="-1.705,-0.200"]
 child_siblings [pos="-1.064,0.469"]
 father_employment_status [pos="0.936,1.524"]
 father_highest_education [pos="0.671,1.089"]
-household_income [pos="-0.736,1.346"]
+household_income [pos="-0.715,1.256"]
 household_total [pos="-1.828,0.508"]
 mother_employment_status [pos="0.005,1.774"]
 mother_highest_education [pos="-1.868,1.603"]
@@ -30,7 +31,9 @@ parents_time_since_covvax [pos="-0.474,-1.888"]
 vulnerable_individuals [pos="-1.676,-1.416"]
 "COI's familial factors" -> "vaccine uptake"
 "parent covid doses" -> "vaccine uptake"
+"parent covid doses" -> parents_time_since_covvax
 age_of_interest -> "vaccine uptake"
+birth_order -> "vaccine uptake"
 child_grand -> "COI's familial factors"
 child_grand -> household_total [pos="-2.302,-0.315"]
 child_grand -> vulnerable_individuals
@@ -39,6 +42,7 @@ child_parents -> household_income
 child_parents -> mother_stay_home
 child_siblings -> "COI's familial factors"
 child_siblings -> age_of_interest
+child_siblings -> birth_order
 father_employment_status -> household_income
 father_highest_education -> "vaccine uptake"
 father_highest_education -> child_siblings
@@ -65,7 +69,7 @@ parents_healthcare -> "parent covid doses"
 parents_healthcare -> "vaccine uptake"
 parents_healthcare -> parent_covid_coverage
 parents_healthcare -> parent_inluenza
-# parents_healthcare -> parents_time_since_covvax
+parents_healthcare -> parents_time_since_covvax
 parents_highest_education -> child_siblings
 parents_highest_education -> household_income
 parents_highest_education -> household_total
@@ -78,7 +82,6 @@ parents_marital_status -> mother_stay_home
 parents_time_since_covvax -> "vaccine uptake"
 vulnerable_individuals -> "COI's familial factors"
 }
-
 ```
 
 converting to a dagitty object
