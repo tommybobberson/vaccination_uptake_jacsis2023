@@ -51,3 +51,6 @@ rsconnect/
 
 # PDFs
 *.pdf
+
+# extremely large object
+Output/05_factors_paired_plots.R
