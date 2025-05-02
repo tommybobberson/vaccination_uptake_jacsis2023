@@ -2,7 +2,7 @@
 title: "04_exploratory_test"
 format: 
   html:
-      self-contained: true
+      self-contained: false
       
 execute:
   eval: true
@@ -204,15 +204,15 @@ cov_ivd |>
 Looknig at how vaccine uptake varies with every single chronic illnesss
 ```{r}
 # dosage
-cov_ivd |>
-  filter(!is.na(covid_coverage_dosage)) |>
-  select(c(starts_with("respondent_"), covid_coverage_dosage)) |>
+inf_ivd |>
+  filter(!is.na(influenza_coverage_age)) |>
+  select(c(starts_with("respondent_"), influenza_coverage_age)) |>
   select(- c(respondent_employment_status, respondent_industry_of_work)) |>
 #  select(
 #    all_of(c("covid_coverage_dosage", chronic_illnesses))
 #  ) |>
   pivot_longer(
-    cols = -covid_coverage_dosage, 
+    cols = -influenza_coverage_age, 
     names_to = "illness", 
     values_to = "status",
     values_ptypes = list(status = integer())
@@ -229,7 +229,7 @@ cov_ivd |>
   ) |>
   # number of children of each dosage for each status of their parent's chronic illness for each illness
   summarise(
-    count = n(), .by = c(illness, illness_experience, covid_coverage_dosage)
+    count = n(), .by = c(illness, illness_experience, influenza_coverage_age)
   ) |>
   
   # calculate proportions of each disease and each dosage by status
@@ -246,10 +246,19 @@ cov_ivd |>
     x = count, 
     n = sum(count),
     .by = c(illness, illness_experience)
-  ) -> covid_dosage_stratified_chronic_illnesses
+  ) |>
+  
+  # rename the illness variables
+  mutate(illness = str_remove(illness, "respondent_")) |>
+  mutate(
+    illness = ifelse(
+      illness == "angina",
+      "angina pectoris & MI",
+      illness)
+  ) -> influenza_age_stratified_chronic_illnesses
   
 # agresti coulli confidence intervals
-covid_dosage_stratified_chronic_illnesses |>
+influenza_age_stratified_chronic_illnesses |>
   
   #caluclate the confidence intervals
   mutate(
@@ -257,18 +266,18 @@ covid_dosage_stratified_chronic_illnesses |>
     upper_CI_agresti = binom.agresti.coull(x, n)$upper
   ) |>
  
-  ggplot(aes(x = covid_coverage_dosage, y = proportions)) +
+  ggplot(aes(x = influenza_coverage_age, y = proportions)) +
   geom_col(aes(fill = illness_experience), position = "dodge") +
   geom_errorbar(
     aes(ymin = lower_CI_agresti, ymax = upper_CI_agresti, group = illness_experience),
     position = "dodge"
   ) +
-  function_plot_label_count(illness_experience, covid_coverage_dosage) +
+  function_plot_label_count(illness_experience, influenza_coverage_age) +
   facet_wrap(vars(illness)) +
   labs(title = "with agresti coulli intervals")
 
 # wilson confidence intervals
-covid_dosage_stratified_chronic_illnesses |>
+influenza_age_stratified_chronic_illnesses |>
   
   #caluclate the confidence intervals
   mutate(
@@ -276,15 +285,25 @@ covid_dosage_stratified_chronic_illnesses |>
     upper_CI_wilson = binom.wilson(x, n)$upper
   ) |>
  
-  ggplot(aes(x = covid_coverage_dosage, y = proportions)) +
+  ggplot(aes(x = influenza_coverage_age, y = proportions)) +
   geom_col(aes(fill = illness_experience), position = "dodge") +
   geom_errorbar(
     aes(ymin = lower_CI_wilson, ymax = upper_CI_wilson, group = illness_experience),
     position = "dodge"
   ) +
-  function_plot_label_count(illness_experience, covid_coverage_dosage) +
+  function_plot_label_count(illness_experience, influenza_coverage_age) +
   facet_wrap(vars(illness)) +
-  labs(title = "with wilson intervals")
+  xlab("Degree of coverage COI has obtained from the influenza vaccine \n
+    based on their parent's experience with different chronic illnesses") + 
+  theme(
+    axis.title.x = element_text(size = 10),
+    legend.title = element_text(size = 9),
+    aspect.ratio = 6.5/11
+  )
+  #ggsave(
+  #  "Child's influenza uptake by parent's chronic illness",
+   # path = "C:\Users\kevin\Documents\obsidian vaccine uptake\Attachments",
+  #  )
 ```
 
 ```{r}
@@ -325,7 +344,16 @@ cov_ivd |>
     x = count, 
     n = sum(count),
     .by = c(illness, illness_experience)
-  ) -> covid_age_stratified_chronic_illnesses
+  ) |>
+  
+  # rename the illness variables
+  mutate(illness = str_remove(illness, "respondent_")) |>
+  mutate(
+    illness = ifelse(
+      illness == "angina",
+      "angina pectoris & MI",
+      illness)
+  )-> covid_age_stratified_chronic_illnesses
  
 # agresti coulli confidence intervals
 covid_age_stratified_chronic_illnesses |>
@@ -363,7 +391,16 @@ covid_age_stratified_chronic_illnesses |>
   ) +
   function_plot_label_count(illness_experience, covid_coverage_age) +
   facet_wrap(vars(illness)) +
-  labs(title = "with wilson intervals")
+  labs(
+    fill = "experience with illness", size = 4
+  ) +
+  xlab("Degree of coverage COI has obtained from the covid vaccine \n
+    based on their parent's experience with different chronic illnesses") + 
+  theme(
+    axis.title.x = element_text(size = 10),
+    legend.title = element_text(size = 9),
+    aspect.ratio = 6.5/11
+  )
 ```
 
 _**Categories for the Covid vaccine**_
@@ -894,6 +931,13 @@ Looking at the influenza data it seems as if the proportion of children vaccinat
 Furthermore, education elvels do seem to have a greater impact on the uptake of influenza vaccines as opposed to the uptake of covid vaccines.
 
 ## Parents education, but with JC and VC seperated from tertiary with
+A breakdown of parents by the test educations
+```{r}
+ivd |>
+  filter(!is.na(child_of_interest) & !is.na(test_mother_highest_education)) |>
+  summarise(n(), .by = test_mother_highest_education)
+```
+
 mothers' highest education
 ```{r}
 # covid coverage by age by mothers' higest education

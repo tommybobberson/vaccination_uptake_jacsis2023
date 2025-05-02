@@ -59,7 +59,10 @@ age_data$age_of_interest <- apply(
 )
 
 # determine the birth order of the child
-  # select the position of the child which mathces the age of interest
+  # select columns with the ages of the children in a response
+  ages <- age_data[, age_indexing]
+
+  # select the position of the child which matches the age of interest
   ages == age_data$age_of_interest -> birth_order_indexing
   birth_order_indexing[is.na(birth_order_indexing) | birth_order_indexing == FALSE] <- NA
   
@@ -848,18 +851,18 @@ independent_variable_data <- independent_variable_data |>
   
       # father is respondent
       parent_1_sex == 0 ~ case_when(
-        highest_education == 1 ~ 0, # junior high qualification
-        highest_education %in% 2:3 ~ 1, # high school qualification
-        highest_education %in% 4:8 ~ 2, # tertiary qualification
+        highest_education %in% 1:3 ~ 0, # junior high or high school qualification
+        highest_education %in% 4:5 ~ 1, # junior college/technical college
+        highest_education %in% 6:8 ~ 2, # tertiary qualification
         highest_education == 9 ~ 3, # post-graduate qualification
         highest_education %in% 10:11 ~ NA # no response 
       ),
       
       # father is respondent's partner
       parent_2_sex == 0 ~ case_when(
-        highest_education_partner == 1 ~ 0, # junior high qualification
-        highest_education_partner %in% 2:3 ~ 1, # high school qualification
-        highest_education_partner %in% 4:8 ~ 2, # tertiary qualification
+        highest_education_partner %in% 1:3 ~ 0, # junior high or high school qualification
+        highest_education_partner %in% 4:5 ~ 1, # junior college/technical college
+        highest_education_partner %in% 6:8 ~ 2, # tertiary qualification
         highest_education_partner == 9 ~ 3, # post-graduate qualification
         highest_education_partner %in% 10:11 ~ NA # no response 
       )
@@ -867,8 +870,8 @@ independent_variable_data <- independent_variable_data |>
     NA
     ) |>
     factor(
-      levels = c(0, 1, 2, 3)#,
-      #labels = c("Junior High", "Highsch", "Tertiary", "Postgrad")
+      levels = c(0, 1, 2, 3),
+      labels = c("Junior High or High school", "Junior/Technical College", "Tertiary", "Postgrad")
     )
   )
 
@@ -886,18 +889,18 @@ independent_variable_data <- independent_variable_data |>
       
       # mother is respondent
       parent_1_sex == 1 ~ case_when(
-        highest_education == 1 ~ 0, # junior high qualification
-        highest_education %in% 2:3 ~ 1, # high school qualification
-        highest_education %in% 4:8 ~ 2, # tertiary qualification
+        highest_education %in% 1:3 ~ 0, # junior high or high school qualification
+        highest_education %in% 4:5 ~ 1, # junior college/technical college
+        highest_education %in% 6:8 ~ 2, # tertiary qualification
         highest_education == 9 ~ 3, # post-graduate qualification
         highest_education %in% 10:11 ~ NA # no response 
       ),
       
       #  mother is respondent's partner
       parent_2_sex == 1 ~ case_when(
-        highest_education_partner == 1 ~ 0, # junior high qualification
-        highest_education_partner %in% 2:3 ~ 1, # high school qualification
-        highest_education_partner %in% 4:8 ~ 2, # tertiary qualification
+        highest_education_partner %in% 1:3 ~ 0, # junior high or high school qualification
+        highest_education_partner %in% 4:5 ~ 1, # junior college/technical college
+        highest_education_partner %in% 6:8 ~ 2, # tertiary qualification
         highest_education_partner == 9 ~ 3, # post-graduate qualification
         highest_education_partner %in% 10:11 ~ NA # no response 
       )
@@ -905,8 +908,8 @@ independent_variable_data <- independent_variable_data |>
     NA
     ) |>
       factor(
-        levels = c(0, 1, 2, 3)#,
-        #labels = c("Junior High", "Highsch", "Tertiary", "Postgrad")
+        levels = c(0, 1, 2, 3),
+        labels = c("Junior High or High school", "Junior/Technical College", "Tertiary", "Postgrad")
       )
   )
 
@@ -937,81 +940,6 @@ independent_variable_data <- independent_variable_data |>
     #.keep = "unused"
   )
 
-# father_highest_education
-# a variable that describes the highest educational attainment of a COI's father
-independent_variable_data <- independent_variable_data |>
-  mutate(
-    father_highest_education = ifelse(
-      
-      # valid status must be confirmed by the presence of COI
-      child_of_interest == 1,
-      case_when(
-        
-        
-        # father is respondent
-        parent_1_sex == 0 ~ case_when(
-          highest_education == 1 ~ 0, # junior high qualification
-          highest_education %in% 2:3 ~ 1, # high school qualification
-          highest_education %in% 4:8 ~ 2, # tertiary qualification
-          highest_education == 9 ~ 3, # post-graduate qualification
-          highest_education %in% 10:11 ~ NA # no response 
-        ),
-        
-        # father is respondent's partner
-        parent_2_sex == 0 ~ case_when(
-          highest_education_partner == 1 ~ 0, # junior high qualification
-          highest_education_partner %in% 2:3 ~ 1, # high school qualification
-          highest_education_partner %in% 4:8 ~ 2, # tertiary qualification
-          highest_education_partner == 9 ~ 3, # post-graduate qualification
-          highest_education_partner %in% 10:11 ~ NA # no response 
-        )
-      ),
-      NA
-    ) |>
-      factor(
-        levels = c(0, 1, 2, 3)#,
-        #labels = c("Junior High", "Highsch", "Tertiary", "Postgrad")
-      )
-  )
-
-
-# mother_highest_education
-# a variable that describes the highest educational attainment of a COI's mother
-independent_variable_data <- independent_variable_data |>
-  mutate(
-    mother_highest_education = ifelse(
-      child_of_interest == 1,
-      case_when(
-        
-        # ignore cases where there are no children of interest
-        child_of_interest == 0 ~ NA,
-        
-        # mother is respondent
-        parent_1_sex == 1 ~ case_when(
-          highest_education == 1 ~ 0, # junior high qualification
-          highest_education %in% 2:3 ~ 1, # high school qualification
-          highest_education %in% 4:8 ~ 2, # tertiary qualification
-          highest_education == 9 ~ 3, # post-graduate qualification
-          highest_education %in% 10:11 ~ NA # no response 
-        ),
-        
-        #  mother is respondent's partner
-        parent_2_sex == 1 ~ case_when(
-          highest_education_partner == 1 ~ 0, # junior high qualification
-          highest_education_partner %in% 2:3 ~ 1, # high school qualification
-          highest_education_partner %in% 4:8 ~ 2, # tertiary qualification
-          highest_education_partner == 9 ~ 3, # post-graduate qualification
-          highest_education_partner %in% 10:11 ~ NA # no response 
-        )
-      ),
-      NA
-    ) |>
-      factor(
-        levels = c(0, 1, 2, 3)#,
-        #labels = c("Junior High", "Highsch", "Tertiary", "Postgrad")
-      )
-  )
-
 # test_father_highest_education
 # a variable that describes the highest educational attainment of a COI's father
 independent_variable_data <- independent_variable_data |>
@@ -1037,10 +965,10 @@ independent_variable_data <- independent_variable_data |>
         parent_2_sex == 0 ~ case_when(
           highest_education_partner == 1 ~ 0, # junior high qualification
           highest_education_partner %in% 2:3 ~ 1, # high school qualification
-          highest_education %in% 4:5 ~ 2, # junior college/technical colleges
-          highest_education %in% 6:8 ~ 3, # tertiary qualification
-          highest_education == 9 ~ 4, # post-graduate qualification
-          highest_education %in% 10:11 ~ NA # no response 
+          highest_education_partner %in% 4:5 ~ 2, # junior college/technical colleges
+          highest_education_partner %in% 6:8 ~ 3, # tertiary qualification
+          highest_education_partner == 9 ~ 4, # post-graduate qualification
+          highest_education_partner %in% 10:11 ~ NA # no response 
         )
       ),
       NA
@@ -1077,10 +1005,10 @@ independent_variable_data <- independent_variable_data |>
         parent_2_sex == 1 ~ case_when(
           highest_education_partner == 1 ~ 0, # junior high qualification
           highest_education_partner %in% 2:3 ~ 1, # high school qualification
-          highest_education %in% 4:5 ~ 2, # junior college/technical colleges
-          highest_education %in% 6:8 ~ 3, # tertiary qualification
-          highest_education == 9 ~ 4, # post-graduate qualification
-          highest_education %in% 10:11 ~ NA # no response 
+          highest_education_partner %in% 4:5 ~ 2, # junior college/technical colleges
+          highest_education_partner %in% 6:8 ~ 3, # tertiary qualification
+          highest_education_partner == 9 ~ 4, # post-graduate qualification
+          highest_education_partner %in% 10:11 ~ NA # no response 
         )
       ),
       NA
