@@ -17,6 +17,7 @@ library(knitr)
 library(reshape2)
 library(binom)
 library(ggcorrplot)
+library(patchwork)
 
 # custom functions
 source(here("Scripts", "functions", "exploratory functions.R"))
@@ -57,6 +58,16 @@ inf <-
     )
   )
 
+# transformed age data
+age <- 
+  readRDS(
+    here(
+      "Data",
+      "JACSIS2023", 
+      "processed", 
+      "transformed_age_data.RDS"
+    )
+  )
 
 # Creating data frames for bivariate and multivariate analysis
 # influenza and independent variable data
@@ -69,14 +80,29 @@ This document will be used to analyse the interdependencies between variables we
 to help us determine the sort of relationships that exist between them, and aid us in choosing a model to use.
 
 ## Section 1 - collinearity between independent (explanatory) variables
+### Numerical variables
 Check if any of the continuous numerical variables are collinear
 
 ```{r}
-# extract all numerical variables
+# extract all numerical variables (including test_household income)
 ivd |>
   filter(child_of_interest == 1) |>
-  select(!where(is.factor) & !starts_with("respondent_") & !starts_with("perception")) |>
   
+  # make test_household_income numeric
+  mutate(test_household_income = as.numeric(test_household_income)) |>
+  
+  # transform test_household_income such that each value represents the number of JPY in millions
+  mutate(
+    test_household_income = case_when(
+      test_household_income == 1 ~ 0,
+      test_household_income %in% 2:3 ~ 1,
+      test_household_income >= 4 ~ test_household_income - 2
+    )
+  ) |>
+  
+  select(!where(is.factor) & !starts_with("respondent_") & !starts_with("perception")) |>
+  filter(!is.na(test_household_income)) |>
+
   # calculate correlation matrix for cases with a COI
   cor() |>
   
@@ -91,3 +117,32 @@ household total
 4. child_grand
 
 Furthermore, child_siblngs is associated withthe number of brothers and the number of sisters
+
+### Categorical variables
+Check if there's **covariance** between categorical variables
+
+**you cAN look at this type of graph for variables you suspect may be highly correlated**
+```{r}
+# prepare data frame to be passed into recursive function
+ivd$age_of_interest <- age$age_of_interest
+prepped_ivd <- ivd |>
+  filter(child_of_interest != 0)
+
+# read dependencies
+causal_relationship_combinations <-
+  readRDS(here("Output", "causal_relationship_combinations.RDS")) |>
+  rename(variable1 = name, variable2 = to) |>
+
+  # dropping rows with COI's_familial_factors and "vaccine_uptake" for now
+  filter(!if_any(everything(), ~ .x %in% c("vaccine uptake", "COI's familial factors")))
+  
+# plot every pair 
+# input the list of factor_pairs, the function, and pass the dataframe ivd to the df argument of our custom fn
+list_of_plots <- pmap(causal_relationship_combinations, function_plot_corr_pairs, df = prepped_ivd)
+```
+
+save the categorical plots
+
+```{r}
+saveRDS(list_of_plots, here("Output", "causal_relationship_plots.RDS"))
+```

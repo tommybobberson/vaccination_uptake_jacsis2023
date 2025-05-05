@@ -119,3 +119,79 @@ function_plot_confidence_intervals <-
       position = "dodge"
     )
   }
+
+# plotting paired plots to explore correlation between different variables based on their type
+function_plot_corr_pairs <- function(variable1, variable2, df) {
+  df <- df |>
+    mutate(
+      var1 = .data[[variable1]],
+      var2 = .data[[variable2]]
+    ) |>
+    filter(!is.na(var1) & !is.na(var2))
+  
+  # Both categorical
+  if (is.factor(df$var1) & is.factor(df$var2)) {
+    return(
+      ggplot(df, aes(x = var1, y = var2, group = var1)) +
+        
+        # calculate the proportion that each level of var 1 takes up for each level of var 2
+        geom_count(aes(size = after_stat(n / ave(n ,x))), color = "steelblue") +
+        theme_minimal() +
+        labs(
+          title = paste("A counts plot of", variable2, "against", variable1),
+          x = variable1,
+          y = variable2
+        )
+    )
+  }
+  
+  # Both numeric
+  if (is.numeric(df$var1) & is.numeric(df$var2)) {
+    return(
+      ggplot(df, aes(x = var1, y = var2)) +
+        geom_point() +
+        theme_minimal() +
+        labs(
+          title = paste("A scatter plot of", variable2, "against", variable1),
+          x = variable1,
+          y = variable2
+        )
+    )
+  }
+  
+  # One numeric, one categorical
+  if (is.numeric(df$var1) & is.factor(df$var2)) {
+    return(
+      ggplot(df, aes(x = var2, y = var1)) +
+        
+        # calculate the proportion of the factor (var2) that each tier of the 
+        # numerical variable takes up (var1)
+        geom_count(aes(size = after_stat(n / ave(n, x))), color = "steelblue") +
+        theme_minimal() +
+        labs(
+          title = paste("A boxplot of", variable1, "by", variable2),
+          x = variable2,
+          y = variable1
+        )
+    )
+  }
+  
+  if (is.numeric(df$var2) & is.factor(df$var1)) {
+    return(
+      ggplot(df, aes(x = var1, y = var2)) +
+        
+        # calculate the proportion of the factor (var1) that each tier of the 
+        # numerical variable takes up (var2)
+        geom_count(aes(size = after_stat(n / ave(n ,x))), color = "steelblue") +
+        theme_minimal() +
+        labs(
+          title = paste("A boxplot of", variable2, "by", variable1),
+          x = variable1,
+          y = variable2
+        )
+    )
+  }
+  
+  # Fallback
+  stop("Unsupported variable types.")
+}
