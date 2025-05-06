@@ -251,26 +251,8 @@ library(tidyverse)
 
 ### Variables derived (and used)
 
--   Annual household income (categorised), `household_income`
-
-categories in (100,000s) of jpy/year:
-
-    -   1 = 0
-    -   2 = \<500
-    -   3 = 500-1000
-    -   4 = 1000-2000
-    -   5 = 2000-3000
-    -   6 = 3000-4000
-    -   7 = 4000-5000
-    -   8 = 5000-6000
-    -   9 = 6000-7000
-    -   10 = 7000-8000
-    -   11 = 8000-9000
-    -   12 = 9000 - 10000
-    -   13 = 10000+
-    -   NA
+-   Annual household income (numeric), `test_household_income`
     
-*13-18 represent the top decile of earners in Japan according to 2023 nationwide statistics *
 
 -   Financial assets of respondents' household
 

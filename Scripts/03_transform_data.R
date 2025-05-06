@@ -39,7 +39,7 @@ age_data <- mutate(
 # determine the age of the child that corresponds to the
 # vaccination data, age_of_interest
 
-age_indexing <- c("child_1_age", "child_2_age", "child_3_age", "child_4_age", "child_5_age") # create a selection vector to reference the childrens' ages
+age_indexing <- c("child_1_age", "child_2_age", "child_3_age", "child_4_age", "child_5_age") # create a selection vector to reference the childrens'ages
 
 # extract age_of_interest for the child whose vax status we're interested in
 age_data$age_of_interest <- apply(
@@ -352,7 +352,7 @@ independent_variable_data <- readRDS(
   
   # replace NA values with 0
   independent_variable_data$child_parents[is.na(independent_variable_data$child_parents)] <- 0L
-
+        
 
 # child_auntcles
   # create variable that represents the number of aunt and uncles the child has
@@ -598,14 +598,19 @@ independent_variable_data <- independent_variable_data |>
   )
 
 # test_household_income
-# fleshing out all categories of household income
+# household income as the median value of their assigned category (in millions of yen)
 independent_variable_data <- independent_variable_data |>
   mutate(
     test_household_income = case_when(
-      household_income_annual %in% 1:18 ~ household_income_annual, # retain categories
+      household_income_annual == 1 ~ 0,
+      household_income_annual == 2 ~ 0.25,
+      household_income_annual == 3 ~ 0.75,
+      household_income_annual %in% 4:12 ~ (household_income_annual - 3) * 1 + 0.5, 
+      household_income_annual %in% 13:17 ~ (household_income_annual - 8) * 2 + 1,
+      household_income_annual == 18 ~ 20,
       household_income_annual %in% 19:20 ~ NA, # people who refused to or didn't know how to answer
     ) |>
-      as.factor()
+      as.numeric()
   )
 
 
