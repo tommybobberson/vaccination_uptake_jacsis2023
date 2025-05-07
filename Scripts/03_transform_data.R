@@ -86,6 +86,9 @@ age_data$age_of_interest <- apply(
   # set birth orders to be NA
   birth_order[birth_order == 100] <- NA
   
+  # add the number of over 18 siblings to the birth order
+  birth_order <- birth_order + independent_variable_data$children_over_18
+  
   # add birth order to data 
   age_data$birth_order <- birth_order
  
