@@ -4,13 +4,29 @@
 # independent_variable_data to data to be used for plotting
 
 
+# read all data -----------------------------------------------------------
 
-# transform age data ------------------------------------------------------
+# read independent variable data
+independent_variable_data <- readRDS(
+  here("Data", "JACSIS2023", "processed", "independent_variable_data.RDS")
+)
 
 # read age_data
 age_data <- readRDS(
   here("Data", "JACSIS2023", "processed", "age_data.RDS")
-  )
+)
+
+# read influenza_data
+influenza_data <- readRDS(
+  here("Data", "JACSIS2023", "processed", "influenza_data.RDS")
+)
+
+# read covid data
+covid_data <- readRDS(
+  here("Data", "JACSIS2023", "processed", "covid_data.RDS")
+)
+
+# transform age data ------------------------------------------------------
 
 # create variables that represent the date of births of each child and their 
 # ages relative to the time of response
@@ -117,10 +133,6 @@ saveRDS(
 
 # transform influenza data ------------------------------------------------
 
-# read influenza_data
-influenza_data <- readRDS(
-  here("Data", "JACSIS2023", "processed", "influenza_data.RDS")
-  )
 # create variables that represent the dates of when the first and  
 # second doses of the influenza vaccine were received
 influenza_data <- mutate(
@@ -223,11 +235,6 @@ transformed_influenza_data <- influenza_data |>
 
 
 # transform covid data ----------------------------------------------------
-
-# read covid data
-covid_data <- readRDS(
-  here("Data", "JACSIS2023", "processed", "covid_data.RDS")
-  )
 
 # create variables to represent the dates of when the first, second and 
 # third doses of the covid vaccine were received
@@ -336,13 +343,6 @@ transformed_covid_data <- covid_data |>
 
 
 # transform independent variable data -------------------------------------
-
-# read independent variable data
-independent_variable_data <- readRDS(
-  here("Data", "JACSIS2023", "processed", "independent_variable_data.RDS")
-  )
-
-  
 # create variable(s)
   
 # child_parents
@@ -383,7 +383,6 @@ independent_variable_data <- readRDS(
   # grandaprents as the child
   independent_variable_data <- independent_variable_data |>
     mutate(child_grand = parents_in_law + grandparents)
-  
   
 # sex_of_interest
   # create a variable to index the columns denoting the sexes of each child
@@ -1193,7 +1192,3 @@ saveRDS(
     "transformed_independent_variable_data.RDS"
     )
   )
-
-
-
- #
