@@ -224,8 +224,7 @@ transformed_influenza_data <- influenza_data |>
     influenza_first_dose_date,
     influenza_second_dose_date,
     influenza_coverage_dosage,
-    influenza_coverage_age,
-    age_of_interest
+    influenza_coverage_age
   )
   
 # save transformed influenza data
@@ -333,8 +332,7 @@ transformed_covid_data <- covid_data |>
     covid_second_dose_date,
     covid_third_dose_date,
     covid_coverage_dosage,
-    covid_coverage_age,
-    age_of_interest
+    covid_coverage_age
   )
 
 # save the transformed covid data
@@ -348,43 +346,43 @@ transformed_covid_data <- covid_data |>
 # create variable(s)
   
 # child_parents
-  # create a variable that represents the number of parents the child has
-  independent_variable_data <- 
-    mutate(
-      independent_variable_data,
-      child_parents = spouses + 1L
-    )
+# create a variable that represents the number of parents the child has
+independent_variable_data <- 
+  mutate(
+    independent_variable_data,
+    child_parents = spouses + 1L
+  )
   
   # replace NA values with 0
   independent_variable_data$child_parents[is.na(independent_variable_data$child_parents)] <- 0L
         
 
 # child_auntcles
-  # create variable that represents the number of aunt and uncles the child has
-  independent_variable_data$child_auntcles <- independent_variable_data$siblings # equal to the respondent's number of siblings
+# create variable that represents the number of aunt and uncles the child has
+independent_variable_data$child_auntcles <- independent_variable_data$siblings # equal to the respondent's number of siblings
 
     
 # vulnerable_individuals
-  # create a variable that represents the number of vulnerable individuals in
-  # the household
-  independent_variable_data <- independent_variable_data |>
-    mutate(
-      vulnerable_individuals = need_ventilation + need_feeding + bedridden
-    )
+# create a variable that represents the number of vulnerable individuals in
+# the household
+independent_variable_data <- independent_variable_data |>
+  mutate(
+    vulnerable_individuals = need_ventilation + need_feeding + bedridden
+  )
 
 # household_total
-  # create a variable that represents the total number of individuals in the 
-  # household
-  independent_variable_data <- independent_variable_data |>
-    mutate(
-      household_total = total_individuals
-    )
+# create a variable that represents the total number of individuals in the 
+# household
+independent_variable_data <- independent_variable_data |>
+  mutate(
+    household_total = total_individuals
+  )
   
 # child_grand
-  # create a variable that represents the number of grandparents and great 
-  # grandaprents as the child
-  independent_variable_data <- independent_variable_data |>
-    mutate(child_grand = parents_in_law + grandparents)
+# create a variable that represents the number of grandparents and great 
+# grandaprents as the child
+independent_variable_data <- independent_variable_data |>
+  mutate(child_grand = parents_in_law + grandparents)
   
 # sex_of_interest
   # create a variable to index the columns denoting the sexes of each child
@@ -434,20 +432,26 @@ transformed_covid_data <- covid_data |>
         factor()
     )
 
+  
 # birth_order
-  independent_variable_data$birth_order <- age_data$birth_order
+independent_variable_data$birth_order <- age_data$birth_order
   
+
 # child_of_interest
-  # create a variable to indicate whether a response includes a child < 18y/o
-  independent_variable_data <- independent_variable_data |>
-    mutate(
-      child_of_interest = case_when(
-        !is.na(sex_of_interest) ~ 1, # child of interest
-        is.na(sex_of_interest) ~ 0 # no child of interest
-      ) |>
-        factor()
-    )
+# create a variable to indicate whether a response includes a child < 18y/o
+independent_variable_data <- independent_variable_data |>
+  mutate(
+    child_of_interest = case_when(
+      !is.na(sex_of_interest) ~ 1, # child of interest
+      is.na(sex_of_interest) ~ 0 # no child of interest
+    ) |>
+      factor()
+  )
   
+# age_of_interest
+# age of the child of interest
+independent_variable_data <- independent_variable_data |>
+  mutate(age_of_interest = age_data$age_of_interest)
   
 # child_sisters
   # number of sisters of the child of interest
@@ -470,30 +474,37 @@ transformed_covid_data <- covid_data |>
       )
 
 # child_brothers
-    # number of brothers of the child of interest
-    sexes <- independent_variable_data[, sex_indexing] # columns containing the sexes of the children
-    
-    # count the number of males in every row
-    sons <- apply(sexes, 1, function(x) {
-      return(
-        sum(x == 1, na.rm = TRUE) # sum the number of values == 1
-        )
-      }
+  # number of brothers of the child of interest
+  sexes <- independent_variable_data[, sex_indexing] # columns containing the sexes of the children
+  
+  # count the number of males in every row
+  sons <- apply(sexes, 1, function(x) {
+    return(
+      sum(x == 1, na.rm = TRUE) # sum the number of values == 1
+      )
+    }
+  )
+  
+  # account for the sex of the child of interest
+  independent_variable_data$child_brothers <- 
+    ifelse(
+      independent_variable_data$sex_of_interest == 0, # if the COI is male
+      sons - 1, # remove 1 from son count if COI is male
+      sons # no. of brothers = son count if COI isn't male
     )
     
-    # account for the sex of the child of interest
-    independent_variable_data$child_brothers <- 
-      ifelse(
-        independent_variable_data$sex_of_interest == 0, # if the COI is male
-        sons - 1, # remove 1 from son count if COI is male
-        sons # no. of brothers = son count if COI isn't male
-      )
-    
 # child_siblings
-# the number of siblings the child has
-  independent_variable_data$child_siblings <-
-    independent_variable_data$child_brothers +
-    independent_variable_data$child_sisters
+# the number of siblings (who are <18y/o) the child has
+independent_variable_data$child_siblings <-
+  independent_variable_data$child_brothers +
+  independent_variable_data$child_sisters
+
+# test_child_siblings
+# the number of siblings (including those who are >= 18 y/o) the child has
+independent_variable_data$test_child_siblings <-
+  independent_variable_data$child_brothers +
+  independent_variable_data$child_sisters +
+  independent_variable_data$children_over_18
   
   
 # parents_marital_status
@@ -539,6 +550,7 @@ independent_variable_data <- independent_variable_data |>
       factor()
   )
 }
+
 
 # parent_1_sex
 # sex of the responding parent/individual
@@ -1155,9 +1167,11 @@ transformed_independent_variable_data <- independent_variable_data |>
     sex_of_interest,
     birth_order,
     child_of_interest,
+    age_of_interest,
     child_sisters,
     child_brothers,
     child_siblings,
+    test_child_siblings,
     parents_marital_status,
     test_parents_marital_status,
     parent_1_sex,

@@ -150,12 +150,15 @@ library(tidyverse)
 -   Number of children
     -   `children_under_18`
     -   `children_over_18`
+-   Age of child
+    -   `age_of_interest`
 
 ### Variables derived
 
 -   Sex of child of interest (reference *Age of child*), `sex_of_interest` 
     -   0 = male
     -   1 = female
+-   Age of child of interest, `age_of_interest`
 -   Number of children of interest (<18y/o), `child_of_interest`
 -   birth order of child of interest, `birth_order`
 -   Number of sisters and/or brothers
@@ -166,7 +169,8 @@ library(tidyverse)
 
 -   Number of siblings at the time of vaccination, `siblings_tov`
     -   sum the number of children who were born before the vaccination date of the child of interest
--   Total number of siblings, `child_siblings`
+-   Total number of siblings under 18 y/o, `child_siblings`
+-   Total number of siblings (both under and over 18 y/o), `test_child_siblings`
 
 ## Parents' marital status
 
