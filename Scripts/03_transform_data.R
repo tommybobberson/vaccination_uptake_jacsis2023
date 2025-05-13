@@ -41,7 +41,7 @@ age_data <- mutate(
   child_4_DOB = make_date(child_4_DOB_year, child_4_DOB_month),
   child_5_DOB = make_date(child_5_DOB_year, child_5_DOB_month),
 
-  #convert response_time to a date
+  # convert response_time to a date
   response_time = as.Date(response_time),
   
   # calculate the age of each child at the time of response
@@ -452,7 +452,26 @@ independent_variable_data <- independent_variable_data |>
 # age of the child of interest
 independent_variable_data <- independent_variable_data |>
   mutate(age_of_interest = age_data$age_of_interest)
+ 
+# age_cat
+# which schooling category the COI falls into based on their age, according to japanese schooling guidelines
+independent_variable_data <- independent_variable_data |>
+  mutate(
+    
+    # calculate age of COI as of april 2nd 2023
+    age_relative_school_year =
+        age_of_interest - time_length(age_data$response_time - as.Date("2023-04-02"), "years"),
+    
+    # class children based on their age_relative_school_year
+    age_cat = case_when(
+      age_relative_school_year < 6 ~ "pre",
+      age_relative_school_year < 12 & age_relative_school_year > 6 ~ "primary",
+      age_relative_school_year > 12 ~ "high"
+    )
+  )
   
+  
+ 
 # child_sisters
   # number of sisters of the child of interest
   sexes <- independent_variable_data[, sex_indexing] # columns containing the sexes of the children
@@ -1168,6 +1187,7 @@ transformed_independent_variable_data <- independent_variable_data |>
     birth_order,
     child_of_interest,
     age_of_interest,
+    age_cat,
     child_sisters,
     child_brothers,
     child_siblings,

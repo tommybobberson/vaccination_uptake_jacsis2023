@@ -152,6 +152,8 @@ library(tidyverse)
     -   `children_over_18`
 -   Age of child
     -   `age_of_interest`
+-   response time
+    -   `response_time`
 
 ### Variables derived
 
@@ -159,6 +161,7 @@ library(tidyverse)
     -   0 = male
     -   1 = female
 -   Age of child of interest, `age_of_interest`
+-   schooling category of COI based on their age, `age_cat`
 -   Number of children of interest (<18y/o), `child_of_interest`
 -   birth order of child of interest, `birth_order`
 -   Number of sisters and/or brothers
