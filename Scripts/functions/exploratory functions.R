@@ -10,25 +10,43 @@
 # by a variable of interest - in essence we are investigating how varying a 
 # certain varaible affects the COI's vaccine coverage
 
+function_data_triple_stratify <-
+  function(dataset, variable, variable_type, stratify_by, coverage) {
+  
+  dataset |>
+      
+      # limit set of observations to observations that are complete
+      filter(!is.na({{stratify_by}}) & !is.na({{variable}}) & !is.na({{coverage}})) |>
+      
+      # coerce variable to proper type for plotting if needed
+      mutate(across({{variable}}, variable_type)) |>
+      
+      summarise(count = n(), .by = c({{stratify_by}}, {{variable}}, {{coverage}})) |>
+      
+      mutate(proportion = count/sum(count) |> round(2), .by = c({{stratify_by}}, {{variable}})) ->
+      stratified_data 
+    
+    return(stratified_data)
+  }
 
 function_data_stratify <-
-  function(dataset, variable, variable_type, coverage) {
+  function(dataset, variable, variable_type, stratify_by) {
   
   dataset |>
     
-    # ensure variables are only for those with valid coverage and variable data
-    filter(!is.na({{coverage}}) & !is.na({{variable}})) |>
+    # ensure variables are only for those with valid coverage (stratify_by) and variable data
+    filter(!is.na({{stratify_by}}) & !is.na({{variable}})) |>
     
     # coerece variable to proper type for plotting (numeric, factor etc.)
     mutate(across({{variable}}, variable_type)) |>
       
     # count the number of individuals of each coverage for each level of the 
     # variable of interest
-    summarise(count = n(), .by = c({{coverage}}, {{variable}})) |>
+    summarise(count = n(), .by = c({{stratify_by}}, {{variable}})) |>
     
     # calculate the proportion of a coverage level that each level of the
     # variable of interest takes up
-    mutate(proportion = count/sum(count), .by = {{variable}}) ->
+    mutate(proportion = count/sum(count) |> round(2), .by = {{variable}}) ->
     stratified_data
   
   return(stratified_data)
@@ -132,10 +150,15 @@ function_plot_corr_pairs <- function(variable1, variable2, df) {
   # Both categorical
   if (is.factor(df$var1) & is.factor(df$var2)) {
     return(
-      ggplot(df, aes(x = var1, y = var2, group = var1)) +
+      df |>
         
         # calculate the proportion that each level of var 1 takes up for each level of var 2
-        geom_count(aes(size = after_stat(n / ave(n ,x))), color = "steelblue") +
+        summarise(count = n(), .by = c(var1, var2)) |>
+        mutate(proportion = count/sum(count), .by = var1) |>
+        
+        # plot by proportions
+        ggplot(aes(x = var1, y = var2, group = var1)) +
+        geom_count(aes(size = proportion), color = "steelblue") +
         theme_minimal() +
         labs(
           title = paste("A counts plot of", variable2, "against", variable1),
@@ -148,7 +171,14 @@ function_plot_corr_pairs <- function(variable1, variable2, df) {
   # Both numeric
   if (is.numeric(df$var1) & is.numeric(df$var2)) {
     return(
-      ggplot(df, aes(x = var1, y = var2)) +
+      df |>
+        # make sure there is a child of interest
+        filter(child_of_interest == 1) |>
+        # calculate mean values for var 2
+        mutate(var2_mean = mean(var2), .by = var1) |>
+        
+        # plot
+        ggplot(aes(x = var1, y = var2_mean)) +
         geom_point() +
         theme_minimal() +
         labs(
@@ -162,11 +192,16 @@ function_plot_corr_pairs <- function(variable1, variable2, df) {
   # One numeric, one categorical
   if (is.numeric(df$var1) & is.factor(df$var2)) {
     return(
-      ggplot(df, aes(x = var2, y = var1)) +
+      df |>
         
         # calculate the proportion of the factor (var2) that each tier of the 
         # numerical variable takes up (var1)
-        geom_count(aes(size = after_stat(n / ave(n, x))), color = "steelblue") +
+        summarise(count = n(), .by = c(var1, var2)) |>
+        mutate(proportion = count/sum(count), .by = var2) |>
+        
+        # plot proportional count plots
+        ggplot(aes(x = var2, y = var1)) +
+        geom_count(aes(size = proportion), color = "steelblue") +
         theme_minimal() +
         labs(
           title = paste("A boxplot of", variable1, "by", variable2),
@@ -178,11 +213,16 @@ function_plot_corr_pairs <- function(variable1, variable2, df) {
   
   if (is.numeric(df$var2) & is.factor(df$var1)) {
     return(
-      ggplot(df, aes(x = var1, y = var2)) +
+      df |>
         
         # calculate the proportion of the factor (var1) that each tier of the 
         # numerical variable takes up (var2)
-        geom_count(aes(size = after_stat(n / ave(n ,x))), color = "steelblue") +
+        summarise(count = n(), .by = c(var1, var2)) |>
+        mutate(proportion = count/sum(count), .by = var1) |>
+      
+        # plot proportional count plots
+        ggplot(aes(x = var1, y = var2)) +
+        geom_count(aes(size = proportion), color = "steelblue") +
         theme_minimal() +
         labs(
           title = paste("A boxplot of", variable2, "by", variable1),
@@ -191,7 +231,15 @@ function_plot_corr_pairs <- function(variable1, variable2, df) {
         )
     )
   }
+
   
-  # Fallback
-  stop("Unsupported variable types.")
+}
+
+
+# plot saving -------------------------------------------------------------
+function_plot_save <- function(plot, plot_name, format, location) {
+  ggsave(
+    here(location, paste0(plot_name, ".", format)), 
+    plot = plot,
+    width = 3, height = 2)
 }
