@@ -224,7 +224,8 @@ transformed_influenza_data <- influenza_data |>
     influenza_first_dose_date,
     influenza_second_dose_date,
     influenza_coverage_dosage,
-    influenza_coverage_age
+    influenza_coverage_age,
+    age_of_interest
   )
   
 # save transformed influenza data
@@ -332,7 +333,8 @@ transformed_covid_data <- covid_data |>
     covid_second_dose_date,
     covid_third_dose_date,
     covid_coverage_dosage,
-    covid_coverage_age
+    covid_coverage_age,
+    age_of_interest
   )
 
 # save the transformed covid data
