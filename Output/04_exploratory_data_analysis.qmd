@@ -2317,7 +2317,7 @@ function_data_stratify(inf_ivd, mother_employment_status, as.factor, influenza_c
 ```{r}
 function_data_stratify(cov_ivd, parents_stay_home, as.factor, covid_coverage_age) |>
   mutate(across(parents_stay_home, ~factor(.x, labels = c("Neither", "Father", "Mother", "Both")))) |>
-  function_calculate_confidence_intervals(parents_stay_home) |>
+  function_calculate_confidence_intervals(parents_stay_home, "wilson") |>
   function_plot_proportion_cols(parents_stay_home, covid_coverage_age) +
   function_plot_confidence_intervals(parents_stay_home) +
   function_plot_label_count(parents_stay_home, covid_coverage_age)
