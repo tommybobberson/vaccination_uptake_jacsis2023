@@ -1604,3 +1604,702 @@ inf_prepped_ivd |>
   # save the plot for reference
   function_plot_save(last_plot(), "child_parents_marital_status_influenza_age", ".png", "Output/05_multivariate_uptake_plots")
 ```
+
+### (M) Vulnerable individuals
+#### child_grand
+examining how the number of vulnerable individuals and the number of grandparents in the COI's household
+affects their uptake of the influenza and covid vaccines
+```{r}
+# covid uptake
+cov_prepped_ivd |>
+  
+  # reduce dimensions of vulnerable individuals and child_grand to ensure adequate sample size
+  mutate(
+    across(
+      c(vulnerable_individuals, child_grand),
+      ~ifelse(.x > 0, 1, 0) |> as.factor()
+    )
+  ) |>
+  
+  # ensure no missing covid vax data and stratify by marital status and parents
+  filter(!is.na(covid_coverage_age)) |>
+  summarise(count = n(), .by = c(vulnerable_individuals, child_grand, covid_coverage_age)) |>
+  mutate(proportion = count / sum(count), .by = c(vulnerable_individuals, child_grand)) |>
+  
+  # plot
+  ggplot(aes(x = child_grand, y = proportion)) +
+  geom_point(aes(colour = vulnerable_individuals)) +
+  geom_smooth(method = "lm", aes(colour = vulnerable_individuals)) +
+  function_plot_label_count(child_grand, vulnerable_individuals) +
+  facet_wrap(vars(covid_coverage_age)) +
+  labs(
+    title = "proportion of children with each uptake of the covid vaccine \n 
+    according to the presence of vulnerable individuals and grandparents at home"
+  ) +
+  theme(plot.title = element_text(lineheight = 0.5))  -> vulnerable_indivs_child_grand_covid_age
+
+  vulnerable_indivs_child_grand_covid_age
+
+  # save the plot for reference
+  function_plot_save(last_plot(), "vulnerable_indivs_child_grand_covid_age", ".png", "Output/05_multivariate_uptake_plots")
+  
+# influenza uptake
+inf_prepped_ivd |>
+  
+  # reduce dimensions of vulnerable individual data and grandparent data to ensure sufficient sample size for analysis
+  mutate(
+    across(
+      c(vulnerable_individuals, child_grand), 
+      ~ ifelse(.x > 0, 1, 0) |> as.factor()
+    )
+  ) |> 
+
+  # ensure no missing covid vax data and stratify by marital status and parents
+  filter(!is.na(influenza_coverage_age)) |>
+  summarise(count = n(), .by = c(vulnerable_individuals, child_grand, influenza_coverage_age)) |>
+  mutate(proportion = count / sum(count), .by = c(vulnerable_individuals, child_grand)) |>
+  
+  # plot
+  ggplot(aes(x = child_grand, y = proportion)) +
+  geom_point(aes(colour = vulnerable_individuals)) +
+  geom_smooth(method = "lm", aes(colour = vulnerable_individuals)) +
+  function_plot_label_count(child_grand, vulnerable_individuals) +
+  facet_wrap(vars(influenza_coverage_age)) +
+  labs(
+    title = "proportion of children with each uptake of the influenza vaccine \n 
+    according to the presence of vulnerable individuals and grandparents at home"
+  ) +
+  theme(plot.title = element_text(lineheight = 0.5))  -> vulnerable_indivs_child_grand_influenza_age
+
+  vulnerable_indivs_child_grand_influenza_age
+
+  # save the plot for reference
+  function_plot_save(last_plot(), "vulnerable_indivs_child_grand_influenza_age", ".png", "Output/05_multivariate_uptake_plots")
+```
+
+We can run a 2 factor ANOVA, to determine if there is any sort of interaction between these 2? Controlling for other confounding factors
+
+#### household_income
+```{r}
+# covid uptake
+cov_prepped_ivd |>
+  
+  # reduce dimensions of vulnerable individuals and hosuehold_income to ensure adequate sample size for analysis
+  mutate(
+    vulnerable_individuals = ifelse(vulnerable_individuals > 0, 1, 0) |> as.factor(),
+    income = ceiling(test_household_income/4)
+  ) |>
+  
+  # ensure no missing covid vax data and stratify by vulnerable individuals and income
+  filter(!is.na(covid_coverage_age)) |>
+  summarise(count = n(), .by = c(vulnerable_individuals, income, covid_coverage_age)) |>
+  mutate(proportion = count / sum(count), .by = c(vulnerable_individuals, income)) |>
+  
+  # plot
+  ggplot(aes(x = income, y = proportion)) +
+  geom_point(aes(colour = vulnerable_individuals)) +
+  geom_smooth(method = "lm", aes(colour = vulnerable_individuals)) +
+  function_plot_label_count(income, vulnerable_individuals) +
+  facet_wrap(vars(covid_coverage_age)) +
+  labs(
+    title = "proportion of children with each uptake of the covid vaccine \n 
+    according to their parents marital status and the number of parents they have"
+  ) +
+  theme(plot.title = element_text(lineheight = 0.5))  -> vulnerable_indivs_income_covid_age
+
+  vulnerable_indivs_income_covid_age
+
+  # save the plot for reference
+ # function_plot_save(last_plot(), "vulnerable_indivs_child_grand_covid_age", ".png", "Output/05_multivariate_uptake_plots")
+  
+# influenza uptake
+inf_prepped_ivd |>
+  
+   # reduce dimensions of vulnerable individuals and hosuehold_income to ensure adequate sample size for analysis
+  mutate(
+    vulnerable_individuals = ifelse(vulnerable_individuals > 0, 1, 0) |> as.factor(),
+    income = ceiling(test_household_income/4)
+  ) |>
+  
+  # ensure no missing covid vax data and stratify by marital status and parents
+  filter(!is.na(influenza_coverage_age)) |>
+  summarise(count = n(), .by = c(vulnerable_individuals, income, influenza_coverage_age)) |>
+  mutate(proportion = count / sum(count), .by = c(vulnerable_individuals, income)) |>
+  
+  # plot
+  ggplot(aes(x = income, y = proportion)) +
+  geom_point(aes(colour = vulnerable_individuals)) +
+  geom_smooth(method = "lm", aes(colour = vulnerable_individuals)) +
+  function_plot_label_count(income, vulnerable_individuals) +
+  facet_wrap(vars(influenza_coverage_age)) +
+  labs(
+    title = "proportion of children with each uptake of the influenza vaccine \n 
+    according to their parents marital status and the number of parents they have"
+  ) +
+  theme(plot.title = element_text(lineheight = 0.5))  -> vulnerable_indivs_income_influenza_age
+
+  vulnerable_indivs_income_influenza_age
+
+  # save the plot for reference
+ # function_plot_save(last_plot(), "vulnerable_indivs_child_grand_influenza_age", ".png", "Output/05_multivariate_uptake_plots")
+```
+
+#### parent_chronic_illness
+
+```{r}
+# covid uptake
+cov_prepped_ivd |>
+  
+  # reduce dimensions of vulnerable individuals to ensure adequate sample size for analysis
+  mutate(
+    vulnerable_individuals = ifelse(vulnerable_individuals > 0, 1, 0) |> as.factor()
+  ) |>
+  
+  # ensure no missing covid vax data and stratify by vulnerable individuals and parent_chronic_illness
+  filter(!is.na(covid_coverage_age)) |>
+  summarise(count = n(), .by = c(vulnerable_individuals, parent_chronic_illness, covid_coverage_age)) |>
+  mutate(proportion = count / sum(count), .by = c(vulnerable_individuals, parent_chronic_illness)) |>
+  
+  # plot
+  ggplot(aes(x = parent_chronic_illness, y = proportion)) +
+  geom_point(aes(colour = vulnerable_individuals)) +
+  geom_smooth(method = "lm", aes(colour = vulnerable_individuals)) +
+  function_plot_label_count(parent_chronic_illness, vulnerable_individuals) +
+  facet_wrap(vars(covid_coverage_age)) +
+  labs(
+    title = "proportion of children with each uptake of the covid vaccine \n 
+    according to their parents' chronic illness status and the presence of vulnerable individuals at home"
+  ) +
+  theme(plot.title = element_text(lineheight = 0.5))  -> vulnerable_indivs_parent_chronic_illness_covid_age
+
+  vulnerable_indivs_parent_chronic_illness_covid_age
+
+  # save the plot for reference
+  function_plot_save(last_plot(), "vulnerable_indivs_parent_chronic_illness_covid_age", ".png", "Output/05_multivariate_uptake_plots")
+  
+# influenza uptake
+inf_prepped_ivd |>
+  
+   # reduce dimensions of vulnerable individuals and hosuehold_parent_chronic_illness to ensure adequate sample size for analysis
+  mutate(
+    vulnerable_individuals = ifelse(vulnerable_individuals > 0, 1, 0) |> as.factor()
+  ) |>
+  
+  # ensure no missing covid vax data and stratify by marital status and parents
+  filter(!is.na(influenza_coverage_age)) |>
+  summarise(count = n(), .by = c(vulnerable_individuals, parent_chronic_illness, influenza_coverage_age)) |>
+  mutate(proportion = count / sum(count), .by = c(vulnerable_individuals, parent_chronic_illness)) |>
+  
+  # plot
+  ggplot(aes(x = parent_chronic_illness, y = proportion)) +
+  geom_point(aes(colour = vulnerable_individuals)) +
+  geom_smooth(method = "lm", aes(colour = vulnerable_individuals)) +
+  function_plot_label_count(parent_chronic_illness, vulnerable_individuals) +
+  facet_wrap(vars(influenza_coverage_age)) +
+  labs(
+    title = "proportion of children with each uptake of the influenza vaccine \n 
+    according to their parents marital status and the number of parents they have"
+  ) +
+  theme(plot.title = element_text(lineheight = 0.5))  -> vulnerable_indivs_parent_chronic_illness_influenza_age
+
+  vulnerable_indivs_parent_chronic_illness_influenza_age
+
+  # save the plot for reference
+  function_plot_save(last_plot(), "vulnerable_indivs_parent_chronic_illness_influenza_age", ".png", "Output/05_multivariate_uptake_plots")
+```
+
+
+#### child_grand, household_income, vulnerable_individuals
+Given such small sample sizes, is it even feasible to perform multivariate stratification
+```{r}
+# covid coverage
+cov_prepped_ivd |>
+  
+  # ensure no missing covid data
+  filter(!is.na(covid_coverage_age)) |>
+  
+  # reduce dimensions of income and vulnerable individuals
+  mutate(
+    income = ceiling(test_household_income/5),
+    vulnerable_individuals = ifelse(vulnerable_individuals > 0, 1, 0) |> as.factor(),
+    child_grand = ifelse(child_grand > 0, 1, 0) |> as.factor()
+  ) |>
+  
+  summarise(count = n(), .by = c(income, vulnerable_individuals, covid_coverage_age, child_grand)) |>
+  mutate(proportion = count / sum(count), .by = c(child_grand, vulnerable_individuals, income)) |>
+  
+  # plot
+  ggplot(aes(x = income, y = proportion)) +
+  geom_point(aes(colour = vulnerable_individuals)) +
+  geom_smooth(aes(colour = vulnerable_individuals), method = "lm") +
+  geom_text(
+    aes(x = income, label = count, colour = vulnerable_individuals),
+    position = "jitter"
+  ) +
+  ylim(c(0,1.1)) +
+  facet_grid(cols = vars(covid_coverage_age), rows = vars(child_grand)) +
+  labs(
+    title = "how the proportion of children with each level of coverage of the covid vaccine varies \n with income and the presence of a vulnearble individual & grandparent in the same household",
+    subtitle = "column facets represent covid vaccination status and row facets the presence of grandaprents"
+  ) +
+  theme(plot.title = element_text(size = 10)) -> vulnerable_indivs_child_grand_income_parent_chronic_covid_age
+
+vulnerable_indivs_child_grand_income_parent_chronic_covid_age
+
+# influenza coverage
+inf_prepped_ivd |>
+  
+  # ensure no missing covid data
+  filter(!is.na(influenza_coverage_age)) |>
+  
+  # reduce dimensions of income and vulnerable individuals
+  mutate(
+    income = ceiling(test_household_income/5),
+    vulnerable_individuals = ifelse(vulnerable_individuals > 0, 1, 0) |> as.factor(),
+    child_grand = ifelse(child_grand > 0, 1, 0) |> as.factor()
+  ) |>
+  
+  summarise(count = n(), .by = c(income, vulnerable_individuals, influenza_coverage_age, child_grand)) |>
+  mutate(proportion = count / sum(count), .by = c(child_grand, vulnerable_individuals, income)) |>
+  
+  # plot
+  ggplot(aes(x = income, y = proportion)) +
+  geom_point(aes(colour = vulnerable_individuals)) +
+  geom_smooth(aes(colour = vulnerable_individuals), method = "lm") +
+  geom_text(
+    aes(x = income, label = count, colour = vulnerable_individuals),
+    position = "jitter"
+  ) +
+  ylim(c(0,1.1)) +
+  facet_grid(cols = vars(influenza_coverage_age), rows = vars(child_grand)) +
+  labs(
+    title = "how the proportion of children with each level of coverage of the influenza vaccine varies \n with income and the presence of a vulnearble individual & grandparent in the same household",
+    subtitle = "column facets represent influenza vaccination status and row facets the presence of grandaprents"
+  ) +
+  theme(plot.title = element_text(size = 10)) -> vulnerable_indivs_child_grand_income_parent_chronic_influenza_age
+
+vulnerable_indivs_child_grand_income_parent_chronic_influenza_age
+  # save
+```
+### (M) household_total
+#### child_grand, test_parents_marital_status
+```{r}
+# covid uptake
+cov_prepped_ivd |>
+  
+  # reduce the dimensions of child_grand
+  mutate(child_grand = ifelse(child_grand <1, 0, 1) |> as.factor()) |>
+  
+  # ensure no missing covid vax data and stratify by grandparents
+  filter(!is.na(covid_coverage_age) & household_total < 8) |>
+  summarise(count = n(), .by = c(household_total, child_grand, test_parents_marital_status, covid_coverage_age)) |>
+  mutate(proportion = count / sum(count), .by = c(household_total, test_parents_marital_status, child_grand)) |>
+  
+  
+  # plot
+  ggplot(aes(x = household_total, y = proportion)) +
+  geom_point(aes(colour = child_grand)) +
+  geom_smooth(method = "lm", aes(colour = child_grand)) +
+  function_plot_label_count(child_grand, covid_coverage_age) +
+  facet_grid(cols = vars(covid_coverage_age), rows = vars(test_parents_marital_status)) +
+  ylim(c(0,1)) +
+  labs(
+    title = "proportion of children with each uptake of the covid vaccine according to \n the total number of individuals,  presence of grandaprents in their household \n and parents' marital status",
+    subtitle = "row facets represent if the child's parents are married (0) or unmarried (1) \n colum facets represent their vaccination status"
+  ) +
+  theme(plot.title = element_text(lineheight = 0.5))  -> household_total_child_grand_parent_marital_cov_age
+
+  household_total_child_grand_parent_marital_cov_age
+
+  # save the plot for reference
+  function_plot_save(last_plot(), "household_total_child_grand_parent_marital_cov_age", ".png", "Output/05_multivariate_uptake_plots")
+  
+# influenza uptake
+inf_prepped_ivd |>
+  
+  # reduce the dimensions of child_grand
+  mutate(child_grand = ifelse(child_grand <1, 0, 1) |> as.factor()) |>
+  
+  # ensure no missing influenza vax data and stratify by grandparents
+  filter(!is.na(influenza_coverage_age) & household_total < 8) |>
+  summarise(count = n(), .by = c(household_total, child_grand, test_parents_marital_status, influenza_coverage_age)) |>
+  mutate(proportion = count / sum(count), .by = c(household_total, test_parents_marital_status, child_grand)) |>
+  
+  
+  # plot
+  ggplot(aes(x = household_total, y = proportion)) +
+  geom_point(aes(colour = child_grand)) +
+  geom_smooth(method = "lm", aes(colour = child_grand)) +
+  function_plot_label_count(child_grand, influenza_coverage_age) +
+  facet_grid(cols = vars(influenza_coverage_age), rows = vars(test_parents_marital_status)) +
+  ylim(c(0,1)) +
+  labs(
+      title = "proportion of children with each uptake of the covid vaccine according to \n the total number of individuals,  presence of grandaprents in their household \n and parents' marital status",
+    subtitle = "row facets represent if the child's parents are married (0) or unmarried (1) \n colum facets represent their vaccination status"
+  ) +
+  theme(plot.title = element_text(lineheight = 0.7))  -> household_total_child_grand_parent_marital_inf_age
+
+  household_total_child_grand_parent_marital_inf_age
+
+  # save the plot for reference
+  function_plot_save(last_plot(), "household_total_child_grand_parent_marital_inf_age", ".png", "Output/05_multivariate_uptake_plots")
+```
+
+#### child_grand, parents_highest_education
+```{r}
+# covid uptake
+cov_prepped_ivd |>
+  
+  # reduce the dimensions of child_grand
+  mutate(child_grand = ifelse(child_grand <1, 0, 1) |> as.factor()) |>
+  
+  # ensure no missing covid vax data and stratify by grandparents
+  filter(!is.na(covid_coverage_age) & household_total < 8) |>
+  summarise(count = n(), .by = c(household_total, child_grand, parents_highest_education, covid_coverage_age)) |>
+  mutate(proportion = count / sum(count), .by = c(household_total, parents_highest_education, child_grand)) |>
+  
+  
+  # plot
+  ggplot(aes(x = household_total, y = proportion)) +
+  geom_point(aes(colour = child_grand)) +
+  geom_smooth(method = "lm", aes(colour = child_grand)) +
+  function_plot_label_count(child_grand, covid_coverage_age) +
+  facet_grid(cols = vars(covid_coverage_age), rows = vars(parents_highest_education)) +
+  ylim(c(0,1)) +
+  labs(
+    title = "proportion of children with each uptake of the covid vaccine according to \n the total number of individuals,  presence of grandaprents in their household \n and parents' highest eduacation",
+    subtitle = "row facets represent the parents' highest education \n colum facets represent their vaccination status"
+  ) +
+  theme(plot.title = element_text(lineheight = 0.5))  -> household_total_child_grand_parent_education_cov_age
+
+  household_total_child_grand_parent_education_cov_age
+
+  # save the plot for reference
+  function_plot_save(last_plot(), "household_total_child_grand_parent_education_cov_age", ".png", "Output/05_multivariate_uptake_plots")
+  
+# influenza uptake
+inf_prepped_ivd |>
+  
+  # reduce the dimensions of child_grand
+  mutate(child_grand = ifelse(child_grand <1, 0, 1) |> as.factor()) |>
+  
+  # ensure no missing influenza vax data and stratify by grandparents
+  filter(!is.na(influenza_coverage_age) & household_total < 8) |>
+  summarise(count = n(), .by = c(household_total, child_grand, parents_highest_education, influenza_coverage_age)) |>
+  mutate(proportion = count / sum(count), .by = c(household_total, parents_highest_education, child_grand)) |>
+  
+  
+  # plot
+  ggplot(aes(x = household_total, y = proportion)) +
+  geom_point(aes(colour = child_grand)) +
+  geom_smooth(method = "lm", aes(colour = child_grand)) +
+  function_plot_label_count(child_grand, influenza_coverage_age) +
+  facet_grid(cols = vars(influenza_coverage_age), rows = vars(parents_highest_education)) +
+  ylim(c(0,1)) +
+  labs(
+      title = "proportion of children with each uptake of the influenza vaccine according to \n the total number of individuals,  presence of grandaprents in their household \n and parents' highest eduacation",
+    subtitle = "row facets represent the parents' highest education \n colum facets represent their vaccination status"
+  ) +
+  theme(plot.title = element_text(lineheight = 0.7))  -> household_total_child_grand_parent_education_inf_age
+
+  household_total_child_grand_parent_education_inf_age
+
+  # save the plot for reference
+  function_plot_save(last_plot(), "household_total_child_grand_parent_education_inf_age", ".png", "Output/05_multivariate_uptake_plots")
+```
+
+#### child_grand
+```{r}
+# covid uptake
+cov_prepped_ivd |>
+  
+  # reduce the dimensions of child_grand
+  mutate(child_grand = ifelse(child_grand <1, 0, 1) |> as.factor()) |>
+  
+  # ensure no missing covid vax data and stratify by grandparents
+  filter(!is.na(covid_coverage_age) & household_total < 8) |>
+  summarise(count = n(), .by = c(household_total, child_grand, covid_coverage_age)) |>
+  mutate(proportion = count / sum(count), .by = c(household_total, child_grand)) |>
+  
+  
+  # plot
+  ggplot(aes(x = household_total, y = proportion)) +
+  geom_point(aes(colour = child_grand)) +
+  geom_smooth(method = "lm", aes(colour = child_grand)) +
+  function_plot_label_count(child_grand, covid_coverage_age) +
+  facet_grid(cols = vars(covid_coverage_age), rows = vars(child_grand)) +
+  ylim(c(0,1)) +
+  labs(
+    title = "proportion of children with each uptake of the covid vaccine according to \n the total number of individuals, and presence of grandaprents in their household ",
+    subtitle = "row facets represent the lack of (0) and presence of (1) grandparents \n colum facets represent their vaccination status"
+  ) +
+  theme(plot.title = element_text(lineheight = 0.5))  -> household_total_child_grand_cov_age
+
+  household_total_child_grand_cov_age
+
+  # save the plot for reference
+  function_plot_save(last_plot(), "household_total_child_grand_cov_age", ".png", "Output/05_multivariate_uptake_plots")
+  
+# influenza uptake
+inf_prepped_ivd |>
+  
+  # reduce the dimensions of child_grand
+  mutate(child_grand = ifelse(child_grand <1, 0, 1) |> as.factor()) |>
+  
+  # ensure no missing influenza vax data and stratify by grandparents
+  filter(!is.na(influenza_coverage_age) & household_total < 8) |>
+  summarise(count = n(), .by = c(household_total, child_grand, influenza_coverage_age)) |>
+  mutate(proportion = count / sum(count), .by = c(household_total, child_grand)) |>
+  
+  
+  # plot
+  ggplot(aes(x = household_total, y = proportion)) +
+  geom_point(aes(colour = child_grand)) +
+  geom_smooth(method = "lm", aes(colour = child_grand)) +
+  function_plot_label_count(child_grand, influenza_coverage_age) +
+  facet_grid(cols = vars(influenza_coverage_age), rows = vars(child_grand)) +
+  ylim(c(0,1)) +
+  labs(
+    title = "proportion of children with each uptake of the influenza vaccine according to \n the total number of individuals, and presence of grandaprents in their household ",
+    subtitle = "row facets represent the lack of (0) and presence of (1) grandparents \n colum facets represent their vaccination status"
+  ) +
+  theme(plot.title = element_text(lineheight = 0.7))  -> household_total_child_grand_inf_age
+
+  household_total_child_grand_inf_age
+
+  # save the plot for reference
+  function_plot_save(last_plot(), "household_total_child_grand_inf_age", ".png", "Output/05_multivariate_uptake_plots")
+```
+
+
+#### test_parents_marital_status
+```{r}
+# covid uptake
+cov_prepped_ivd |>
+  
+  # ensure no missing covid vax data and stratify by respondign parent's marital status
+  filter(!is.na(covid_coverage_age) & household_total < 8) |>
+  summarise(count = n(), .by = c(household_total, test_parents_marital_status, covid_coverage_age)) |>
+  mutate(proportion = count / sum(count), .by = c(household_total, test_parents_marital_status)) |>
+  
+  
+  # plot
+  ggplot(aes(x = household_total, y = proportion)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  function_plot_label_count(test_parents_marital_status, covid_coverage_age) +
+  facet_grid(cols = vars(covid_coverage_age), rows = vars(test_parents_marital_status)) +
+  ylim(c(0,1)) +
+  labs(
+    title = "proportion of children with each uptake of the covid vaccine according to \n the total number of individuals, and presence of grandaprents in their household ",
+    subtitle = "row facets represent responding parent's marital status: (0) married, (1) unmarried \n colum facets represent their vaccination status"
+  ) +
+  theme(plot.title = element_text(lineheight = 0.5))  -> household_total_child_parents_marital_cov_age
+
+  household_total_child_parents_marital_cov_age
+
+  # save the plot for reference
+  function_plot_save(last_plot(), "household_total_child_parents_marital_cov_age", ".png", "Output/05_multivariate_uptake_plots")
+  
+# influenza uptake
+inf_prepped_ivd |>
+  
+  # ensure no missing influenza vax data and stratify by marital status
+  filter(!is.na(influenza_coverage_age) & household_total < 8) |>
+  summarise(count = n(), .by = c(household_total, test_parents_marital_status, influenza_coverage_age)) |>
+  mutate(proportion = count / sum(count), .by = c(household_total, test_parents_marital_status)) |>
+  
+  
+  # plot
+  ggplot(aes(x = household_total, y = proportion)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  function_plot_label_count(test_parents_marital_status, influenza_coverage_age) +
+  facet_grid(cols = vars(influenza_coverage_age), rows = vars(test_parents_marital_status)) +
+  ylim(c(0,1)) +
+  labs(
+    title = "proportion of children with each uptake of the influenza vaccine according to \n the total number of individuals, and the responding parent's marital status ",
+    subtitle = "row facets represent the responding parent's marital status: (0) married, (1) unmarried\n colum facets represent their vaccination status"
+  ) +
+  theme(plot.title = element_text(lineheight = 0.7)) -> household_total_child_parents_marital_inf_age
+
+  household_total_child_parents_marital_inf_age
+
+  # save the plot for reference
+  function_plot_save(last_plot(), "household_total_child_parents_marital_inf_age", ".png", "Output/05_multivariate_uptake_plots")
+```
+
+#### test_parents_marital_status, household_income
+```{r}
+# covid uptake
+cov_prepped_ivd |>
+  
+  # reduce the dimensions of household income
+  mutate(income = ceiling(test_household_income / 4)) |>
+  
+  # ensure no missing covid vax data and stratify by grandparents
+  filter(!is.na(covid_coverage_age) & household_total < 8 & !is.na(income)) |>
+  summarise(count = n(), .by = c(household_total, income, test_parents_marital_status, covid_coverage_age)) |>
+  mutate(proportion = count / sum(count), .by = c(household_total, test_parents_marital_status, income)) |>
+  
+  
+  # plot
+  ggplot(aes(x = household_total, y = proportion)) +
+  geom_point(aes(colour = test_parents_marital_status)) +
+  geom_smooth(method = "lm", aes(colour = test_parents_marital_status)) +
+  function_plot_label_count(test_parents_marital_status, covid_coverage_age) +
+  facet_grid(cols = vars(covid_coverage_age), rows = vars(income)) +
+  ylim(c(0,1.05)) +
+  labs(
+    title = "proportion of children with each uptake of the covid vaccine according to the total number of individuals,  household income and parents' marital status",
+    subtitle = "row facets represent the total annual household income as multiples of 4million JPY \n colum facets represent their vaccination status"
+  ) +
+  theme(plot.title = element_text(lineheight = 0.5))  -> household_total_parent_marital_income_cov_age
+
+  household_total_parent_marital_income_cov_age
+
+  # save the plot for reference
+  function_plot_save(last_plot(), "household_total_parent_marital_income_cov_age", ".png", "Output/05_multivariate_uptake_plots")
+  
+# influenza uptake
+inf_prepped_ivd |>
+  
+  # reduce the dimensions of household income
+  mutate(income = ceiling(test_household_income / 4)) |>
+  
+  # ensure no missing influenza vax data and stratify by grandparents
+  filter(!is.na(influenza_coverage_age) & household_total < 8 & !is.na(income)) |>
+  summarise(count = n(), .by = c(household_total, income, test_parents_marital_status, influenza_coverage_age)) |>
+  mutate(proportion = count / sum(count), .by = c(household_total, test_parents_marital_status, income)) |>
+  
+  
+  # plot
+  ggplot(aes(x = household_total, y = proportion)) +
+  geom_point(aes(colour = test_parents_marital_status)) +
+  geom_smooth(method = "lm", aes(colour = test_parents_marital_status)) +
+  function_plot_label_count(test_parents_marital_status, influenza_coverage_age) +
+  facet_grid(cols = vars(influenza_coverage_age), rows = vars(income)) +
+  ylim(c(0,1.05)) +
+  labs(
+    title = "proportion of children with each uptake of the influenza vaccine according to the total number of individuals, household income and parents' marital status",
+    subtitle = "row facets represent the total annual household income as multiples of 4million JPY \n colum facets represent their vaccination status"
+  ) +
+  theme(plot.title = element_text(lineheight = 0.5))  -> household_total_parent_marital_income_inf_age
+
+  household_total_parent_marital_income_inf_age
+
+  # save the plot for reference
+  function_plot_save(last_plot(), "household_total_parent_marital_income_inf_age", ".png", "Output/05_multivariate_uptake_plots")  
+```
+#### parents_highest_education
+```{r}
+# covid uptake
+cov_prepped_ivd |>
+  
+  # ensure no missing covid vax data and stratify by parent's highest education
+  filter(!is.na(covid_coverage_age) & household_total < 8) |>
+  summarise(count = n(), .by = c(household_total, parents_highest_education, covid_coverage_age)) |>
+  mutate(proportion = count / sum(count), .by = c(household_total, parents_highest_education)) |>
+  
+  
+  # plot
+  ggplot(aes(x = household_total, y = proportion)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  function_plot_label_count(parents_highest_education, covid_coverage_age) +
+  facet_grid(cols = vars(covid_coverage_age), rows = vars(parents_highest_education)) +
+  ylim(c(0,1)) +
+  labs(
+    title = "proportion of children with each uptake of the covid vaccine according to \n the total number of individuals, and the parents' highest educations",
+    subtitle = "row facets represent responding parent's highest educations \n colum facets represent their vaccination status"
+  ) +
+  theme(plot.title = element_text(lineheight = 0.5))  -> household_total_highest_education_cov_age
+
+  household_total_highest_education_cov_age
+
+  # save the plot for reference
+  function_plot_save(last_plot(), "household_total_highest_education_cov_age", ".png", "Output/05_multivariate_uptake_plots")
+  
+# influenza uptake
+inf_prepped_ivd |>
+  
+  # ensure no missing infid vax data and stratify by parent's highest education
+  filter(!is.na(influenza_coverage_age) & household_total < 8) |>
+  summarise(count = n(), .by = c(household_total, parents_highest_education, influenza_coverage_age)) |>
+  mutate(proportion = count / sum(count), .by = c(household_total, parents_highest_education)) |>
+  
+  
+  # plot
+  ggplot(aes(x = household_total, y = proportion)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  function_plot_label_count(parents_highest_education, influenza_coverage_age) +
+  facet_grid(cols = vars(influenza_coverage_age), rows = vars(parents_highest_education)) +
+  ylim(c(0,1)) +
+  labs(
+    title = "proportion of children with each uptake of the influenza vaccine according to \n the total number of individuals, and the parents' highest educations",
+    subtitle = "row facets represent responding parent's highest educations \n colum facets represent their vaccination status"
+  ) +
+  theme(plot.title = element_text(lineheight = 0.5))  -> household_total_highest_education_inf_age
+
+  household_total_highest_education_inf_age
+
+  # save the plot for reference
+  function_plot_save(last_plot(), "household_total_highest_education_inf_age", ".png", "Output/05_multivariate_uptake_plots")
+```
+
+### (M) child_grand
+#### household_income
+```{r}
+# covid
+cov_prepped_ivd |>
+  
+  # ensure no missing covid data
+  filter(!is.na(covid_coverage_age)) |>
+  
+  # reduce dimensions of income and child_grand
+  mutate(
+    income = ceiling(test_household_income/5),
+    child_grand = ifelse(child_grand > 0, 1, 0) |> as.factor()
+  ) |>
+  
+  summarise(count = n(), .by = c(income, covid_coverage_age, child_grand)) |>
+  mutate(proportion = count / sum(count), .by = c(child_grand, income)) |>
+  
+  # plot
+  ggplot(aes(x = income, y = proportion)) +
+  geom_point(aes(colour = child_grand)) +
+  geom_smooth(aes(colour = child_grand), method = "lm") +
+  geom_text(
+    aes(x = income, label = count, colour = child_grand),
+    position = "jitter"
+  ) +
+  ylim(c(0,1.1)) +
+  facet_grid(cols = vars(covid_coverage_age)) 
+
+# influenza
+inf_prepped_ivd |>
+  
+  # ensure no missing covid data
+  filter(!is.na(influenza_coverage_age)) |>
+  
+  # reduce dimensions of income and child_grand
+  mutate(
+    income = ceiling(test_household_income/5),
+    child_grand = ifelse(child_grand > 0, 1, 0) |> as.factor()
+  ) |>
+  
+  summarise(count = n(), .by = c(income, influenza_coverage_age, child_grand)) |>
+  mutate(proportion = count / sum(count), .by = c(child_grand, income)) |>
+  
+  # plot
+  ggplot(aes(x = income, y = proportion)) +
+  geom_point(aes(colour = child_grand)) +
+  geom_smooth(aes(colour = child_grand), method = "lm") +
+  geom_text(
+    aes(x = income, label = count, colour = child_grand),
+    position = "jitter"
+  ) +
+  ylim(c(0,1.1)) +
+  facet_grid(cols = vars(influenza_coverage_age)) 
+```
