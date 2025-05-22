@@ -505,7 +505,7 @@ Stratifying by both the mother and father's highest education levels, we realise
 looking at each cimbinatiins of parents education
 
 
-### Revisit (R) father mother education stratified by each other
+#### father mother education stratified by each other
 Now let's look at income for each combination of mother's and fathers
 ```{r}
 # covid coverage by age
@@ -586,6 +586,96 @@ mother_highest_father_highest_education_influenza_age |>
 # lay out the data
 mother_highest_father_highest_education_influenza_age |>
   arrange(mother_highest_education, father_highest_education, influenza_coverage_age, income)
+```
+
+#### (R) Revisit test father and mother's education stratified by each other
+Now let's try stratifying by test_father and test_mother's highest education 
+```{r}
+# covid coverage by age
+cov_prepped_ivd |>
+  filter(!is.na(test_mother_highest_education) & !is.na(test_father_highest_education) & !is.na(covid_coverage_age) & !is.na(test_household_income)) |>
+    
+  # pivot to include values for both mother's and father's education
+  #pivot_longer(cols = c(test_father_highest_education, test_mother_highest_education, parents_highest_education), values_to = "education", names_to = "parent") |>
+  
+  # stratify income levels to compress them
+  mutate(income = ceiling(test_household_income / 4)
+         ) |>
+  
+  # stratify counts by income levels and education
+  summarise(
+    count = n(),
+    .by = c(test_mother_highest_education, test_father_highest_education, income, covid_coverage_age)
+  ) |>
+  
+  mutate(
+    proportion = count / sum(count),
+    .by = c(test_mother_highest_education, test_father_highest_education, income)
+  ) -> test_mother_highest_father_highest_education_covid_age
+  #filter(test_mother_highest_education == "Junior High or High school", test_father_highest_education == "Junior High or High school")
+ 
+# plot
+test_mother_highest_father_highest_education_covid_age |>
+  
+  ggplot(aes(x = income, y = proportion, colour = covid_coverage_age)) +
+  geom_point() +
+  geom_smooth(aes(group = covid_coverage_age), method = "lm") +
+  ylim(0, 1) +
+  #labs(
+  #  title = "covid coverage with diferring annual household \n
+  #income levels, stratified by their mother and father's education",
+  #  caption = "income rounded to closest 4 million JPY / year"
+  #) +
+  facet_grid(cols = vars(test_mother_highest_education), rows = vars(test_father_highest_education)) +
+  labs(
+    title = "uptake of the covid vaccine in the COI according to their mother and father's highest educational attainments",
+    subtitle = "columns represent mother's highest_education and rows represent father's highest education"
+  )
+
+# lay out the data
+test_mother_highest_father_highest_education_covid_age |>
+  arrange(test_mother_highest_education, test_father_highest_education, covid_coverage_age, income)
+
+# influenza coverage by age
+inf_prepped_ivd |>
+  filter(!is.na(test_mother_highest_education) & !is.na(test_father_highest_education) & !is.na(influenza_coverage_age) & !is.na(test_household_income)) |>
+    
+  # stratify income levels to compress them
+  mutate(income = ceiling(test_household_income / 4)) |>
+  
+  # stratify counts by income levels and education
+  summarise(
+    count = n(),
+    .by = c(test_mother_highest_education, test_father_highest_education, income, influenza_coverage_age)
+  ) |>
+  
+  mutate(
+    proportion = count / sum(count),
+    .by = c(test_mother_highest_education, test_father_highest_education, income)
+  ) -> test_mother_highest_father_highest_education_influenza_age
+  #filter(test_mother_highest_education == "Junior High or High school", test_father_highest_education == "Junior High or High school")
+ 
+# plot
+test_mother_highest_father_highest_education_influenza_age |>
+  
+  ggplot(aes(x = income, y = proportion, colour = influenza_coverage_age)) +
+  geom_point() +
+  geom_smooth(aes(group = influenza_coverage_age), method = "lm") +
+  ylim(0, 1) +
+  #labs(
+  #  title = "covid coverage with diferring annual household \n
+  #income levels, stratified by their mother and father's education",
+  #  caption = "income rounded to closest 4 million JPY / year"
+  #) +
+  facet_grid(cols = vars(test_mother_highest_education), rows = vars(test_father_highest_education)) +
+  labs(
+    title = "uptake of the influenza vaccine in the COI according to their mother and father's highest educational attainments",
+    subtitle = "columns represent mother's highest_education and rows represent father's highest education"
+  )
+
+# lay out the data
+test_mother_highest_father_highest_education_influenza_age |>
+  arrange(test_mother_highest_education, test_father_highest_education, influenza_coverage_age, income)
 ```
 
 
@@ -1578,6 +1668,8 @@ cov_prepped_ivd |>
   ) +
   theme(plot.title = element_text(lineheight = 0.5))  -> child_parents_marital_status_covid_age
 
+  child_parents_marital_status_covid_age
+
   # save the plot for reference
   function_plot_save(last_plot(), "child_parents_marital_status_covid_age", ".png", "Output/05_multivariate_uptake_plots")
 
@@ -1600,6 +1692,8 @@ inf_prepped_ivd |>
     according to their parents marital status and the number of parents they have"
   ) +
   theme(plot.title = element_text(lineheight = 0.5)) -> child_parents_marital_status_influenza_age
+
+  child_parents_marital_status_influenza_age
 
   # save the plot for reference
   function_plot_save(last_plot(), "child_parents_marital_status_influenza_age", ".png", "Output/05_multivariate_uptake_plots")
@@ -2246,6 +2340,74 @@ inf_prepped_ivd |>
 
   # save the plot for reference
   function_plot_save(last_plot(), "household_total_highest_education_inf_age", ".png", "Output/05_multivariate_uptake_plots")
+```
+#### child_siblings and test_child_siblings
+```{r}
+# covid uptake
+cov_prepped_ivd |>
+  
+  # account for both test_child_siblings and child_siblings
+  pivot_longer(cols = c(test_child_siblings, child_siblings), values_to = "siblings", names_to = "type") |>
+  
+  # ensure no missing covid vax data and reduce the dimensions of the number of siblings to ensure we have an adequate sample size for analysis
+  filter(!is.na(covid_coverage_age) & household_total < 8) |>
+  mutate(siblings = ifelse(siblings < 3, siblings, "3+") |> as.factor()) |>
+  
+  # stratify by household totals, silbings and test siblings
+  summarise(count = n(), .by = c(household_total, siblings, type, covid_coverage_age)) |>
+  mutate(proportion = count / sum(count), .by = c(household_total, siblings, type)) |>
+  
+  
+  # plot
+  ggplot(aes(x = household_total, y = proportion, group = type)) +
+  geom_point(aes(colour = type), position = position_dodge(width = 0.3)) +
+  geom_smooth(method = "lm", aes(colour = type), position = position_dodge(width = 1.0)) +
+  function_plot_label_count(household_total, covid_coverage_age) +
+  facet_grid(cols = vars(covid_coverage_age), rows = vars(siblings)) +
+  ylim(c(0,1)) +
+  labs(
+    title = "proportion of children with each uptake of the covid vaccine according to \n the total number of individuals, and siblings or test siblings they have at home",
+    subtitle = "row facets represent the number of sibligns (test or non test) at home \n colum facets represent their vaccination status"
+  ) +
+  theme(plot.title = element_text(lineheight = 0.5))  -> household_total_siblings_test_siblings_cov_age
+
+ household_total_siblings_test_siblings_cov_age
+
+  # save the plot for reference
+  function_plot_save(last_plot(), "household_total_siblings_test_siblings_cov_age", ".png", "Output/05_multivariate_uptake_plots")
+  
+# influenza uptake
+inf_prepped_ivd |>
+  
+  # account for both test_child_siblings and child_siblings
+  pivot_longer(cols = c(test_child_siblings, child_siblings), values_to = "siblings", names_to = "type") |>
+  
+  # ensure no missing covid vax data and reduce the dimensions of the number of siblings to ensure we have an adequate sample size for analysis
+  filter(!is.na(influenza_coverage_age) & household_total < 8) |>
+  mutate(siblings = ifelse(siblings < 3, siblings, "3+") |> as.factor()) |>
+  
+  # stratify by household totals, silbings and test siblings
+  summarise(count = n(), .by = c(household_total, siblings, type, influenza_coverage_age)) |>
+  mutate(proportion = count / sum(count), .by = c(household_total, siblings, type)) |>
+  
+  
+  # plot
+  ggplot(aes(x = household_total, y = proportion, group = type)) +
+  geom_point(aes(colour = type), position = position_dodge(width = 0.3)) +
+  geom_smooth(method = "lm", aes(colour = type), position = position_dodge(width = 1.0)) +
+  function_plot_label_count(household_total, influenza_coverage_age) +
+  facet_grid(cols = vars(influenza_coverage_age), rows = vars(siblings)) +
+  ylim(c(0,1)) +
+  labs(
+    title = "proportion of children with each uptake of the influenza vaccine according to \n the total number of individuals, and siblings or test siblings they have at home",
+    subtitle = "row facets represent the number of sibligns (test or non test) at home \n colum facets represent their vaccination status"
+  ) +
+  theme(plot.title = element_text(lineheight = 0.5))  -> household_total_siblings_test_siblings_inf_age
+
+ household_total_siblings_test_siblings_inf_age
+
+  # save the plot for reference
+  function_plot_save(last_plot(), "household_total_siblings_test_siblings_inf_age", ".png", "Output/05_multivariate_uptake_plots")
 ```
 
 ### (M) child_grand
