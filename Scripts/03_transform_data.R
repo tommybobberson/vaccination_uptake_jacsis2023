@@ -524,6 +524,10 @@ independent_variable_data$test_child_siblings <-
   independent_variable_data$child_brothers +
   independent_variable_data$child_sisters +
   independent_variable_data$children_over_18
+
+# siblings over 18
+independent_variable_data$siblings_over_18 <-
+  independent_variable_data$children_over_18
   
   
 # parents_marital_status
@@ -993,9 +997,9 @@ independent_variable_data <- independent_variable_data |>
         
         # father is respondent
         parent_1_sex == 0 ~ case_when(
-          highest_education == 1 ~ 0, # junior high qualification
-          highest_education %in% 2:3 ~ 1, # high school qualification
-          highest_education %in% 4:5 ~ 2, # junior college/technical colleges
+          highest_education %in% 1:3 ~ 0, # high school qualification
+          highest_education == 4 ~ 1, # vocational school qualification
+          highest_education %in% 5 ~ 2, # technical college
           highest_education %in% 6:8 ~ 3, # tertiary qualification
           highest_education == 9 ~ 4, # post-graduate qualification
           highest_education %in% 10:11 ~ NA # no response 
@@ -1003,9 +1007,9 @@ independent_variable_data <- independent_variable_data |>
         
         # father is respondent's partner
         parent_2_sex == 0 ~ case_when(
-          highest_education_partner == 1 ~ 0, # junior high qualification
-          highest_education_partner %in% 2:3 ~ 1, # high school qualification
-          highest_education_partner %in% 4:5 ~ 2, # junior college/technical colleges
+          highest_education_partner %in% 1:3 ~ 0, # high school qualification
+          highest_education_partner == 4 ~ 1, # vocational school qualification
+          highest_education_partner %in% 5 ~ 2, # technical college
           highest_education_partner %in% 6:8 ~ 3, # tertiary qualification
           highest_education_partner == 9 ~ 4, # post-graduate qualification
           highest_education_partner %in% 10:11 ~ NA # no response 
@@ -1014,8 +1018,8 @@ independent_variable_data <- independent_variable_data |>
       NA
     ) |>
       factor(
-        levels = c(0, 1, 2, 3, 4),
-        labels = c("Junior High", "Highsch", "Junior/Technical College", "Tertiary", "Postgrad")
+        levels = c(0, 1, 1.5, 2, 3, 4),
+        labels = c("Junior High/High school", "Vocational Sch", "Junior College", "Technical College", "Tertiary", "Postgrad")
       )
   )
 
@@ -1023,6 +1027,7 @@ independent_variable_data <- independent_variable_data |>
 # test_mother_highest_education
 # a variable that describes the highest educational attainment of a COI's mother
 independent_variable_data <- independent_variable_data |>
+  
   mutate(
     test_mother_highest_education = ifelse(
       child_of_interest == 1,
@@ -1033,9 +1038,9 @@ independent_variable_data <- independent_variable_data |>
         
         # mother is respondent
         parent_1_sex == 1 ~ case_when(
-          highest_education == 1 ~ 0, # junior high qualification
-          highest_education %in% 2:3 ~ 1, # high school qualification
-          highest_education %in% 4:5 ~ 2, # junior college/technical colleges
+          highest_education %in% 1:3 ~ 0, # high school qualification
+          highest_education == 4 ~ 1, # vocational school qualification
+          highest_education %in% 5 ~ 1.5, # junior college
           highest_education %in% 6:8 ~ 3, # tertiary qualification
           highest_education == 9 ~ 4, # post-graduate qualification
           highest_education %in% 10:11 ~ NA # no response 
@@ -1043,9 +1048,9 @@ independent_variable_data <- independent_variable_data |>
         
         #  mother is respondent's partner
         parent_2_sex == 1 ~ case_when(
-          highest_education_partner == 1 ~ 0, # junior high qualification
-          highest_education_partner %in% 2:3 ~ 1, # high school qualification
-          highest_education_partner %in% 4:5 ~ 2, # junior college/technical colleges
+          highest_education_partner %in% 1:3 ~ 0, # high school qualification
+          highest_education_partner == 4 ~ 1, # vocational school qualification
+          highest_education_partner %in% 5 ~ 1.5, # junior college
           highest_education_partner %in% 6:8 ~ 3, # tertiary qualification
           highest_education_partner == 9 ~ 4, # post-graduate qualification
           highest_education_partner %in% 10:11 ~ NA # no response 
@@ -1054,10 +1059,40 @@ independent_variable_data <- independent_variable_data |>
       NA
     ) |>
       factor(
-        levels = c(0, 1, 2, 3, 4),
-        labels = c("Junior High", "Highsch", "Junior/Technical College", "Tertiary", "Postgrad")
+        levels = c(0, 1, 1.5, 2, 3, 4),
+        labels = c("Junior High/High school", "Vocational Sch", "Junior College", "Technical College", "Tertiary", "Postgrad")
       )
   )
+
+# test_parents_highest_education
+# highest educational attainment across test_mother_highest_education and test_father_highest_education
+independent_variable_data <- independent_variable_data |>
+  
+  # find the maximum educational attainment of each child's parents by comparing their educations as numerics
+  rowwise() |>
+  mutate(
+    
+    # perform operation only for cases where there is a COI and at least 1 valid response for parental education
+    test_parents_highest_education = ifelse(
+      child_of_interest == 1 & (!is.na(test_father_highest_education) | !is.na(test_mother_highest_education)),
+       max(
+        as.numeric(test_father_highest_education),
+        as.numeric(test_mother_highest_education),
+        na.rm = TRUE
+      ),
+      NA
+    ) |>
+      
+      # assign factor levels
+      factor(
+        levels = c(1 , 2, 3, 4, 5, 6),
+        labels = c("Junior High/High", "Vocational", "JC", "TC", "Tertiary", "Postgrad")
+      )
+  ) |>
+  
+  # drop rowwise grouping to avoid conflicts
+  ungroup()
+  
 
 # parent_influenza
 # variable that indicates whether the child's (responding parent)
@@ -1192,6 +1227,7 @@ transformed_independent_variable_data <- independent_variable_data |>
     child_brothers,
     child_siblings,
     test_child_siblings,
+    siblings_over_18,
     parents_marital_status,
     test_parents_marital_status,
     parent_1_sex,
@@ -1212,6 +1248,7 @@ transformed_independent_variable_data <- independent_variable_data |>
     test_father_highest_education,
     test_mother_highest_education,
     parents_highest_education,
+    test_parents_highest_education,
     parent_influenza,
     parent_covid_doses,
     parent_covid_coverage,
