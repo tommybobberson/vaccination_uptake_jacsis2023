@@ -17,7 +17,7 @@ child_siblings [pos="-1.290,0.603"]
 father_employment_status [pos="0.910,1.609"]
 father_highest_education [pos="0.799,0.916"]
 household_total [pos="-1.828,0.508"]
-mother_employment_status [pos="0.042,1.711"]
+mother_employment_status [pos="-0.100,1.596"]
 mother_highest_education [pos="-1.684,1.939"]
 mother_stay_home [pos="0.169,0.654"]
 parent_1_age [pos="-1.334,-1.948"]
@@ -26,9 +26,10 @@ parent_covid_coverage [pos="0.436,-2.220"]
 parent_covid_doses [pos="1.183,-1.172"]
 parent_influenza [pos="1.031,-1.747"]
 parents_healthcare [pos="1.150,-0.016"]
-parents_highest_education [pos="-1.948,1.198"]
+parents_highest_education [pos="-2.004,1.271"]
 parents_time_since_covvax [pos="-0.367,-1.975"]
-test_household_income [pos="-0.690,1.195"]
+siblings_over_18 [pos="-1.185,1.569"]
+test_household_income [pos="-0.776,0.547"]
 test_parents_marital_status [pos="-0.614,0.100"]
 vulnerable_individuals [pos="-1.676,-1.416"]
 "COI's familial factors" -> "vaccine uptake"
@@ -58,6 +59,7 @@ father_highest_education -> father_employment_status
 father_highest_education -> parents_highest_education
 father_highest_education -> test_household_income
 household_total -> "COI's familial factors"
+household_total -> test_household_income
 mother_employment_status -> child_grand
 mother_employment_status -> mother_stay_home
 mother_employment_status -> test_household_income
@@ -92,6 +94,10 @@ parents_highest_education -> household_total
 parents_highest_education -> mother_stay_home
 parents_highest_education -> test_household_income
 parents_time_since_covvax -> "vaccine uptake"
+siblings_over_18 -> birth_order
+siblings_over_18 -> household_total
+siblings_over_18 -> test_household_income
+siblings_over_18 -> child_grand
 test_household_income -> "COI's familial factors"
 test_household_income -> "vaccine uptake"
 test_household_income -> child_grand
@@ -105,78 +111,76 @@ vulnerable_individuals -> "COI's familial factors"
 }
 ```
 
-converting to a dagitty object
+experimental dag
 ```{r}
-dag_code <- 
-' dag {
-"COI\'s familial factors" [exposure,pos="-1.053,-0.783"]
-"vaccine uptake" [outcome,pos="0.206,-0.328"]
-age_of_interest [pos="1.011,0.434"]
-birth_order [pos="-0.700,2.108"]
-child_grand [pos="-1.921,-0.871"]
-child_parents [pos="-1.705,-0.200"]
-child_siblings [pos="-1.290,0.603"]
-father_employment_status [pos="0.910,1.609"]
+dag {
+"vaccine uptake" [outcome,pos="0.315,-0.557"]
+age_cat [adjusted,pos="0.540,1.723"]
+age_of_interest [adjusted,pos="1.151,0.502"]
+birth_order [adjusted,pos="-0.686,2.092"]
+child_grand [exposure,pos="-1.899,-0.349"]
+child_parents [exposure,pos="-1.323,-0.883"]
+child_siblings [exposure,pos="-1.305,0.710"]
+father_employment_status [pos="0.940,1.786"]
 father_highest_education [pos="0.799,0.916"]
-household_total [pos="-1.828,0.508"]
-mother_employment_status [pos="0.042,1.711"]
+household_total [pos="-1.922,0.592"]
+mother_employment_status [pos="-0.100,1.596"]
 mother_highest_education [pos="-1.684,1.939"]
 mother_stay_home [pos="0.169,0.654"]
-parent_1_age [pos="-1.334,-1.948"]
-parent_chronic_illness [pos="-0.523,-1.320"]
+parent_1_age [pos="-1.604,-2.032"]
+parent_chronic_illness [exposure,pos="-0.523,-1.320"]
 parent_covid_coverage [pos="0.436,-2.220"]
 parent_covid_doses [pos="1.183,-1.172"]
 parent_influenza [pos="1.031,-1.747"]
 parents_healthcare [pos="1.150,-0.016"]
-parents_highest_education [pos="-2.047,1.043"]
+parents_highest_education [pos="-1.885,1.307"]
 parents_time_since_covvax [pos="-0.367,-1.975"]
-test_household_income [pos="-0.690,1.195"]
-test_parents_marital_status [pos="-0.614,0.100"]
-vulnerable_individuals [pos="-1.676,-1.416"]
-"COI\'s familial factors" -> "vaccine uptake"
+siblings_over_18 [pos="-1.070,2.049"]
+test_household_income [exposure,pos="-0.757,0.655"]
+test_parents_marital_status [exposure,pos="-0.739,-0.059"]
+vulnerable_individuals [exposure,pos="-1.676,-1.416"]
+age_cat -> "vaccine uptake"
 age_of_interest -> "vaccine uptake"
+age_of_interest -> age_cat
+age_of_interest -> mother_stay_home
 birth_order -> "vaccine uptake"
-birth_order -> "age_of_interest"
-child_grand -> "COI\'s familial factors"
+birth_order -> age_of_interest
+child_grand -> "vaccine uptake"
 child_grand -> household_total [pos="-2.302,-0.315"]
 child_grand -> vulnerable_individuals
 child_parents -> "vaccine uptake"
 child_parents -> child_grand
-child_parents -> mother_stay_home
 child_parents -> mother_employment_status
+child_parents -> mother_stay_home
 child_parents -> test_household_income
-child_siblings -> "COI\'s familial factors"
+child_siblings -> "vaccine uptake"
 child_siblings -> age_of_interest
 child_siblings -> birth_order
 child_siblings -> household_total
-father_employment_status -> test_household_income
 father_employment_status -> child_grand
-father_highest_education -> "vaccine uptake"
+father_employment_status -> test_household_income
 father_highest_education -> child_siblings
 father_highest_education -> father_employment_status
 father_highest_education -> parents_highest_education
 father_highest_education -> test_household_income
-household_total -> "COI\'s familial factors"
-mother_employment_status -> mother_stay_home
+household_total -> test_household_income
 mother_employment_status -> child_grand
+mother_employment_status -> mother_stay_home
 mother_employment_status -> test_household_income
-mother_highest_education -> "vaccine uptake"
 mother_highest_education -> child_siblings
 mother_highest_education -> mother_employment_status
 mother_highest_education -> mother_stay_home [pos="-1.228,1.247"]
 mother_highest_education -> parents_highest_education
 mother_highest_education -> test_household_income
-mother_stay_home -> age_of_interest
 mother_stay_home -> child_grand
 mother_stay_home -> test_household_income
-parent_1_age -> "COI\'s familial factors"
 parent_1_age -> parent_chronic_illness
 parent_1_age -> vulnerable_individuals
 parent_chronic_illness -> "vaccine uptake"
-parent_chronic_illness -> vulnerable_individuals
+parent_chronic_illness -> parent_covid_coverage
 parent_chronic_illness -> parent_covid_doses
 parent_chronic_illness -> parent_influenza
-parent_chronic_illness -> parent_covid_coverage
+parent_chronic_illness -> vulnerable_individuals
 parent_chronic_illness <-> test_parents_marital_status
 parent_covid_coverage -> "vaccine uptake"
 parent_covid_doses -> "vaccine uptake"
@@ -192,10 +196,123 @@ parents_highest_education -> household_total
 parents_highest_education -> mother_stay_home
 parents_highest_education -> test_household_income
 parents_time_since_covvax -> "vaccine uptake"
+siblings_over_18 -> birth_order
+siblings_over_18 -> household_total
+siblings_over_18 -> parents_highest_education
+siblings_over_18 -> test_household_income
+siblings_over_18 -> child_grand
+test_household_income -> "vaccine uptake"
+test_household_income -> child_grand
+test_household_income -> child_siblings
+test_parents_marital_status -> "vaccine uptake"
+test_parents_marital_status -> child_parents
+test_parents_marital_status -> household_total
+test_parents_marital_status -> mother_stay_home
+test_parents_marital_status -> test_household_income
+vulnerable_individuals -> "vaccine uptake"
+}
+```
+
+converting to a dagitty object
+```{r}
+dag_code <- 
+'
+dag {
+"COI\'s familial factors" [exposure,pos="-1.053,-0.783"]
+"vaccine uptake" [outcome,pos="0.206,-0.328"]
+age_cat [pos="0.567,1.994"]
+age_of_interest [pos="1.151,0.502"]
+birth_order [pos="-0.686,2.092"]
+child_grand [pos="-1.921,-0.871"]
+child_parents [pos="-1.705,-0.200"]
+child_siblings [pos="-1.290,0.603"]
+father_employment_status [pos="0.910,1.609"]
+father_highest_education [pos="0.799,0.916"]
+household_total [pos="-1.828,0.508"]
+mother_employment_status [pos="-0.100,1.596"]
+mother_highest_education [pos="-1.684,1.939"]
+mother_stay_home [pos="0.169,0.654"]
+parent_1_age [pos="-1.334,-1.948"]
+parent_chronic_illness [pos="-0.523,-1.320"]
+parent_covid_coverage [pos="0.436,-2.220"]
+parent_covid_doses [pos="1.183,-1.172"]
+parent_influenza [pos="1.031,-1.747"]
+parents_healthcare [pos="1.150,-0.016"]
+parents_highest_education [pos="-2.004,1.271"]
+parents_time_since_covvax [pos="-0.367,-1.975"]
+siblings_over_18 [pos="-1.185,1.569"]
+test_household_income [pos="-0.776,0.547"]
+test_parents_marital_status [pos="-0.614,0.100"]
+vulnerable_individuals [pos="-1.676,-1.416"]
+"COI\'s familial factors" -> "vaccine uptake"
+age_cat -> "vaccine uptake"
+age_of_interest -> "vaccine uptake"
+age_of_interest -> age_cat
+age_of_interest -> mother_stay_home
+birth_order -> "vaccine uptake"
+birth_order -> age_of_interest
+child_grand -> "COI\'s familial factors"
+child_grand -> household_total [pos="-2.302,-0.315"]
+child_grand -> vulnerable_individuals
+child_parents -> "vaccine uptake"
+child_parents -> child_grand
+child_parents -> mother_employment_status
+child_parents -> mother_stay_home
+child_parents -> test_household_income
+child_siblings -> "COI\'s familial factors"
+child_siblings -> age_of_interest
+child_siblings -> birth_order
+child_siblings -> household_total
+father_employment_status -> child_grand
+father_employment_status -> test_household_income
+father_highest_education -> "vaccine uptake"
+father_highest_education -> child_siblings
+father_highest_education -> father_employment_status
+father_highest_education -> parents_highest_education
+father_highest_education -> test_household_income
+household_total -> "COI\'s familial factors"
+household_total -> test_household_income
+mother_employment_status -> child_grand
+mother_employment_status -> mother_stay_home
+mother_employment_status -> test_household_income
+mother_highest_education -> "vaccine uptake"
+mother_highest_education -> child_siblings
+mother_highest_education -> mother_employment_status
+mother_highest_education -> mother_stay_home [pos="-1.228,1.247"]
+mother_highest_education -> parents_highest_education
+mother_highest_education -> test_household_income
+mother_stay_home -> child_grand
+mother_stay_home -> test_household_income
+parent_1_age -> "COI\'s familial factors"
+parent_1_age -> parent_chronic_illness
+parent_1_age -> vulnerable_individuals
+parent_chronic_illness -> "vaccine uptake"
+parent_chronic_illness -> parent_covid_coverage
+parent_chronic_illness -> parent_covid_doses
+parent_chronic_illness -> parent_influenza
+parent_chronic_illness -> vulnerable_individuals
+parent_chronic_illness <-> test_parents_marital_status
+parent_covid_coverage -> "vaccine uptake"
+parent_covid_doses -> "vaccine uptake"
+parent_covid_doses -> parents_time_since_covvax
+parent_influenza -> "vaccine uptake"
+parents_healthcare -> "vaccine uptake"
+parents_healthcare -> parent_covid_coverage
+parents_healthcare -> parent_covid_doses
+parents_healthcare -> parent_influenza
+parents_healthcare -> parents_time_since_covvax
+parents_highest_education -> child_siblings
+parents_highest_education -> household_total
+parents_highest_education -> mother_stay_home
+parents_highest_education -> test_household_income
+parents_time_since_covvax -> "vaccine uptake"
+siblings_over_18 -> birth_order
+siblings_over_18 -> household_total
+siblings_over_18 -> test_household_income
 test_household_income -> "COI\'s familial factors"
 test_household_income -> "vaccine uptake"
-test_household_income -> child_siblings
 test_household_income -> child_grand
+test_household_income -> child_siblings
 test_parents_marital_status -> "COI\'s familial factors"
 test_parents_marital_status -> child_parents
 test_parents_marital_status -> household_total
