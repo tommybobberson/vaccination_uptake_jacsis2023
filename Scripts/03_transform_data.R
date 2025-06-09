@@ -652,6 +652,37 @@ independent_variable_data <- independent_variable_data |>
       as.numeric()
   )
 
+# household_debt
+# household Debt as the median value of their asssinged category
+independent_variable_data <- independent_variable_data |>
+  mutate(
+    household_debt = case_when(
+      household_debt  == 1 ~ 0,
+      household_debt == 2 ~ 0.25,
+      household_debt == 3 ~ 0.75,
+      household_debt %in% 4:12 ~ (household_debt - 3) * 1 + 0.5, 
+      household_debt %in% 13:17 ~ (household_debt - 8) * 2 + 1,
+      household_debt == 18 ~ 20,
+      household_debt %in% 19:20 ~ NA, # people who refused to or didn't know how to answer
+    ) |>
+      as.numeric()
+  )
+
+# household_mortgage
+# household mortgage as the median value of their asssinged category
+independent_variable_data <- independent_variable_data |>
+  mutate(
+    household_mortgage = case_when(
+      household_mortgage  == 1 ~ 0,
+      household_mortgage == 2 ~ 0.25,
+      household_mortgage == 3 ~ 0.75,
+      household_mortgage %in% 4:12 ~ (household_mortgage - 3) * 1 + 0.5, 
+      household_mortgage %in% 13:17 ~ (household_mortgage - 8) * 2 + 1,
+      household_mortgage == 18 ~ 20,
+      household_mortgage %in% 19:20 ~ NA, # people who refused to or didn't know how to answer
+    ) |>
+      as.numeric()
+  )
 
 # parent_chronic_illness
 # describes whether the parent of the child who  
@@ -1235,6 +1266,8 @@ transformed_independent_variable_data <- independent_variable_data |>
     parent_1_age,
     household_income,
     test_household_income,
+    household_debt,
+    household_mortgage,
     parent_chronic_illness,
     father_employment_status,
     mother_employment_status,

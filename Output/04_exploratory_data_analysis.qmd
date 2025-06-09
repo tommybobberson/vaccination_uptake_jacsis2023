@@ -2402,3 +2402,99 @@ function_data_stratify(cov_ivd, parent_covid_doses, as.factor, parents_time_sinc
 ```
 In general, the longer the time since the parents last received a dose of the covid vaccine, the lower the number of doses of the covid vaccine they have. Indicating that a recent covid dose is associated with more consistent and thus greater uptake of the covid vaccination on the parents' part
 
+
+### Household Debt
+Exploring the relation between household debt and other variables
+
+
+
+```{r}
+# covid
+# by degree of coverage
+cov_ivd |>
+  filter(!is.na(covid_coverage_age) & !is.na(household_debt)) |>
+  mutate(household_income = as.numeric(household_debt)) |>
+  summarise(count = n(), .by = c(household_debt, covid_coverage_age)) |>
+  mutate(proportion = count / sum(count), .by = household_debt) -> covid_debt_age
+
+# table showing the counts for each point on the plot (number of
+# individuals who fall into each coverage category
+covid_debt_age|>
+  arrange(household_debt, covid_coverage_age) |>
+  select(-proportion) |>
+  pivot_wider(names_from = covid_coverage_age, values_from = count)
+  
+# scatter plot
+covid_debt_age |>
+  ggplot(aes(x = household_debt, y = proportion)) +
+  geom_point(aes(colour = covid_coverage_age)) +
+  geom_smooth(aes(colour = covid_coverage_age), method = "lm")
+
+# influenza
+# by degree of coverage
+inf_ivd |>
+  filter(!is.na(influenza_coverage_age) & !is.na(household_debt)) |>
+  mutate(household_income = as.numeric(household_debt)) |>
+  summarise(count = n(), .by = c(household_debt, influenza_coverage_age)) |>
+  mutate(proportion = count / sum(count), .by = household_debt) -> influenza_debt_age
+
+# table showing the counts for each point on the plot (number of
+# individuals who fall into each coverage category
+influenza_debt_age |>
+  arrange(household_debt, influenza_coverage_age) |>
+  select(-proportion) |>
+  pivot_wider(names_from = influenza_coverage_age, values_from = count)
+  
+# scatter plot
+influenza_debt_age |>
+  ggplot(aes(x = household_debt, y = proportion)) +
+  geom_point(aes(colour = influenza_coverage_age)) +
+  geom_smooth(aes(colour = influenza_coverage_age), method = "lm")
+```
+### Household mortgage
+Exploring the relation between household mortgage and other variables
+```{r}
+# covid
+# by degree of coverage
+cov_ivd |>
+  filter(!is.na(covid_coverage_age) & !is.na(household_mortgage)) |>
+  mutate(household_income = as.numeric(household_mortgage)) |>
+  summarise(count = n(), .by = c(household_mortgage, covid_coverage_age)) |>
+  mutate(proportion = count / sum(count), .by = household_mortgage) -> covid_mortgage_age
+
+  
+# scatter plot
+covid_mortgage_age |>
+  ggplot(aes(x = household_mortgage, y = proportion)) +
+  geom_point(aes(colour = covid_coverage_age)) +
+  geom_smooth(aes(colour = covid_coverage_age), method = "lm") +
+  geom_text(aes(label = count, colour = covid_coverage_age), size = 3)
+
+
+# influenza
+# by degree of coverage
+inf_ivd |>
+  filter(!is.na(influenza_coverage_age) & !is.na(household_mortgage)) |>
+  mutate(household_income = as.numeric(household_mortgage)) |>
+  summarise(count = n(), .by = c(household_mortgage, influenza_coverage_age)) |>
+  mutate(proportion = count / sum(count), .by = household_mortgage) -> influenza_mortgage_age
+
+# scatter plot
+influenza_mortgage_age |>
+  ggplot(aes(x = household_mortgage, y = proportion)) +
+  geom_point(aes(colour = influenza_coverage_age)) +
+  geom_smooth(aes(colour = influenza_coverage_age), method = "lm") +
+  geom_text(aes(label = count, colour = influenza_coverage_age), size = 3)\
+```
+Run anovas to determine if the coverage of children in households who've already paid off their mortgages significantly differ from those who haven't. Assumptions are:
+  - normality
+  - homoscedasticity
+  - independence
+```{r}
+# covid
+anova <- aov(covid_coverage_age ~ household_mortgage, data = cov_prepped_ivd)
+
+anova
+
+
+  ```

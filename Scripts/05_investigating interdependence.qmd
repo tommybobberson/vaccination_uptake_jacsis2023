@@ -79,15 +79,36 @@ prepped_ivd <- ivd |>
   mutate(age_of_interest = age$age_of_interest) |>
   filter(child_of_interest == 1)
 
-# influenza and covid variable data
+# influenza and independent variable data
 inf_prepped_ivd <- bind_cols(inf, ivd) |>
   mutate(age_of_interest = age$age_of_interest) |>
-  filter(child_of_interest == 1) 
+  filter(child_of_interest == 1 & !is.na(influenza_coverage_age)) 
 
 # covid and independent variable data
 cov_prepped_ivd <- bind_cols(cov, ivd) |>
   mutate(age_of_interest = age$age_of_interest) |>
-  filter(child_of_interest == 1)
+  filter(child_of_interest == 1 & !is.na(covid_coverage_age))
+
+# create dummy variables for both influenza and covid uptake response variables
+inf_prepped_ivd |>
+  model.matrix(~ influenza_coverage_age + 0, data = _) |>
+  as.data.frame() -> inf_ivd_dummy_vars
+
+cov_prepped_ivd |>
+  model.matrix(~ covid_coverage_age + 0, data = _) |>
+  as.data.frame() -> cov_ivd_dummy_vars
+
+
+# create sets of data with dummy response variables for multinomial regresion fitting
+# influenza
+dummy_inf_prepped_ivd <-
+  cbind(inf_ivd_dummy_vars, inf_prepped_ivd) |>
+  select(-influenza_coverage_age)
+
+# covid
+dummy_cov_prepped_ivd <-
+  cbind(cov_ivd_dummy_vars, cov_prepped_ivd) |>
+  select(-covid_coverage_age)
 
 ```
 This document will be used to analyse the interdependencies between variables we have processed thusfar,
@@ -288,6 +309,96 @@ prepped_ivd |>
 The proportion of married mothers who stay home decreases as their educational attainments increase for whilst the proportion of unmarried mothers who stay home remains low throughout given they are likely the sole breadwinner of the family in such scenarios
 
 
+### Household debt
+distribution of debt
+```{r}
+prepped_ivd |>
+  filter(!is.na(household_debt) & child_of_interest == 1) |>
+  # filter(household_debt > 0) 
+  ggplot(aes(x = household_debt)) +
+  geom_histogram()
+``` 
+debt and education
+```{r}
+prepped_ivd |>
+  filter(!is.na(household_debt) & child_of_interest == 1) |>
+  filter(household_debt > 0) |>
+  summarise(count = n(), .by = c(parents_highest_education, household_debt)) |>
+  mutate(proportion = count/sum(count), .by = parents_highest_education) |>
+  ggplot(aes(x = household_debt, y = proportion, colour = parents_highest_education)) +
+  geom_point() +
+  facet_wrap(vars(parents_highest_education))
+```
+debt and test_household_income
+```{r} 
+prepped_ivd |>
+  filter(!is.na(household_debt) & !is.na(test_household_income) & !is.na(parents_highest_education)) |>
+  summarise(avg_debt = sum(household_debt/n()), .by = c(parents_highest_education, test_household_income)) |>
+  ggplot(aes(x = test_household_income, y = avg_debt, colour = parents_highest_education)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  facet_wrap(vars(parents_highest_education))
+
+# running a regression
+
+  # homoscedasticity??
+  prepped_ivd |>
+  filter(!is.na(household_debt) & !is.na(test_household_income) & !is.na(parents_highest_education)) |>
+  summarise(avg_debt = sum(household_debt/n()), .by = c(parents_highest_education, test_household_income)) |>
+  ggplot(aes(x = test_household_income, y = avg_debt, colour = parents_highest_education)) +
+  geom_point() 
+  
+  # collinearity??
+
+  
+prepped_ivd |>
+  lm(household_debt ~ test_household_income + parents_highest_education + parents_highest_education*test_household_income, data = _)
+```
+
+### Household_mortgage
+distribution of mortgages
+```{r}
+prepped_ivd |>
+  filter(!is.na(household_mortgage) & child_of_interest == 1) |>
+  # filter(household_debt > 0) 
+  ggplot(aes(x = household_mortgage)) +
+  geom_histogram()
+``` 
+mortgage and education
+```{r}
+prepped_ivd |>
+  filter(!is.na(household_mortgage) & child_of_interest == 1 & !is.na(parents_highest_education)) |>
+  # filter(household_debt > 0) |>
+  summarise(count = n(), .by = c(parents_highest_education, household_mortgage)) |>
+  mutate(proportion = count/sum(count), .by = parents_highest_education) |>
+  ggplot(aes(x = household_mortgage, y = proportion, colour = parents_highest_education)) +
+  geom_point() +
+  facet_wrap(vars(parents_highest_education))
+```
+
+mortgage and debt
+```{r}
+prepped_ivd |>
+  filter(!is.na(household_mortgage) & !is.na(household_debt) & !is.na(parents_highest_education)) |>
+  summarise(avg_debt = sum(household_debt) / n(), count = n(), .by = c(household_mortgage, parents_highest_education)) |>
+  mutate(proportion = count / sum(count), .by = parents_highest_education) |>
+  ggplot(aes(x = household_mortgage, y = avg_debt, colour = parents_highest_education)) +
+  geom_point(aes(size = proportion)) +
+  facet_wrap(vars(parents_highest_education))
+```
+
+Mortgage, debt and income
+```{r}
+prepped_ivd |>
+  filter(!is.na(household_income) & !is.na(household_mortgage) & !is.na(household_debt)) |>
+  mutate(avg_debt = household_debt / n(), .by = c(household_income, household_mortgage, parents_highest_education)) |>
+  mutate(avg_mortgage = household_mortgage / n(), .by = c(household_income, household_debt)) |>
+  ggplot(aes(x = household_income, y = avg_mortgage, colour = parents_highest_education, alpha = avg_debt)) +
+  geom_point() +
+  facet_wrap(vars(parents_highest_education))
+  
+```
+
 ### Birth order
 #### age_of_interest, child_siblings
 ```{r}
@@ -319,7 +430,6 @@ prepped_ivd |>
   ggplot() + 
   geom_density(aes(x = age_of_interest, colour = child_siblings)) +
   facet_wrap(vars(birth_order))
-
 ```
 
 ## Multivariate (interactions)
@@ -369,27 +479,53 @@ inf_prepped_ivd |>
 function_plot_save(last_plot(), "inf_age_mother_father_highest_education", "png", "Output/05_multivariate_uptake_plots")
   
 ```
-
+#### father/mother_education income
 coverage by mothers and fathers education with income
 ```{r}
 # covid coverage by age
 cov_prepped_ivd |>
   filter(!is.na(mother_highest_education) & !is.na(father_highest_education) & !is.na(covid_coverage_age) & !is.na(test_household_income)) |>
   
+  pivot_longer(cols = c(father_highest_education, mother_highest_education), values_to = "education", names_to = "parents") |>
+  
   # stratify income levels to compress them
   mutate(income = ceiling(test_household_income / 4)) |>
   
   # stratify counts by income levels and education
-  summarise(count = n(), .by = c(father_highest_education, income, covid_coverage_age)) |>
-  mutate(proportion = count / sum(count), .by = c(father_highest_education, income)) |>
+  summarise(count = n(), .by = c(parents, education, income, covid_coverage_age)) |>
+  mutate(proportion = count / sum(count), .by = c(parents, education, income)) |>
 
   
   # plot
-  ggplot(aes(x = income, y = proportion, colour = father_highest_education)) +
+  ggplot(aes(x = income, y = proportion, colour = parents)) +
   geom_point() +
-  geom_smooth(aes(group = father_highest_education), method = "lm") +
-  facet_wrap(vars(covid_coverage_age))
+  geom_smooth(aes(group = parents, fill = parents), alpha = 0.2, method = "lm") +
+  facet_grid(cols = vars(covid_coverage_age), rows = vars(education)) -> father_mother_highest_education_income_cov_age
 
+father_mother_highest_education_income_cov_age
+
+
+# influenza coverage by age
+inf_prepped_ivd |>
+  filter(!is.na(mother_highest_education) & !is.na(father_highest_education) & !is.na(influenza_coverage_age) & !is.na(test_household_income)) |>
+  
+  pivot_longer(cols = c(father_highest_education, mother_highest_education), values_to = "education", names_to = "parents") |>
+  
+  # stratify income levels to compress them
+  mutate(income = ceiling(test_household_income / 4)) |>
+  
+  # stratify counts by income levels and education
+  summarise(count = n(), .by = c(parents, education, income, influenza_coverage_age)) |>
+  mutate(proportion = count / sum(count), .by = c(parents, education, income)) |>
+
+  
+  # plot
+  ggplot(aes(x = income, y = proportion, colour = parents)) +
+  geom_point() +
+  geom_smooth(aes(group = parents, fill = parents), alpha = 0.2, method = "lm") +
+  facet_grid(cols = vars(influenza_coverage_age), rows = vars(education)) -> father_mother_highest_education_income_inf_age
+
+father_mother_highest_education_income_inf_age
 ```
 coverage by number of parents and income
 ```{r}
@@ -441,7 +577,7 @@ inf_prepped_ivd |>
             
 ```
 
-    
+#### father/mother/parents_highest_education  
 coverage by father, mother and parents highest education and income
 ```{r}
 # covid coverage by age
@@ -590,7 +726,7 @@ mother_highest_father_highest_education_influenza_age |>
   arrange(mother_highest_education, father_highest_education, influenza_coverage_age, income)
 ```
 
-#### (R) Revisit test father and mother's education stratified by each other
+#### (R) test_father and test_mother's education stratified by each other
 Now let's try stratifying by test_father and test_mother's highest education 
 ```{r}
 # covid coverage by age
@@ -2673,20 +2809,20 @@ cov_prepped_ivd |>
   
   # reduce dimensions of income and child_grand
   mutate(
-    income = ceiling(test_household_income/5),
-    child_grand = ifelse(child_grand > 0, 1, 0) |> as.factor()
+    #test_household_income = ceiling(test_household_income/5),
+    child_grand = ifelse(child_grand < 2, as.character(child_grand), "2+")
   ) |>
   
-  summarise(count = n(), .by = c(income, covid_coverage_age, child_grand)) |>
-  mutate(proportion = count / sum(count), .by = c(child_grand, income)) -> child_grand_income_cov_age
+  summarise(count = n(), .by = c(test_household_income, covid_coverage_age, child_grand)) |>
+  mutate(proportion = count / sum(count), .by = c(child_grand, test_household_income)) -> child_grand_income_cov_age
   
 child_grand_income_cov_age |>
   # plot
-  ggplot(aes(x = income, y = proportion)) +
+  ggplot(aes(x = test_household_income, y = proportion)) +
   geom_point(aes(colour = child_grand)) +
   geom_smooth(aes(colour = child_grand), method = "lm") +
   geom_text(
-    aes(x = income, label = count, colour = child_grand),
+    aes(x = test_household_income, label = count, colour = child_grand),
     position = "jitter"
   ) +
   ylim(c(0,1.1)) +
@@ -2700,20 +2836,20 @@ inf_prepped_ivd |>
   
   # reduce dimensions of income and child_grand
   mutate(
-    income = ceiling(test_household_income/5),
-    child_grand = ifelse(child_grand > 0, 1, 0) |> as.factor()
+    #test_household_income = ceiling(test_household_income / 5),
+    child_grand = ifelse(child_grand < 2, as.character(child_grand), "2+")
   ) |>
   
-  summarise(count = n(), .by = c(income, influenza_coverage_age, child_grand)) |>
-  mutate(proportion = count / sum(count), .by = c(child_grand, income)) -> child_grand_income_inf_age
+  summarise(count = n(), .by = c(test_household_income, influenza_coverage_age, child_grand)) |>
+  mutate(proportion = count / sum(count), .by = c(child_grand, test_household_income)) -> child_grand_income_inf_age
 
 child_grand_income_inf_age |>
   # plot
-  ggplot(aes(x = income, y = proportion)) +
+  ggplot(aes(x = test_household_income, y = proportion)) +
   geom_point(aes(colour = child_grand)) +
   geom_smooth(aes(colour = child_grand), method = "lm") +
   geom_text(
-    aes(x = income, label = count, colour = child_grand),
+    aes(x = test_household_income, label = count, colour = child_grand),
     position = "jitter"
   ) +
   ylim(c(0,1.1)) +
@@ -2829,13 +2965,16 @@ child_grand_parents_income_inf_age |>
 ```
 
 
-#### children_over_18, household_income
+#### siblings_over_18, household_income
 ```{r}
 # covid_uptake 
 cov_prepped_ivd |>
 
   # filter out households that didn't provide an income response or vaccine data
   filter(!is.na(covid_coverage_age) & !is.na(test_household_income)) |>
+  
+  # reduce the dimensions of the number of siblings over 18 so we can work with a larger sample size
+  mutate(siblings_over_18 = ifelse(siblings_over_18 < 2, as.character(siblings_over_18), "2+")) |>
   
   # reduce dimensions of income and/or grandparents so we have a larger sample to work with
   #mutate(test_household_income = ceiling(test_household_income / 5)) |>
@@ -2850,14 +2989,14 @@ cov_prepped_ivd |>
 
 # plot
 child_grand_siblings_over_18_income_cov_age |>
-  ggplot(aes(x = test_household_income, y = proportion, group = siblings_over_18)) +
-  geom_point(aes(colour = siblings_over_18)) +
-  geom_smooth(aes(colour = siblings_over_18), method = "lm") +
-  facet_grid(cols = vars(covid_coverage_age), rows = vars(child_grand)) +
+  ggplot(aes(x = test_household_income, y = proportion, group = child_grand)) +
+  geom_point(aes(colour = child_grand)) +
+  geom_smooth(aes(colour = child_grand), method = "lm") +
+  facet_grid(cols = vars(covid_coverage_age), rows = vars(siblings_over_18)) +
   ylim(c(0,1)) +
   labs(
     title = "visualising how covid vaccine uptake in COI varies with household_income for different number of parents and grandparents",
-    subtitle = "columns represent the uptake status of the covid vaccine and rows represent the number of grandparents the child has"
+    subtitle = "columns represent the uptake status of the covid vaccine and rows represent the number of siblings over 18 the child has"
   )
 
 # influenza uptake 
@@ -2869,6 +3008,8 @@ inf_prepped_ivd |>
   # factorise siblings over 18
   mutate(siblings_over_18 = as.character(siblings_over_18)) |>
 
+  # reduce the dimensions of the number of siblings over 18 so we can work with a larger sample size
+  mutate(siblings_over_18 = ifelse(siblings_over_18 < 2, as.character(siblings_over_18), "2+")) |>
   
   # reduce dimensions of income and/or grandparents so we have a larger sample to work with
   #mutate(test_household_income = ceiling(test_household_income / 5)) |>
@@ -2881,14 +3022,242 @@ inf_prepped_ivd |>
 
 # plot
 child_grand_siblings_over_18_income_inf_age |>
-  ggplot(aes(x = test_household_income, y = proportion, group = siblings_over_18)) +
-  geom_point(aes(colour = siblings_over_18)) +
-  geom_smooth(aes(colour = siblings_over_18), method = "lm") +
-  facet_grid(cols = vars(influenza_coverage_age), rows = vars(child_grand)) +
+  ggplot(aes(x = test_household_income, y = proportion, group = child_grand)) +
+  geom_point(aes(colour = child_grand)) +
+  geom_smooth(aes(colour = child_grand), method = "lm") +
+  facet_grid(cols = vars(influenza_coverage_age), rows = vars(siblings_over_18)) +
   ylim(c(0,1)) +
   labs(
     title = "visualising how influenza vaccine uptake in COI varies with household_income for different number of siblings over 18 and grandparents",
-    subtitle = "columns represent the uptake status of the influenza vaccine and rows represent the number of grandparents the child has"
+    subtitle = "columns represent the uptake status of the influenza vaccine and rows represent the number of siblings over 18 the child has"
   )
 
+```
+
+#### siblings_over_18
+breakdown of children according to the number of silbings over 18yo they have
+```{r}
+cov_prepped_ivd |>
+  xtabs(~ siblings_over_18, data = _)
+```
+
+```{r}
+# covid uptake
+cov_prepped_ivd |>
+  
+  # ensure no missing data 
+  filter(!is.na(child_grand) & !is.na(covid_coverage_age)) |>
+  
+  # reduce the dimensions of the number of siblings over 18 so we can work with a larger sample size
+  mutate(siblings_over_18 = ifelse(siblings_over_18 < 2, as.character(siblings_over_18), "2+")) |>
+  
+  # stratify data by the child's coverage statuses, parent's marital statuses and the no. of grandparents
+  function_data_triple_stratify(siblings_over_18, as.factor, child_grand, covid_coverage_age) -> child_grand_siblings_over_18_covid_age
+
+# plot
+child_grand_siblings_over_18_covid_age |>
+  ggplot(aes(x = child_grand, y = proportion, group = siblings_over_18)) +
+  geom_point(aes(colour = siblings_over_18)) +
+  geom_smooth(aes(colour = siblings_over_18), method = "lm") +
+  function_plot_label_count(child_grand, covid_coverage_age) +
+  facet_wrap(vars(covid_coverage_age)) +
+  labs(
+    title = "visualising how the uptake of the covid vaccine varies with an increasing number of grandparents, for children with different numbers of siblings over 18",
+    subtitle = "the columns represent the degree of coverage with the coid vax we're looking at: unvaxxed (0), partial vax (1), full vax (2)"
+  )
+
+# influenza uptake
+inf_prepped_ivd |>
+  
+  # ensure no missing data 
+  filter(!is.na(child_grand) & !is.na(influenza_coverage_age)) |>
+  
+  # reduce the dimensions of the number of siblings over 18 so we can work with a larger sample size
+  mutate(siblings_over_18 = ifelse(siblings_over_18 < 2, as.character(siblings_over_18), "2+")) |>
+  
+  # stratify data by the child's coverage statuses, parent's marital statuses and the no. of grandparents
+  function_data_triple_stratify(siblings_over_18, as.factor, child_grand, influenza_coverage_age) -> child_grand_siblings_over_18_inf_age
+
+# plot
+child_grand_siblings_over_18_inf_age |>
+  ggplot(aes(x = child_grand, y = proportion, group = siblings_over_18)) +
+  geom_point(aes(colour = siblings_over_18)) +
+  geom_smooth(aes(colour = siblings_over_18), method = "lm") +
+  function_plot_label_count(child_grand, influenza_coverage_age) +
+  facet_wrap(vars(influenza_coverage_age)) +
+  labs(
+    title = "visualising how the uptake of the influenza vaccine varies with an increasing number of grandparents, for children with different numbers of siblings over 18",
+    subtitle = "the columns represent the degree of coverage with the influenza vax we're looking at: unvaxxed (0), partial vax (1), full vax (2)"
+  )
+```   
+
+#### father_employment status
+```{r}
+# covid uptake
+cov_prepped_ivd |>
+  
+  # ensure no missing data 
+  filter(!is.na(child_grand) & !is.na(covid_coverage_age)) |>
+  
+  # reduce the dimensions of the number of grandparents so we have larger samples for analysis
+  mutate(child_grand = ifelse(child_grand < 2, as.character(child_grand), "2+") ) |>
+
+ # stratify data by the child's coverage statuses, parent's marital statuses and the father's employment status
+  function_data_triple_stratify(father_employment_status, as.factor, child_grand, covid_coverage_age) -> child_grand_father_employment_covid_age
+
+# plot
+child_grand_father_employment_covid_age |>
+  ggplot(aes(x = child_grand, y = proportion, group = father_employment_status)) +
+  geom_point(aes(colour = father_employment_status)) +
+  geom_smooth(aes(colour = father_employment_status), method = "lm") +
+  function_plot_label_count(child_grand, covid_coverage_age) +
+  facet_wrap(vars(covid_coverage_age)) +
+  labs(
+    title = "visualising how the uptake of the covid vaccine varies with an increasing number of grandparents, for children with father's of different employment statuses",
+    subtitle = "the columns represent the degree of coverage with the coid vax we're looking at: unvaxxed (0), partial vax (1), full vax (2)"
+  )
+
+
+# influenza uptake
+inf_prepped_ivd |>
+  
+  # ensure no missing data 
+  filter(!is.na(child_grand) & !is.na(influenza_coverage_age)) |>
+  
+  # reduce the dimensions of the number of grandparents so we have larger samples for analysis
+  mutate(child_grand = ifelse(child_grand < 2, as.character(child_grand), "2+") ) |>
+  
+ # stratify data by the child's coverage statuses, parent's marital statuses and the father's employment status
+  function_data_triple_stratify(father_employment_status, as.factor, child_grand, influenza_coverage_age) -> child_grand_father_employment_influenza_age
+
+# plot
+child_grand_father_employment_influenza_age |>
+  ggplot(aes(x = child_grand, y = proportion, group = father_employment_status)) +
+  geom_point(aes(colour = father_employment_status)) +
+  geom_smooth(aes(colour = father_employment_status), method = "lm") +
+  function_plot_label_count(child_grand, influenza_coverage_age) +
+  facet_wrap(vars(influenza_coverage_age)) +
+  labs(
+    title = "visualising how the uptake of the influenza vaccine varies with an increasing number of grandparents, for children with father's of different employment statuses",
+    subtitle = "the columns represent the degree of coverage with the influenza vax we're looking at: unvaxxed (0), partial vax (1), full vax (2)"
+  )
+```
+
+#### mother_employment_status
+```{r}
+# covid uptake
+cov_prepped_ivd |>
+  
+  # ensure no missing data 
+  filter(!is.na(child_grand) & !is.na(covid_coverage_age)) |>
+  
+  # reduce the dimensions of the number of grandparents so we have larger samples for analysis
+  mutate(child_grand = ifelse(child_grand < 2, as.character(child_grand), "2+") ) |>
+
+ # stratify data by the child's coverage statuses, parent's marital statuses and the mother's employment status
+  function_data_triple_stratify(mother_employment_status, as.factor, child_grand, covid_coverage_age) -> child_grand_mother_employment_covid_age
+
+# plot
+child_grand_mother_employment_covid_age |>
+  ggplot(aes(x = child_grand, y = proportion, group = mother_employment_status)) +
+  geom_point(aes(colour = mother_employment_status)) +
+  geom_smooth(aes(colour = mother_employment_status, fill = mother_employment_status), method = "lm", alpha = 0.1) +
+  function_plot_label_count(child_grand, covid_coverage_age) +
+  facet_wrap(vars(covid_coverage_age)) +
+  labs(
+    title = "visualising how the uptake of the covid vaccine varies with an increasing number of grandparents, for children with mother's of different employment statuses",
+    subtitle = "the columns represent the degree of coverage with the coid vax we're looking at: unvaxxed (0), partial vax (1), full vax (2)"
+  )
+  
+  # run an ANOVA to check if there's a different in no coverage of the covid vaccine, with grandparents
+  dummy_cov_prepped_ivd |>
+    
+    # ensure no missing data 
+    filter(!is.na(child_grand) & !is.na(covid_coverage_age0)) |>
+  
+    # reduce the dimensions of the number of grandparents so we have larger samples for analysis
+    mutate(child_grand = ifelse(child_grand < 2, as.character(child_grand), "2+")) |> 
+    
+      # run an anova that includes the interaction between the number of grandparents and the mother's employment status
+      aov(covid_coverage_age0 ~ child_grand + mother_employment_status + child_grand * mother_employment_status, data = _) |>
+      Anova(type = "III")
+    
+     
+
+# influenza uptake
+inf_prepped_ivd |>
+  
+  # ensure no missing data 
+  filter(!is.na(child_grand) & !is.na(influenza_coverage_age)) |>
+  
+  # reduce the dimensions of the number of grandparents so we have larger samples for analysis
+  mutate(child_grand = ifelse(child_grand < 2, as.character(child_grand), "2+") ) |>
+  
+ # stratify data by the child's coverage statuses, parent's marital statuses and the mother's employment status
+  function_data_triple_stratify(mother_employment_status, as.factor, child_grand, influenza_coverage_age) -> child_grand_mother_employment_influenza_age
+
+# plot
+child_grand_mother_employment_influenza_age |>
+  ggplot(aes(x = child_grand, y = proportion, group = mother_employment_status)) +
+  geom_point(aes(colour = mother_employment_status)) +
+  geom_smooth(aes(colour = mother_employment_status, fill = mother_employment_status), method = "lm", alpha = 0.1) +
+  function_plot_label_count(child_grand, influenza_coverage_age) +
+  facet_wrap(vars(influenza_coverage_age)) +
+  labs(
+    title = "visualising how the uptake of the influenza vaccine varies with an increasing number of grandparents, for children with mother's of different employment statuses",
+    subtitle = "the columns represent the degree of coverage with the influenza vax we're looking at: unvaxxed (0), partial vax (1), full vax (2)"
+  )
+```
+
+
+#### mother_stay_home
+```{r}
+# covid uptake
+cov_prepped_ivd |>
+  
+  # ensure no missing data 
+  filter(!is.na(child_grand) & !is.na(covid_coverage_age)) |>
+  
+  # reduce the dimensions of the number of grandparents so we have larger samples for analysis
+  mutate(child_grand = ifelse(child_grand < 2, as.character(child_grand), "2+") ) |>
+
+ # stratify data by the child's coverage statuses, parent's marital statuses and the father's employment status
+  function_data_triple_stratify(mother_stay_home, as.factor, child_grand, covid_coverage_age) -> child_grand_mother_stay_home_covid_age
+
+# plot
+child_grand_mother_stay_home_covid_age |>
+  ggplot(aes(x = child_grand, y = proportion, group = mother_stay_home)) +
+  geom_point(aes(colour = mother_stay_home)) +
+  geom_smooth(aes(colour = mother_stay_home), method = "lm") +
+  function_plot_label_count(child_grand, covid_coverage_age) +
+  facet_wrap(vars(covid_coverage_age)) +
+  labs(
+    title = "visualising how the uptake of the covid vaccine varies with an increasing number of grandparents, depending on if the child's mother stays home or not",
+    subtitle = "the columns represent the degree of coverage with the coid vax we're looking at: unvaxxed (0), partial vax (1), full vax (2)"
+  )
+
+
+# influenza uptake
+inf_prepped_ivd |>
+  
+  # ensure no missing data 
+  filter(!is.na(child_grand) & !is.na(influenza_coverage_age)) |>
+  
+  # reduce the dimensions of the number of grandparents so we have larger samples for analysis
+  mutate(child_grand = ifelse(child_grand < 2, as.character(child_grand), "2+") ) |>
+  
+ # stratify data by the child's coverage statuses, parent's marital statuses and the father's employment status
+  function_data_triple_stratify(mother_stay_home, as.factor, child_grand, influenza_coverage_age) -> child_grand_mother_stay_home_influenza_age
+
+# plot
+child_grand_mother_stay_home_influenza_age |>
+  ggplot(aes(x = child_grand, y = proportion, group = mother_stay_home)) +
+  geom_point(aes(colour = mother_stay_home)) +
+  geom_smooth(aes(colour = mother_stay_home), method = "lm") +
+  function_plot_label_count(child_grand, influenza_coverage_age) +
+  facet_wrap(vars(influenza_coverage_age)) +
+  labs(
+    title = "visualising how the uptake of the influenza vaccine varies with an increasing number of grandparents, depending on if the child's mother stays home or not",
+    subtitle = "the columns represent the degree of coverage with the influenza vax we're looking at: unvaxxed (0), partial vax (1), full vax (2)"
+  )
 ```
