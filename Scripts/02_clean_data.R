@@ -188,6 +188,11 @@ independent_variables <- cleaned_data |>
     household_mortgage = Q90.3,
     household_debt = Q90.4,
     
+    # activities spent on work and childcare by parents
+    childcare_daily = Q31.11,
+    parent_work_weekly = Q13.1, 
+    spouse_work_weekly = Q13.2,
+    
     # respondents' chronic illness
     respondent_hypertension = Q40.1,
     respondent_diabetes = Q40.2,
