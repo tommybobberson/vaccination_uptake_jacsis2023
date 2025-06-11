@@ -1,0 +1,329 @@
+05_investigating_interdependence_regresssions for test_mother_highest_test_father_highest_education_
+
+This document serves to run a script which will run a mini regression,
+to compare how different highest educational attainments of the COI's mothers and 
+fathers affects their uptake of the covid and influenza vaccine differently, when 
+factors such as household_income are varied
+
+## Libraraies
+```{r}
+#| echo: false
+#| warning: false
+library(here)
+library(tidyverse)
+library(lubridate)
+library(knitr)
+library(reshape2)
+library(binom)
+library(ggcorrplot)
+library(patchwork)
+library(car)
+
+# custom functions
+source(here("Scripts", "functions", "exploratory functions.R"))
+```
+
+## Data
+```{r}
+# transformed independent variable data
+ivd <-
+  readRDS(
+    here(
+      "Data",
+      "JACSIS2023", 
+      "processed", 
+      "transformed_independent_variable_data.RDS"
+      )
+    )
+
+# transformed covid data
+cov <-
+  readRDS(
+    here(
+      "Data",
+      "JACSIS2023", 
+      "processed", 
+      "transformed_covid_data.RDS"
+    )
+  )
+
+# transformed influenza data
+inf <-
+  readRDS(
+    here(
+      "Data",
+      "JACSIS2023", 
+      "processed", 
+      "transformed_influenza_data.RDS"
+    )
+  )
+
+# transformed age data
+age <- 
+  readRDS(
+    here(
+      "Data",
+      "JACSIS2023", 
+      "processed", 
+      "transformed_age_data.RDS"
+    )
+  )
+
+# Creating data frames for bivariate and multivariate analysis
+# limit indep data to only those households with a COI
+prepped_ivd <- ivd |>
+  mutate(age_of_interest = age$age_of_interest) |>
+  filter(child_of_interest == 1)
+
+# influenza and independent variable data
+inf_prepped_ivd <- bind_cols(inf, ivd) |>
+  mutate(age_of_interest = age$age_of_interest) |>
+  filter(child_of_interest == 1 & !is.na(influenza_coverage_age)) 
+
+# covid and independent variable data
+cov_prepped_ivd <- bind_cols(cov, ivd) |>
+  mutate(age_of_interest = age$age_of_interest) |>
+  filter(child_of_interest == 1 & !is.na(covid_coverage_age))
+
+# create dummy variables for both influenza and covid uptake response variables
+inf_prepped_ivd |>
+  model.matrix(~ influenza_coverage_age + 0, data = _) |>
+  as.data.frame() -> inf_ivd_dummy_vars
+
+cov_prepped_ivd |>
+  model.matrix(~ covid_coverage_age + 0, data = _) |>
+  as.data.frame() -> cov_ivd_dummy_vars
+
+
+# create sets of data with dummy response variables for multinomial regresion fitting
+# influenza
+dummy_inf_prepped_ivd <-
+  cbind(inf_ivd_dummy_vars, inf_prepped_ivd) |>
+  select(-influenza_coverage_age)
+
+# covid
+dummy_cov_prepped_ivd <-
+  cbind(cov_ivd_dummy_vars, cov_prepped_ivd) |>
+  select(-covid_coverage_age)
+
+```
+
+## parents_highest_education with income
+Let's test how uptake varies with parent's highest education
+```{r}
+# influenza 
+dummy_inf_prepped_ivd |>
+  
+  # ensure only children with households of non NA income statuses are investigated
+  filter(!is.na(test_household_income)) |>
+  
+  # ensure only children where both parents' education statuses are available are investigated
+  filter(!is.na(parents_highest_education)) -> dummy_inf_parents_highest_education_test_household_income
+
+# create dummy variables for each level of the parents' educations so we can examine ONLY the interaction of postgrad education with income
+dummy_inf_parents_highest_education_test_household_income |>
+  
+  model.matrix(~ parents_highest_education + 0, data = _) -> 
+  inf_dummy_parents_highest_education_test_household_income
+
+
+# append the dummy variables for parents' educations on to our current dataframe
+dummy_inf_dummy_parents_highest_education_test_household_income <- 
+  cbind(inf_dummy_parents_highest_education_test_household_income, dummy_inf_parents_highest_education_test_household_income)
+
+# create a vector that contains each level of the dummy variable
+  inf_dummy <- dummy_inf_parents_highest_education_test_household_income |>
+    select(starts_with("influenza_coverage_age"))
+  
+# run different linear models for each level of influenza 
+  # no interaction
+  map(
+    inf_dummy,
+    function(x) lm(
+      x ~ test_household_income + parents_highest_education, 
+      data = dummy_inf_dummy_parents_highest_education_test_household_income
+    )
+  )
+  
+  # interaction between mother's education and income and father's education and income
+  map(
+    inf_dummy,
+    function(x) lm(
+      x ~ test_household_income + parents_highest_education +
+        parents_highest_education * test_household_income + parents_highest_education * test_household_income, 
+      data = dummy_inf_dummy_parents_highest_education_test_household_income
+    )
+  )
+  
+  # interaction between mother's and father's highest education and income
+  map(
+    inf_dummy,
+    function(x) lm(
+      x ~ test_household_income + `parents_highest_educationJunior High or High school` + `parents_highest_educationJunior/Technical College` + parents_highest_educationPostgrad + parents_highest_educationTertiary +
+        parents_highest_educationPostgrad * test_household_income + `parents_highest_educationJunior/Technical College` * test_household_income + parents_highest_educationTertiary * test_household_income + `parents_highest_educationJunior High or High school` * test_household_income , 
+      data = dummy_inf_dummy_parents_highest_education_test_household_income
+    )
+  )
+  
+  # interaction between mother and father's education
+  map(
+    inf_dummy,
+    function(x) lm(
+      x ~ test_household_income + test_mother_highest_education + test_father_highest_education +
+        test_father_highest_education * test_mother_highest_education, 
+      data = dummy_inf_dummy_mother_father_highest_education_test_household_income
+    )
+  )
+```
+
+
+## test_mother_highest_test_father_highest_education_ with income
+### LPM
+First let's test probability of each vaccination status with respect the the COI's
+mother's and father's highest educational attainment
+```{r}
+# influenza 
+dummy_inf_prepped_ivd |>
+  
+  # ensure only children with households of non NA income statuses are investigated
+  filter(!is.na(test_household_income)) |>
+  
+  # ensure only children where both parents' education statuses are available are investigated
+  filter(!is.na(test_mother_highest_education) & !is.na(test_father_highest_education)) -> dummy_inf_mother_father_highest_education_test_household_income
+
+# create dummy variables for each level of the parents' educations so we can examine ONLY the interaction of postgrad education with income
+dummy_inf_mother_father_highest_education_test_household_income |>
+  
+  model.matrix(~ test_father_highest_education + test_mother_highest_education + 0, data = _) -> 
+  inf_dummy_mother_father_highest_education_test_household_income
+
+
+# append the dummy variables for parents' educations on to our current dataframe
+dummy_inf_dummy_mother_father_highest_education_test_household_income <- 
+  cbind(inf_dummy_mother_father_highest_education_test_household_income, dummy_inf_mother_father_highest_education_test_household_income)
+
+# create a vector that contains each level of the dummy variable
+  inf_dummy <- dummy_inf_mother_father_highest_education_test_household_income |>
+    select(starts_with("influenza_coverage_age"))
+  
+# run different linear models for each level of influenza 
+  # no interaction
+  map(
+    inf_dummy,
+    function(x) lm(
+      x ~ test_household_income + test_mother_highest_education + test_father_highest_education, 
+      data = dummy_inf_dummy_mother_father_highest_education_test_household_income
+    )
+  )
+  
+  # interaction between mother's education and income and father's education and income
+  map(
+    inf_dummy,
+    function(x) lm(
+      x ~ test_household_income + test_mother_highest_education + test_father_highest_education +
+        test_father_highest_education * test_household_income + test_mother_highest_education * test_household_income, 
+      data = dummy_inf_dummy_mother_father_highest_education_test_household_income
+    )
+  )
+  
+  # interaction between mother's and father's highest education (postgrad) and income
+  map(
+    inf_dummy,
+    function(x) lm(
+      x ~ test_household_income + `test_mother_highest_educationVocational Sch` + `test_mother_highest_educationJunior College` + test_mother_highest_educationTertiary + test_mother_highest_educationPostgrad + `test_father_highest_educationVocational Sch` + `test_father_highest_educationTechnical College` + test_father_highest_educationTertiary + test_father_highest_educationPostgrad +
+        test_father_highest_educationPostgrad * test_household_income + test_mother_highest_educationPostgrad * test_household_income, 
+      data = dummy_inf_dummy_mother_father_highest_education_income
+    )
+  )
+  
+  # interaction between mother and father's education
+  map(
+    inf_dummy,
+    function(x) lm(
+      x ~ test_household_income + test_mother_highest_education + test_father_highest_education +
+        test_father_highest_education * test_mother_highest_education, 
+      data = dummy_inf_dummy_mother_father_highest_education_test_household_income
+    )
+  )
+```
+
+
+### Logit model
+Next, we'll run a logistc regression by treating the different income categories (subdividing them into bins of 4 million JPY each) as categorical variables
+
+Interactions between both parent's educations and income was excluded because it was just a bad fit
+```{r}
+# influenza 
+dummy_inf_prepped_ivd |>
+  
+  # ensure only children with households of non NA income statuses are investigated
+  filter(!is.na(test_household_income)) |>
+  
+  # ensure only children where both parents' education statuses are available are investigated
+  filter(!is.na(test_mother_highest_education) & !is.na(test_father_highest_education)) |>
+  
+  # categorise income
+  mutate(income = ceiling(test_household_income / 4) |> as.factor()) -> dummy_inf_mother_father_highest_education_income
+
+  
+# create dummy variables for each level of the parents' educations so we can examine ONLY the interaction of postgrad education with income
+dummy_inf_mother_father_highest_education_income |>
+  
+  model.matrix(~ test_father_highest_education + test_mother_highest_education + 0, data = _) -> 
+  inf_dummy_mother_father_highest_education_income
+
+
+# append the dummy variables for parents' educations on to our current dataframe
+dummy_inf_dummy_mother_father_highest_education_income <- 
+  cbind(inf_dummy_mother_father_highest_education_income, dummy_inf_mother_father_highest_education_income)
+
+
+# create a vector that contains each level of the dummy variable for influenza which we can loop through as our dependent variable
+  inf_dummy <- dummy_inf_mother_father_highest_education_income |>
+    select(starts_with("influenza_coverage_age"))
+    
+
+# run different logistic regression models for each level of influenza coverage
+  
+  # no interaction
+  map(
+    inf_dummy,
+    function(x) glm(
+      x ~ income + test_mother_highest_education + test_father_highest_education, 
+      family = "binomial",
+      data = dummy_inf_dummy_mother_father_highest_education_income
+    )
+  )
+  
+  # interaction between mother's education and income and father's education (postgrad) and income
+  map(
+    inf_dummy,
+    function(x) glm(
+      x ~ income + test_mother_highest_education + test_father_highest_education +
+        test_father_highest_educationPostgrad * income + test_mother_highest_educationPostgrad * income, 
+      family = "binomial",
+      data = dummy_inf_dummy_mother_father_highest_education_income
+    )
+  )
+  
+  # interaction between mother's education and income and father's education (postgrad) and income (DIFF FORMATTING)
+  map(
+    inf_dummy,
+    function(x) glm(
+      x ~ test_household_income + `test_mother_highest_educationVocational Sch` + `test_mother_highest_educationJunior College` + test_mother_highest_educationTertiary + test_mother_highest_educationPostgrad + `test_father_highest_educationVocational Sch` + `test_father_highest_educationTechnical College` + test_father_highest_educationTertiary + test_father_highest_educationPostgrad +
+        test_father_highest_educationPostgrad * test_household_income + test_mother_highest_educationPostgrad * test_household_income, 
+      family = "binomial",
+      data = dummy_inf_dummy_mother_father_highest_education_income
+    )
+  )
+  
+  # interaction between mother and father's education
+  map(
+    inf_dummy,
+    function(x) glm(
+      x ~ income + test_mother_highest_education + test_father_highest_education, 
+      family = "binomial",
+      data = dummy_inf_dummy_mother_father_highest_education_income
+    )
+  )
+```

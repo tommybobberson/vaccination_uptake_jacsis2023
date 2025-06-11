@@ -1,0 +1,294 @@
+---
+title: "Figures to be presented"
+format: html
+---
+
+Libraries
+```{r}
+#| echo: false
+#| warning: false
+library(here)
+library(tidyverse)
+library(lubridate)
+library(knitr)
+library(reshape2)
+library(binom)
+library(ggcorrplot)
+library(patchwork)
+library(car)
+
+# custom functions
+source(here("Scripts", "functions", "exploratory functions.R"))
+```
+
+Data
+```{r}
+# transformed independent variable data
+ivd <-
+  readRDS(
+    here(
+      "Data",
+      "JACSIS2023", 
+      "processed", 
+      "transformed_independent_variable_data.RDS"
+      )
+    )
+
+# transformed covid data
+cov <-
+  readRDS(
+    here(
+      "Data",
+      "JACSIS2023", 
+      "processed", 
+      "transformed_covid_data.RDS"
+    )
+  )
+
+# transformed influenza data
+inf <-
+  readRDS(
+    here(
+      "Data",
+      "JACSIS2023", 
+      "processed", 
+      "transformed_influenza_data.RDS"
+    )
+  )
+
+# transformed age data
+age <- 
+  readRDS(
+    here(
+      "Data",
+      "JACSIS2023", 
+      "processed", 
+      "transformed_age_data.RDS"
+    )
+  )
+
+# Creating data frames for bivariate and multivariate analysis
+# limit indep data to only those households with a COI
+prepped_ivd <- ivd |>
+  mutate(age_of_interest = age$age_of_interest) |>
+  filter(child_of_interest == 1)
+
+# influenza and independent variable data
+inf_prepped_ivd <- bind_cols(inf, ivd) |>
+  mutate(age_of_interest = age$age_of_interest) |>
+  filter(child_of_interest == 1 & !is.na(influenza_coverage_age)) 
+
+# covid and independent variable data
+cov_prepped_ivd <- bind_cols(cov, ivd) |>
+  mutate(age_of_interest = age$age_of_interest) |>
+  filter(child_of_interest == 1 & !is.na(covid_coverage_age))
+
+# create dummy variables for both influenza and covid uptake response variables
+inf_prepped_ivd |>
+  model.matrix(~ influenza_coverage_age + 0, data = _) |>
+  as.data.frame() -> inf_ivd_dummy_vars
+
+cov_prepped_ivd |>
+  model.matrix(~ covid_coverage_age + 0, data = _) |>
+  as.data.frame() -> cov_ivd_dummy_vars
+
+
+# create sets of data with dummy response variables for multinomial regresion fitting
+# influenza
+dummy_inf_prepped_ivd <-
+  cbind(inf_ivd_dummy_vars, inf_prepped_ivd) |>
+  select(-influenza_coverage_age)
+
+# covid
+dummy_cov_prepped_ivd <-
+  cbind(cov_ivd_dummy_vars, cov_prepped_ivd) |>
+  select(-covid_coverage_age)
+
+```
+
+
+## age_of_interest and age_cat vs siblings/birth order 
+```{r}
+# covid_uptake siblings
+cov_prepped_ivd |>
+  
+  filter(!is.na(covid_coverage_age)) |>
+  
+  mutate(
+    
+    # compress the number of siblings
+    child_siblings = ifelse(
+      child_siblings <= 1 ,
+      as.character(child_siblings),
+      "2+"
+    ),
+    
+    # segment age into increments of 0.5 years
+    age_of_interest = round(age_of_interest * 2) / 2
+  ) |>
+  
+  summarise(count = n(), .by = c(age_of_interest, covid_coverage_age, child_siblings, age_cat)) |>
+  mutate(proportion = count / sum (count), .by = c(age_of_interest, child_siblings, age_cat)) |>
+  arrange(child_siblings, age_of_interest, covid_coverage_age) |>
+  
+  mutate(
+    # weight observations within each age_category, such that the trend for the proportion that have received each coverage is reflective of the sample size
+    weights = count / sum(count), .by = c(age_cat, child_siblings, covid_coverage_age)
+    
+  ) |>
+  
+  # remove outlier points
+  filter(proportion != 1) |>
+
+  # plot graphs of covid coverage by age across different birth orders
+  ggplot(aes(x = age_of_interest, y = proportion, colour = covid_coverage_age)) +
+  geom_point(aes(shape = age_cat)) +
+  geom_smooth(aes(linetype = age_cat, weight = weights), method = "lm", se = FALSE) +
+  facet_wrap(vars(child_siblings), nrow = 2, ncol = 2) +
+  labs(
+    title = "proportions of children in different age categores with each degree of 
+    \n coverage by the covid vaccine, stratified by different age groups and the number of siblings they have",
+    subtitle = "trend lines weighted by the sample size within each age category, coverage status and birth order",
+    x = "age",
+    y = "proportion"
+  ) +
+  theme(plot.title = element_text(lineheight = 0.5))
+
+# influenza
+inf_prepped_ivd |>
+  
+  filter(!is.na(influenza_coverage_age)) |>
+  
+  mutate(
+    
+    # compress higher birth order
+    child_siblings = ifelse(
+      child_siblings <= 1,
+      as.character(child_siblings),
+      "2+"
+    ),
+    
+    # segment age into increments of 0.5 years
+    age_of_interest = round(age_of_interest * 2) / 2
+  ) |>
+  
+  summarise(count = n(), .by = c(age_of_interest, influenza_coverage_age, child_siblings, age_cat)) |>
+  mutate(proportion = count / sum (count), .by = c(age_of_interest, child_siblings, age_cat)) |>
+  arrange(child_siblings, age_of_interest, influenza_coverage_age) |>
+  
+  mutate(
+    # weight observations within each age_category, such that the trend for the proportion that have received each coverage is reflective of the sample size
+    weights = count / sum(count), .by = c(age_cat, child_siblings, influenza_coverage_age)
+    
+  ) |>
+  
+  # remove outliers where proportion = 1
+  filter(proportion != 1) |>
+
+  # plot graphs of covid coverage by age across different birth orders
+  ggplot(aes(x = age_of_interest, y = proportion, colour = influenza_coverage_age)) +
+  geom_point(aes(shape = age_cat)) +
+  geom_smooth(aes(linetype = age_cat, weight = weights), method = "lm", se = FALSE) +
+  facet_wrap(vars(child_siblings), nrow = 2, ncol = 2) +
+  labs(
+    title = "proportions of children in different age categores with each degree of 
+    \n coverage by the influenza vaccine, stratified by different age groups and the number of siblings they have",
+    subtitle = "trend lines weighted by the sample size within each age category, coverage status and birth order",
+    x = "age",
+    y = "proportion"
+  ) +
+  theme(plot.title = element_text(lineheight = 0.5))
+```
+
+## parents_highest_education, test_household_income
+```{r}
+# covid coverage by age
+cov_prepped_ivd |>
+  filter(!is.na(parents_highest_education) & !is.na(covid_coverage_age) & !is.na(test_household_income)) |>
+    
+  
+  # stratify income levels to compress them
+  # mutate(test_household_income = ceiling(test_household_income / 4)) |>
+  
+  # stratify counts by income levels and education
+  summarise(count = n(), .by = c(test_household_income, parents_highest_education, covid_coverage_age)) |>
+  mutate(proportion = count / sum(count), .by = c(parents_highest_education, test_household_income)) |>
+  
+  # filter out outliers
+  filter(proportion != 1) |>
+  
+  # plot
+  ggplot(aes(x = test_household_income, y = proportion, colour = covid_coverage_age)) +
+  geom_point() +
+  geom_smooth(aes(group = covid_coverage_age), method = "lm") +
+  labs(
+    title = "covid coverage with diferring annual household \n
+  income levels, stratified by the highest educational attainment of a child's parents"
+  ) +
+  facet_wrap(vars(parents_highest_education))
+    
+    
+# influenza coverage by age
+inf_prepped_ivd |>
+  filter(!is.na(parents_highest_education) & !is.na(influenza_coverage_age) & !is.na(test_household_income)) |>
+  
+  # stratify income levels to compress them
+  # mutate(income = ceiling(test_household_income / 4)) |>
+  
+  # stratify counts by income levels and education
+  summarise(count = n(), .by = c(parents_highest_education, test_household_income, influenza_coverage_age)) |>
+  mutate(proportion = count / sum(count), .by = c(parents_highest_education, test_household_income)) |>
+  
+  # filter out outliers
+  filter(proportion != 1) |>
+  
+  # plot
+  ggplot(aes(x = test_household_income, y = proportion, colour = influenza_coverage_age)) +
+  geom_point() +
+  geom_smooth(aes(group = influenza_coverage_age), method = "lm") +
+  labs(
+    title = "influenza coverage with diferring annual household \n
+  income levels, stratified by the highest educational attainment of a child's parents"
+  ) +
+  facet_wrap(vars(parents_highest_education))
+
+```
+
+## perception of danger of infection
+```{r}
+cov_prepped_ivd |>
+     
+     # stratify by vaccine danger and doses received
+     filter(household_total > 1 & !is.na(covid_coverage_age)) |>
+     group_by(perception_infection_danger, covid_coverage_age) |>
+     
+     # count the number of children in each category
+     summarise(count = n()) |>
+     ggplot() + 
+     geom_col(
+         aes(x = perception_infection_danger, y = count, fill = covid_coverage_age), 
+         position = "fill"
+     ) + xlab("Infection is dangerous, so i get my children vaccinated\
+     strongly disagree to strongly agree") +
+     ylab("proportion of households by coverage") +
+     labs(title = "proportion of children with different degrees of coverage from the covid-vaccine,\
+          based on their parents' perception of the danger of infection")
+
+inf_prepped_ivd |>
+     # stratify by vaccine danger and doses received
+     filter(household_total > 1 & !is.na(influenza_coverage_age)) |>
+     group_by(perception_infection_danger, influenza_coverage_age) |>
+     
+     # count the number of children in each category
+     summarise(count = n()) |>
+     ggplot() + 
+     geom_col(
+         aes(x = perception_infection_danger, y = count, fill = influenza_coverage_age), 
+         position = "fill"
+     ) + xlab("Infection is dangerous, so i get my children vaccinated\
+     strongly disagree to strongly agree") +
+     ylab("proportion of households by coverage") +
+    labs(title = "proportion of children with different degrees of coverage from the influenza vaccine,\
+          based on their parents' perception of the danger of infection")
+
+```

@@ -2415,7 +2415,10 @@ cov_ivd |>
   filter(!is.na(covid_coverage_age) & !is.na(household_debt)) |>
   mutate(household_income = as.numeric(household_debt)) |>
   summarise(count = n(), .by = c(household_debt, covid_coverage_age)) |>
-  mutate(proportion = count / sum(count), .by = household_debt) -> covid_debt_age
+  mutate(proportion = count / sum(count), .by = household_debt) |>
+  
+  # filter out outliers
+  filter(proportion != 1) -> covid_debt_age
 
 # table showing the counts for each point on the plot (number of
 # individuals who fall into each coverage category
@@ -2436,7 +2439,10 @@ inf_ivd |>
   filter(!is.na(influenza_coverage_age) & !is.na(household_debt)) |>
   mutate(household_income = as.numeric(household_debt)) |>
   summarise(count = n(), .by = c(household_debt, influenza_coverage_age)) |>
-  mutate(proportion = count / sum(count), .by = household_debt) -> influenza_debt_age
+  mutate(proportion = count / sum(count), .by = household_debt) |>
+
+  # filter out extreme points
+  filter(proportion != 1) -> influenza_debt_age
 
 # table showing the counts for each point on the plot (number of
 # individuals who fall into each coverage category
