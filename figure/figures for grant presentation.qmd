@@ -114,6 +114,9 @@ cov_prepped_ivd |>
   
   filter(!is.na(covid_coverage_age)) |>
   
+  # filter out partial uptake
+  filter(covid_coverage_age != 1) |>
+  
   mutate(
     
     # compress the number of siblings
@@ -146,18 +149,21 @@ cov_prepped_ivd |>
   geom_smooth(aes(linetype = age_cat, weight = weights), method = "lm", se = FALSE) +
   facet_wrap(vars(child_siblings), nrow = 2, ncol = 2) +
   labs(
-    title = "proportions of children in different age categores with each degree of 
-    \n coverage by the covid vaccine, stratified by different age groups and the number of siblings they have",
+    title = "proportions of children in different age categores with each degree of coverage by \nthe covid vaccine, stratified by different age groups and the number of siblings they have",
     subtitle = "trend lines weighted by the sample size within each age category, coverage status and birth order",
     x = "age",
     y = "proportion"
   ) +
-  theme(plot.title = element_text(lineheight = 0.5))
+  theme(plot.title = element_text(lineheight = 0.1)) +
+  theme_bw()
 
 # influenza
 inf_prepped_ivd |>
   
   filter(!is.na(influenza_coverage_age)) |>
+  
+  # filter out partial uptake
+  filter(influenza_coverage_age != 1) |>
   
   mutate(
     
@@ -191,13 +197,13 @@ inf_prepped_ivd |>
   geom_smooth(aes(linetype = age_cat, weight = weights), method = "lm", se = FALSE) +
   facet_wrap(vars(child_siblings), nrow = 2, ncol = 2) +
   labs(
-    title = "proportions of children in different age categores with each degree of 
-    \n coverage by the influenza vaccine, stratified by different age groups and the number of siblings they have",
+    title = "proportions of children in different age categores with each degree of coverage by \nthe influenza vaccine, stratified by different age groups and the number of siblings they have",
     subtitle = "trend lines weighted by the sample size within each age category, coverage status and birth order",
     x = "age",
     y = "proportion"
   ) +
-  theme(plot.title = element_text(lineheight = 0.5))
+  theme(plot.title = element_text(lineheight = 0.5)) +
+  theme_bw()
 ```
 
 ## parents_highest_education, test_household_income
@@ -214,19 +220,48 @@ cov_prepped_ivd |>
   summarise(count = n(), .by = c(test_household_income, parents_highest_education, covid_coverage_age)) |>
   mutate(proportion = count / sum(count), .by = c(parents_highest_education, test_household_income)) |>
   
-  # filter out outliers
-  filter(proportion != 1) |>
+  # filter out outliers, partial coverage
+  filter(proportion != 1, covid_coverage_age != 1) |>
+   
+  # rename coverage statuses
+  mutate(
+    covid_coverage_age = case_when(
+      covid_coverage_age == 0 ~ "Unvaccinated",
+      covid_coverage_age == 2 ~ "Fully Vaccinated"
+    )
+  ) |>
   
   # plot
   ggplot(aes(x = test_household_income, y = proportion, colour = covid_coverage_age)) +
   geom_point() +
-  geom_smooth(aes(group = covid_coverage_age), method = "lm") +
+  geom_smooth(aes(group = covid_coverage_age, weight = count), size = 0.75, alpha = 0.2, method = "lm") +
   labs(
-    title = "covid coverage with diferring annual household \n
-  income levels, stratified by the highest educational attainment of a child's parents"
+    title = "Children's Covid vaccination status, stratified by\ntheir parents' highest educational attainment and household income",
+    x = "Annual household income (millions of JPY)",
+    y = "Proportion of children",
+    col = "Covid vaccination status"
   ) +
+
+  ylim(NA, 1) +
+  
+  theme(
+    text = element_text(family = "sans"),
+    plot.title = element_text(size = 18, face = "bold"),
+    axis.title.x = element_text(size = 12),
+    axis.title.y = element_text(size = 12),
+    legend.position = "bottom",
+    legend.text = element_text(lineheight = 0.5),
+    legend.margin = margin(t = 1, r = 0, b = 0, l = 0),
+    panel.grid.major = element_line(colour = "grey95"),
+    panel.grid.minor = element_line(colour = "grey95"),
+    panel.background = element_rect(fill = "white"),
+    panel.border = element_rect(fill = "NA",colour = "grey90")
+  ) +
+  
+  guides(color = guide_legend(override.aes = list(fill = NA))) +
+
   facet_wrap(vars(parents_highest_education))
-    
+
     
 # influenza coverage by age
 inf_prepped_ivd |>
@@ -238,18 +273,47 @@ inf_prepped_ivd |>
   # stratify counts by income levels and education
   summarise(count = n(), .by = c(parents_highest_education, test_household_income, influenza_coverage_age)) |>
   mutate(proportion = count / sum(count), .by = c(parents_highest_education, test_household_income)) |>
+
+  # filter out outliers, partial coverage
+  filter(proportion != 1, influenza_coverage_age != 1) |>
   
-  # filter out outliers
-  filter(proportion != 1) |>
+  # rename coverage statuses
+  mutate(
+    influenza_coverage_age = case_when(
+      influenza_coverage_age == 0 ~ "Unvaccinated",
+      influenza_coverage_age == 2 ~ "Fully Vaccinated"
+    )
+  ) |>
   
   # plot
   ggplot(aes(x = test_household_income, y = proportion, colour = influenza_coverage_age)) +
-  geom_point() +
-  geom_smooth(aes(group = influenza_coverage_age), method = "lm") +
+  geom_point(alpha = 0.75) +
+  geom_smooth(aes(group = influenza_coverage_age, weight = count), size = 0.75, alpha = 0.2, method = "lm") +
   labs(
-    title = "influenza coverage with diferring annual household \n
-  income levels, stratified by the highest educational attainment of a child's parents"
+    title = "Children's Influenza vaccination status, stratified by\ntheir parents' highest educational attainment and household income",
+    x = "Annual household income (millions of JPY)",
+    y = "Proportion of children",
+    col = "Influenza vaccination status"
   ) +
+
+  ylim(NA, 1) +
+  
+  theme(
+    text = element_text(family = "sans"),
+    plot.title = element_text(size = 18, face = "bold"),
+    axis.title.x = element_text(size = 12),
+    axis.title.y = element_text(size = 12),
+    legend.position = "bottom",
+    legend.text = element_text(lineheight = 0.5),
+    legend.margin = margin(t = 1, r = 0, b = 0, l = 0),
+    panel.grid.major = element_line(colour = "grey95"),
+    panel.grid.minor = element_line(colour = "grey95"),
+    panel.background = element_rect(fill = "white"),
+    panel.border = element_rect(fill = "NA",colour = "grey90")
+  ) +
+  
+  guides(color = guide_legend(override.aes = list(fill = NA))) +
+  
   facet_wrap(vars(parents_highest_education))
 
 ```
@@ -258,21 +322,24 @@ inf_prepped_ivd |>
 ```{r}
 cov_prepped_ivd |>
      
-     # stratify by vaccine danger and doses received
-     filter(household_total > 1 & !is.na(covid_coverage_age)) |>
-     group_by(perception_infection_danger, covid_coverage_age) |>
-     
-     # count the number of children in each category
-     summarise(count = n()) |>
-     ggplot() + 
-     geom_col(
-         aes(x = perception_infection_danger, y = count, fill = covid_coverage_age), 
-         position = "fill"
-     ) + xlab("Infection is dangerous, so i get my children vaccinated\
-     strongly disagree to strongly agree") +
-     ylab("proportion of households by coverage") +
-     labs(title = "proportion of children with different degrees of coverage from the covid-vaccine,\
-          based on their parents' perception of the danger of infection")
+   # stratify by vaccine danger and doses received
+   filter(household_total > 1 & !is.na(covid_coverage_age)) |>
+   group_by(perception_infection_danger, covid_coverage_age) |>
+
+   # filter out partial uptake
+  
+   
+   # count the number of children in each category
+   summarise(count = n()) |>
+   ggplot() + 
+   geom_col(
+       aes(x = perception_infection_danger, y = count, fill = covid_coverage_age), 
+       position = "fill"
+   ) + xlab("Infection is dangerous, so i get my children vaccinated\
+   strongly disagree to strongly agree") +
+   ylab("proportion of households by coverage") +
+   labs(title = "proportion of children with different degrees of coverage from the covid-vaccine,\
+        based on their parents' perception of the danger of infection")
 
 inf_prepped_ivd |>
      # stratify by vaccine danger and doses received
