@@ -1009,11 +1009,13 @@ independent_variable_data <- independent_variable_data |>
       edu,
       NA
     ) |>
-      factor()
       
-    # drop edu - but how not to drop child_of_interest either???
-    #.keep = "unused"
+      factor(
+        levels = c("Junior High or High school", "Junior/Technical College", "Tertiary", "Postgrad")
+      )
   )
+
+
 
 # test_father_highest_education
 # a variable that describes the highest educational attainment of a COI's father
