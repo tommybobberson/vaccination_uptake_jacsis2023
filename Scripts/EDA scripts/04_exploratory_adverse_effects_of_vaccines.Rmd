@@ -18,6 +18,7 @@ library(tidyverse)
 library(lubridate)
 library(knitr)
 library(GGally)
+library(ggcorrplot)
 ```
 *other packages will be loaded as needed*
 
@@ -74,6 +75,27 @@ cov_inf_ivd <- bind_cols(cov, inf, ivd)
 
 this is a scrap document to quickly investigate if the perception of vaccine safety and 
 efficacy has any impact on vaccine uptake in children of interest from the families we are studying
+
+## Correlations plot
+```{r}
+cov_inf_ivd |>
+  
+  # choose only factors relating to parent's perceptions/opinions on vaccination, and the vaccination status of the children themselves
+  select(starts_with("perception_"), covid_coverage_age, influenza_coverage_age) |>
+  
+  # filter out cases without valid vaccination statuses 
+  filter(!is.na(covid_coverage_age) & !is.na(influenza_coverage_age)) |>
+  
+  # make coverage varialbes numerical so correlation can be calculated
+  mutate(across(c(covid_coverage_age, influenza_coverage_age), as.numeric)) |>
+  
+  # calculate Correlation coefficients
+  cor() |>
+  
+  # plot heatmap
+  ggcorrplot(method = "square", lab = TRUE, lab_size = 3)
+
+```
 
 ## Questions
 People were asked the following 8 questions and gave their responses on a scale
