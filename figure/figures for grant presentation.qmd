@@ -1,6 +1,6 @@
 ---
 title: "Figures to be presented"
-format: html
+format: pptx
 ---
 
 Libraries
@@ -16,6 +16,7 @@ library(binom)
 library(ggcorrplot)
 library(patchwork)
 library(car)
+library(cowplot)
 
 # custom functions
 source(here("Scripts", "functions", "exploratory functions.R"))
@@ -117,14 +118,16 @@ cov_prepped_ivd |>
   # filter out partial uptake
   filter(covid_coverage_age != 1) |>
   
+  # rename sibling categories and compress them
   mutate(
-    
-    # compress the number of siblings
-    child_siblings = ifelse(
-      child_siblings <= 1 ,
-      as.character(child_siblings),
-      "2+"
-    ),
+     child_siblings = case_when(
+      child_siblings == 0 ~ "No Siblings",
+      child_siblings == 1 ~ "1 Sibling",
+      child_siblings >= 2 ~ "2+ Siblings"
+      ) |>
+       factor(
+         levels= c("No Siblings", "1 Sibling", "2+ Siblings")
+       ),
     
     # segment age into increments of 0.5 years
     age_of_interest = round(age_of_interest * 2) / 2
@@ -140,22 +143,61 @@ cov_prepped_ivd |>
     
   ) |>
   
-  # remove outlier points
+  # remove outliers where proportion = 1
   filter(proportion != 1) |>
-
+  
+  # rename coverage, number of siblings and schooling statuses
+  mutate(
+    covid_coverage_age = case_when(
+      covid_coverage_age == 0 ~ "Unvaccinated",
+      covid_coverage_age == 2 ~ "Fully Vaccinated"
+    ),
+    
+    age_cat = case_when(
+      age_cat == "pre" ~ "Preschool",
+      age_cat == "primary" ~ "Primary school",
+      age_cat == "high" ~ "(Junior) Highschool"
+    )
+  ) |>
+   
   # plot graphs of covid coverage by age across different birth orders
   ggplot(aes(x = age_of_interest, y = proportion, colour = covid_coverage_age)) +
   geom_point(aes(shape = age_cat)) +
-  geom_smooth(aes(linetype = age_cat, weight = weights), method = "lm", se = FALSE) +
-  facet_wrap(vars(child_siblings), nrow = 2, ncol = 2) +
+  geom_smooth(aes(linetype = age_cat, weight = weights), size = 0.75, alpha = 0.1, method = "lm") +
+  facet_wrap(vars(child_siblings), ncol = 3) +
   labs(
-    title = "proportions of children in different age categores with each degree of coverage by \nthe covid vaccine, stratified by different age groups and the number of siblings they have",
-    subtitle = "trend lines weighted by the sample size within each age category, coverage status and birth order",
-    x = "age",
-    y = "proportion"
+    title = "Covid vaccination status with children's age,\n number of siblings and current level of schooling",
+    x = "Age",
+    y = "Proportion of children",
+    col = "Covid vaccination status",
+    shape = "Schooling category",
+    linetype = "Schooling category"
   ) +
-  theme(plot.title = element_text(lineheight = 0.1)) +
-  theme_bw()
+  
+  theme(
+    text = element_text(family = "sans"),
+    plot.title = element_text(size = 16, face = "bold", margin = margin(l = 15, b = 10)),
+    plot.title.position = "plot",
+    axis.title.x = element_text(size = 12),
+    axis.title.y = element_text(size = 12),
+    legend.position = "bottom",
+    legend.box = "vertical", # If you have multiple legends, arrange them vertically
+    #legend.box.just = "top", # Align to the top of the legend box area
+    #legend.justification = "top", # Justify the legend key within its area
+    legend.text = element_text(lineheight = 0.5),
+    legend.margin = margin(t = -10, r = 0, b = 0, l = 0),
+    panel.grid.major = element_line(colour = "grey95"),
+    panel.grid.minor = element_line(colour = "grey95"),
+    panel.background = element_rect(fill = "white"),
+    panel.border = element_rect(fill = "NA",colour = "grey90")
+  ) +
+  
+  guides(
+    color = guide_legend(override.aes = list(fill = NA)),
+    shape = guide_legend(override.aes = list(fill = NA)), 
+    linetype = guide_legend(override.aes = list(fill = NA)) 
+  )
+
 
 # influenza
 inf_prepped_ivd |>
@@ -165,14 +207,16 @@ inf_prepped_ivd |>
   # filter out partial uptake
   filter(influenza_coverage_age != 1) |>
   
+  # rename sibling categories and compress them
   mutate(
-    
-    # compress higher birth order
-    child_siblings = ifelse(
-      child_siblings <= 1,
-      as.character(child_siblings),
-      "2+"
-    ),
+     child_siblings = case_when(
+      child_siblings == 0 ~ "No Siblings",
+      child_siblings == 1 ~ "1 Sibling",
+      child_siblings >= 2 ~ "2+ Siblings"
+      ) |>
+       factor(
+         levels = c("No Siblings", "1 Sibling", "2+ Siblings")
+       ),
     
     # segment age into increments of 0.5 years
     age_of_interest = round(age_of_interest * 2) / 2
@@ -190,20 +234,57 @@ inf_prepped_ivd |>
   
   # remove outliers where proportion = 1
   filter(proportion != 1) |>
-
+  
+  # rename coverage, number of siblings and schooling statuses
+  mutate(
+    influenza_coverage_age = case_when(
+      influenza_coverage_age == 0 ~ "Unvaccinated",
+      influenza_coverage_age == 2 ~ "Fully Vaccinated"
+    ),
+    
+    age_cat = case_when(
+      age_cat == "pre" ~ "Preschool",
+      age_cat == "primary" ~ "Primary school",
+      age_cat == "high" ~ "(Junior) Highschool"
+    )
+  ) |>
+   
   # plot graphs of covid coverage by age across different birth orders
   ggplot(aes(x = age_of_interest, y = proportion, colour = influenza_coverage_age)) +
   geom_point(aes(shape = age_cat)) +
-  geom_smooth(aes(linetype = age_cat, weight = weights), method = "lm", se = FALSE) +
-  facet_wrap(vars(child_siblings), nrow = 2, ncol = 2) +
+  geom_smooth(aes(linetype = age_cat, weight = weights), size = 0.75, alpha = 0.1, method = "lm") +
+  facet_wrap(vars(child_siblings), ncol = 3) +
   labs(
-    title = "proportions of children in different age categores with each degree of coverage by \nthe influenza vaccine, stratified by different age groups and the number of siblings they have",
-    subtitle = "trend lines weighted by the sample size within each age category, coverage status and birth order",
-    x = "age",
-    y = "proportion"
+    title = "Influenza vaccination status with children's age,\nnumber of siblings and current level of schooling",
+    x = "Age",
+    y = "Proportion of children",
+    col = "Influenza vaccination status",
+    shape = "Schooling category",
+    linetype = "Schooling category"
   ) +
-  theme(plot.title = element_text(lineheight = 0.5)) +
-  theme_bw()
+  
+  theme(
+    text = element_text(family = "sans"),
+    plot.title = element_text(size = 16, face = "bold", margin = margin(l = 15, b = 10)),
+    plot.title.position = "plot",
+    axis.title.x = element_text(size = 12),
+    axis.title.y = element_text(size = 12),
+    legend.position = "bottom",
+    legend.box = "vertical", # If you have multiple legends, arrange them vertically
+    legend.text = element_text(lineheight = 0.5),
+    legend.margin = margin(t = -10, r = 0, b = 0, l = 0),
+    panel.grid.major = element_line(colour = "grey95"),
+    panel.grid.minor = element_line(colour = "grey95"),
+    panel.background = element_rect(fill = "white"),
+    panel.border = element_rect(fill = "NA",colour = "grey90"),
+  ) +
+  
+  # remove the backgrounds of the legend labels mapped to each aesthetic
+  guides(
+    color = guide_legend(override.aes = list(fill = NA)),
+    shape = guide_legend(override.aes = list(fill = NA)), 
+    linetype = guide_legend(override.aes = list(fill = NA)) 
+  )
 ```
 
 ## parents_highest_education, test_household_income
@@ -246,12 +327,13 @@ cov_prepped_ivd |>
   
   theme(
     text = element_text(family = "sans"),
-    plot.title = element_text(size = 18, face = "bold"),
+    plot.title = element_text(size = 16, face = "bold", margin = margin(l = 15, b = 10)),
+    plot.title.position = "plot",
     axis.title.x = element_text(size = 12),
     axis.title.y = element_text(size = 12),
     legend.position = "bottom",
     legend.text = element_text(lineheight = 0.5),
-    legend.margin = margin(t = 1, r = 0, b = 0, l = 0),
+    legend.margin = margin(t = -10, r = 0, b = 0, l = 0),
     panel.grid.major = element_line(colour = "grey95"),
     panel.grid.minor = element_line(colour = "grey95"),
     panel.background = element_rect(fill = "white"),
@@ -259,9 +341,8 @@ cov_prepped_ivd |>
   ) +
   
   guides(color = guide_legend(override.aes = list(fill = NA))) +
-
+  
   facet_wrap(vars(parents_highest_education))
-
     
 # influenza coverage by age
 inf_prepped_ivd |>
@@ -290,7 +371,7 @@ inf_prepped_ivd |>
   geom_point(alpha = 0.75) +
   geom_smooth(aes(group = influenza_coverage_age, weight = count), size = 0.75, alpha = 0.2, method = "lm") +
   labs(
-    title = "Children's Influenza vaccination status, stratified by\ntheir parents' highest educational attainment and household income",
+    title = "Children's Influenza vaccination status, stratified by their\nparents' highest educational attainment and household income",
     x = "Annual household income (millions of JPY)",
     y = "Proportion of children",
     col = "Influenza vaccination status"
@@ -300,12 +381,13 @@ inf_prepped_ivd |>
   
   theme(
     text = element_text(family = "sans"),
-    plot.title = element_text(size = 18, face = "bold"),
+    plot.title = element_text(size = 16, face = "bold", margin = margin(l = 15, b = 10)),
+    plot.title.position = "plot",
     axis.title.x = element_text(size = 12),
     axis.title.y = element_text(size = 12),
     legend.position = "bottom",
     legend.text = element_text(lineheight = 0.5),
-    legend.margin = margin(t = 1, r = 0, b = 0, l = 0),
+    legend.margin = margin(t = -10, r = 0, b = 0, l = 0),
     panel.grid.major = element_line(colour = "grey95"),
     panel.grid.minor = element_line(colour = "grey95"),
     panel.background = element_rect(fill = "white"),
@@ -320,6 +402,7 @@ inf_prepped_ivd |>
 
 ## perception of danger of infection
 ```{r}
+# covid coverage
 cov_prepped_ivd |>
      
    # stratify by vaccine danger and doses received
@@ -327,24 +410,71 @@ cov_prepped_ivd |>
    group_by(perception_infection_danger, covid_coverage_age) |>
 
    # filter out partial uptake
+   filter(covid_coverage_age != 1) |>
+    
+    # rename coverage statuses
+    mutate(
+      covid_coverage_age = case_when(
+        covid_coverage_age == 0 ~ "Unvaccinated",
+        covid_coverage_age == 2 ~ "Fully Vaccinated"
+      ) |>
+      factor(
+        levels = c("Unvaccinated", "Fully Vaccinated")
+      )
+    ) |>
   
-   
    # count the number of children in each category
    summarise(count = n()) |>
    ggplot() + 
    geom_col(
        aes(x = perception_infection_danger, y = count, fill = covid_coverage_age), 
        position = "fill"
-   ) + xlab("Infection is dangerous, so i get my children vaccinated\
-   strongly disagree to strongly agree") +
-   ylab("proportion of households by coverage") +
-   labs(title = "proportion of children with different degrees of coverage from the covid-vaccine,\
-        based on their parents' perception of the danger of infection")
+   ) + 
+  
+  labs(
+      title = "Children's Covid vaccination status,\nbased on their parents' perceived danger of infection",
+      y = "Proportion of children",
+      x = "Infection is dangerous, so I get my children vaccinated (strongly disagree to strongly agree)",
+      fill = "Covid vaccination status"
+    ) +
+  
+   theme(
+    text = element_text(family = "sans"),
+    plot.title = element_text(size = 16, face = "bold", margin = margin(l = 15, b = 10)),
+    plot.title.position = "plot",
+    axis.title.x = element_text(size = 12),
+    axis.title.y = element_text(size = 12),
+    legend.position = "bottom",
+    legend.text = element_text(lineheight = 0.5),
+    legend.margin = margin(t = -10, r = 0, b = 0, l = 0),
+    panel.grid.major = element_line(colour = "grey95"),
+    panel.grid.minor = element_line(colour = "grey95"),
+    panel.background = element_rect(fill = "white"),
+    panel.border = element_rect(fill = "NA",colour = "grey90")
+  ) +
+  
+  guides(color = guide_legend(override.aes = list(fill = NA)))
 
+
+# influenza coverage
 inf_prepped_ivd |>
      # stratify by vaccine danger and doses received
      filter(household_total > 1 & !is.na(influenza_coverage_age)) |>
      group_by(perception_infection_danger, influenza_coverage_age) |>
+  
+    # filter out partial uptake
+    filter(influenza_coverage_age != 1) |>
+  
+    # rename coverage statuses
+    mutate(
+      influenza_coverage_age = case_when(
+        influenza_coverage_age == 0 ~ "Unvaccinated",
+        influenza_coverage_age == 2 ~ "Fully Vaccinated"
+      ) |>
+        factor(
+          levels = c("Unvaccinated", "Fully Vaccinated")
+        )
+    ) |>
      
      # count the number of children in each category
      summarise(count = n()) |>
@@ -352,10 +482,30 @@ inf_prepped_ivd |>
      geom_col(
          aes(x = perception_infection_danger, y = count, fill = influenza_coverage_age), 
          position = "fill"
-     ) + xlab("Infection is dangerous, so i get my children vaccinated\
-     strongly disagree to strongly agree") +
-     ylab("proportion of households by coverage") +
-    labs(title = "proportion of children with different degrees of coverage from the influenza vaccine,\
-          based on their parents' perception of the danger of infection")
+     ) + 
+  
+    labs(
+      title = "Children's Influenza vaccination status,\nbased on their parents' perceived danger of infection",
+      y = "Proportion of children",
+      x = "Infection is dangerous, so I get my children vaccinated (strongly disagree to strongly agree)",
+      fill = "Influenza vaccination status"
+    ) +
+  
+  theme(
+    text = element_text(family = "sans"),
+    plot.title = element_text(size = 16, face = "bold", margin = margin(l = 15, b = 10)),
+    plot.title.position = "plot",
+    axis.title.x = element_text(size = 12),
+    axis.title.y = element_text(size = 12),
+    legend.position = "bottom",
+    legend.text = element_text(lineheight = 0.5),
+    legend.margin = margin(t = -10, r = 0, b = 0, l = 0),
+    panel.grid.major = element_line(colour = "grey95"),
+    panel.grid.minor = element_line(colour = "grey95"),
+    panel.background = element_rect(fill = "white"),
+    panel.border = element_rect(fill = "NA",colour = "grey90")
+  ) +
+  
+  guides(color = guide_legend(override.aes = list(fill = NA)))
 
 ```

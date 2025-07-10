@@ -240,6 +240,5 @@ function_plot_corr_pairs <- function(variable1, variable2, df) {
 function_plot_save <- function(plot, plot_name, format, location) {
   ggsave(
     here(location, paste0(plot_name, ".", format)), 
-    plot = plot,
-    width = 3, height = 2)
+    plot = plot)
 }
