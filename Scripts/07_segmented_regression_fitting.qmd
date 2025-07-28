@@ -1,0 +1,84 @@
+---
+format: 
+  html:
+    fig-asp: 0.8
+execute: 
+  eval: true
+  echo: false
+  warning: false
+---
+
+Libraries
+```{r}
+#| echo: false
+#| warning: false
+library(here)
+library(tidyverse)
+library(lubridate)
+library(knitr)
+library(reshape2)
+library(binom)
+library(ggcorrplot)
+library(patchwork)
+library(car)
+
+
+# custom functions
+source(here("Scripts", "functions", "exploratory functions.R"))
+```
+
+Data
+```{r}
+# read combined data
+regression_data <- readRDS(
+  here("Data", "JACSIS2023", "processed", "reshaped_combined_data.RDS")
+  )
+```
+
+This document will serve as a space where we explore different techniques/strategies to fit (parts of) our regression model.
+
+## Subsections of regression fitting
+### Fiting a segmented model for age against age category
+Age category here acts as the interaction term. However, I can't figure out if we need to make the intercept vary with age cat too.
+
+To determine which approach we'll use, we will be fitting a model of the proportion of vaccine uptake statuses with age, age-category and number of siblings. To see which matches the models produced during our EDA phase better. Logistic regressions will be run, and their outcomes plotted for comparison
+
+We will be investigating 2 approaches:
+1. just adding an interaction term to current regression model packages such as glm 
+2. using `segmented` to specify a regresion model?
+
+### Approach 1 - exising regression model packages
+```{r}
+# Model for covid vaccination
+model_covid_coverage_age_2 <- glm(
+    covid_coverage_age_2 ~ age_of_interest + age_cat + age_cat*age_of_interest,
+    family = "binomial",
+    data = regression_data
+  )
+
+  # no coverage
+model_covid_coverage_age_0 <-  glm(
+    covid_coverage_age_0 ~ age_of_interest + age_cat + age_cat*age_of_interest,
+    family = "binomial",
+    data = regression_data
+  )
+
+
+# Model for influenza vaccination
+  # complete coverage
+model_influenza_coverage_age_2 <- glm(
+    influenza_coverage_age_2 ~ age_of_interest + age_cat + age_cat*age_of_interest,
+    family = "binomial",
+    data = regression_data
+  )
+
+  # no coverage
+model_influenza_coverage_age_0 <- glm(
+    influenza_coverage_age_0 ~ age_of_interest + age_cat + age_cat*age_of_interest,
+    family = "binomial",
+    data = regression_data
+  )
+```
+
+
+

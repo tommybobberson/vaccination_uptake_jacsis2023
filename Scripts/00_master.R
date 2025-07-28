@@ -9,6 +9,7 @@ library(codebook)
 library(dagitty)
 library(ggdag)
 library(binom)
+library(fastDummies)
 
 # source custom functions
 functions <- list.files(
