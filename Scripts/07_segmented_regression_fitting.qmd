@@ -21,6 +21,7 @@ library(binom)
 library(ggcorrplot)
 library(patchwork)
 library(car)
+library(pscl)
 
 
 # custom functions
@@ -50,35 +51,91 @@ We will be investigating 2 approaches:
 ### Approach 1 - exising regression model packages
 ```{r}
 # Model for covid vaccination
-model_covid_coverage_age_2 <- glm(
-    covid_coverage_age_2 ~ age_of_interest + age_cat + age_cat*age_of_interest,
-    family = "binomial",
-    data = regression_data
-  )
+  # Full coverage
 
-  # no coverage
-model_covid_coverage_age_0 <-  glm(
-    covid_coverage_age_0 ~ age_of_interest + age_cat + age_cat*age_of_interest,
-    family = "binomial",
-    data = regression_data
-  )
+    # full coverage without siblings
+    model_1_covid_coverage_age_2 <- glm(
+      covid_coverage_age_2 ~ age_of_interest + age_cat + age_cat*age_of_interest,
+      family = "binomial",
+      data = regression_data
+    )
+    
+    # Assessing the fit
+    pscl::pR2(model_1_covid_coverage_age_2)["McFadden"]
+    
+    # full coverage with siblings
+    model_2_covid_coverage_age_2 <- glm(
+      covid_coverage_age_2 ~ age_of_interest * age_cat * child_siblings,
+      family = "binomial",
+      data = regression_data
+    ) 
+    
+    # Assessing the fit
+    pscl::pR2(model_2_covid_coverage_age_2)["McFadden"]
+    
+    # full coverage with birth order
+    model_3_covid_coverage_age_2 <- glm(
+      covid_coverage_age_2 ~ age_of_interest * age_cat * birth_order,
+      family = "binomial",
+      data = regression_data
+    )
+    
+    # Assessing the fit
+    pscl::pR2(model_3_covid_coverage_age_2)["McFadden"]
+
+  
+  # No coverage
+    # no coverage without siblings
+    model_1_covid_coverage_age_0 <- glm(
+      covid_coverage_age_0 ~ age_of_interest + age_cat + age_cat*age_of_interest,
+      family = "binomial",
+      data = regression_data
+    ) 
+  
+    # Assessing the fit
+    pscl::pR2(model_1_covid_coverage_age_0)["McFadden"]
+  
+    # no coverage with siblings
+    model_2_covid_coverage_age_0 <- glm(
+      covid_coverage_age_0 ~ age_of_interest * age_cat * child_siblings,
+      family = "binomial",
+      data = regression_data
+    )
+  
+    # Assessing the fit
+    pscl::pR2(model_2_covid_coverage_age_0)["McFadden"]
+  
+    # no coverage with birth order
+    model_3_covid_coverage_age_0 <- glm(
+      covid_coverage_age_0 ~ age_of_interest * age_cat * birth_order,
+      family = "binomial",
+      data = regression_data
+    ) 
+  
+    # Assessing the fit
+    pscl::pR2(model_3_covid_coverage_age_0)["McFadden"]
 
 
+  
 # Model for influenza vaccination
   # complete coverage
-model_influenza_coverage_age_2 <- glm(
-    influenza_coverage_age_2 ~ age_of_interest + age_cat + age_cat*age_of_interest,
-    family = "binomial",
-    data = regression_data
-  )
+  model_influenza_coverage_age_2 <- glm(
+      influenza_coverage_age_2 ~ age_of_interest + age_cat + age_cat*age_of_interest,
+      family = "binomial",
+      data = regression_data
+    )
 
   # no coverage
-model_influenza_coverage_age_0 <- glm(
-    influenza_coverage_age_0 ~ age_of_interest + age_cat + age_cat*age_of_interest,
-    family = "binomial",
-    data = regression_data
-  )
+  model_influenza_coverage_age_0 <- glm(
+      influenza_coverage_age_0 ~ age_of_interest + age_cat + age_cat*age_of_interest,
+      family = "binomial",
+      data = regression_data
+    )
 ```
 
+### Approach 2 - using the `segmented` package
+```{r}
+
+```
 
 
