@@ -1501,6 +1501,69 @@ function_plot_save(age_birth_order_influenza_age, "age_birth_order_influenza_age
 ```
 
 #### child_siblings
+The following examines child_siblings only
+```{r}
+# covid uptake
+cov_prepped_ivd |>
+  
+  mutate(
+    # segment age into increments of 0.5 years
+    age_of_interest = round(age_of_interest * 2) / 2,
+    
+    # compress individuals with >= 3 siblings
+    child_siblings = ifelse(child_siblings >= 2, "2+", child_siblings)
+  ) |>
+  
+  
+  # stratify proportions of vaccine uptake by age and the number of siblings
+  function_data_triple_stratify(age_of_interest, as.numeric, child_siblings, covid_coverage_age) |>
+  
+  # plot 
+  ggplot(aes(x = age_of_interest, y = proportion, colour = covid_coverage_age)) +
+  geom_smooth(method = "lm", se = FALSE) +
+  geom_point() +
+  facet_wrap(vars(child_siblings)) +
+  labs(
+    title = "how the proportion of children in different age categores with each degree of 
+    \ncoverage by the covid vaccine changes with age, stratified by the number of siblings they have",
+    x = "age",
+    y = "proportion"
+  ) +
+  theme(plot.title = element_text(lineheight = 0.5))
+
+# influenza uptake
+inf_prepped_ivd |>
+  
+  mutate(
+    # segment age into increments of 0.5 years
+    age_of_interest = round(age_of_interest * 2) / 2,
+    
+    # compress individuals with >= 3 siblings
+    child_siblings = ifelse(child_siblings >= 2, "2+", child_siblings)
+  ) |>
+  
+  
+  
+  # stratify proportions of vaccine uptake by age and the number of siblings
+  function_data_triple_stratify(age_of_interest, as.numeric, child_siblings, influenza_coverage_age) |>
+  
+  # plot 
+  ggplot(aes(x = age_of_interest, y = proportion, colour = influenza_coverage_age)) +
+  geom_smooth(method = "lm", se = FALSE) +
+  geom_point() +
+  facet_wrap(vars(child_siblings)) +
+  labs(
+    title = "how the proportion of children in different age categores with each degree of 
+    \ncoverage by the influenza vaccine changes with age, stratified by the number of siblings they have",
+    x = "age",
+    y = "proportion"
+  ) +
+  theme(plot.title = element_text(lineheight = 0.5))
+```
+
+
+
+The following examines child_siblings and age_cat
 ```{r}
 # covid_uptake
 cov_prepped_ivd |>
@@ -1509,9 +1572,9 @@ cov_prepped_ivd |>
     
     # compress higher birth order
     child_siblings = ifelse(
-      child_siblings <= 2,
+      child_siblings <= 1,
       as.character(child_siblings),
-      "3+"
+      "2+"
     ),
     
     # segment age into increments of 0.5 years
@@ -1543,7 +1606,7 @@ cov_prepped_ivd_transformed_age_siblings_age_cat |>
 
 data_age_child_siblings_covid_age_cat2 |>
   
-  # plot graphs of covid coverage by age across different birth orders
+  # plot graphs of covid coverage by age across differing number of siblings
   ggplot(aes(x = age_of_interest, y = proportion, colour = covid_coverage_age)) +
   geom_point(aes(shape = age_cat)) +
   geom_smooth(aes(linetype = age_cat, weight = weights), method = "lm", se = FALSE) +
@@ -1614,9 +1677,9 @@ inf_prepped_ivd |>
     
     # compress higher birth order
     child_siblings = ifelse(
-      child_siblings <= 2,
+      child_siblings <= 1,
       as.character(child_siblings),
-      "3+"
+      "2+"
     ),
     
     # segment age into increments of 0.5 years
@@ -1673,9 +1736,9 @@ cov_prepped_ivd |>
     
     # compress higher birth order
     test_child_siblings = ifelse(
-      test_child_siblings <= 2,
+      test_child_siblings <= 1,
       as.character(test_child_siblings),
-      "3+"
+      "2+"
     ),
     
     # segment age into increments of 0.5 years
@@ -1731,9 +1794,9 @@ inf_prepped_ivd |>
     
     # compress higher birth order
     test_child_siblings = ifelse(
-      test_child_siblings <= 2,
+      test_child_siblings <= 1,
       as.character(test_child_siblings),
-      "3+"
+      "2+"
     ),
     
     # segment age into increments of 0.5 years
@@ -1863,27 +1926,19 @@ Testng age categories and how they interact with ages
 cov_prepped_ivd |>
   
   filter(!is.na(covid_coverage_age)) |>
-  
+    
+  # segment age into increments of 0.5 years
   mutate(
-    
-    # compress higher birth order
-    child_siblings = ifelse(
-      child_siblings <= 2,
-      as.character(child_siblings),
-      "3+"
-    ),
-    
-    # segment age into increments of 0.5 years
     age_of_interest = round(age_of_interest * 2) / 2
   ) |>
   
-  summarise(count = n(), .by = c(age_of_interest, covid_coverage_age, child_siblings, age_cat)) |>
-  mutate(proportion = count / sum (count), .by = c(age_of_interest, child_siblings, age_cat)) |>
-  arrange(child_siblings, age_of_interest, covid_coverage_age) |>
+  summarise(count = n(), .by = c(age_of_interest, covid_coverage_age, age_cat)) |>
+  mutate(proportion = count / sum (count), .by = c(age_of_interest, age_cat)) |>
+  arrange(age_of_interest, covid_coverage_age) |>
   
   mutate(
     # weight observations within each age_category, such that the trend for the proportion that have received each coverage is reflective of the sample size
-    weights = count / sum(count), .by = c(age_cat, child_siblings, covid_coverage_age)
+    weights = count / sum(count), .by = c(age_cat, covid_coverage_age)
     
   ) |>
 
@@ -1891,11 +1946,10 @@ cov_prepped_ivd |>
   ggplot(aes(x = age_of_interest, y = proportion, colour = covid_coverage_age)) +
   geom_point(aes(shape = age_cat)) +
   geom_smooth(aes(linetype = age_cat, weight = weights), method = "lm", se = FALSE) +
-  facet_wrap(vars(child_siblings)) +
   labs(
     title = "proportions of children in different age categores with each degree of 
-    \n coverage by the covid vaccine, stratified by different age groups and the number of siblings they have",
-    subtitle = "trend lines weighted by the sample size within each age category, coverage status and birth order",
+    \n coverage by the covid vaccine, stratified by different age groups",
+    subtitle = "trend lines weighted by the sample size",
     x = "age",
     y = "proportion"
   ) +
@@ -1907,25 +1961,17 @@ inf_prepped_ivd |>
   filter(!is.na(influenza_coverage_age)) |>
   
   mutate(
-    
-    # compress higher birth order
-    child_siblings = ifelse(
-      child_siblings <= 2,
-      as.character(child_siblings),
-      "3+"
-    ),
-    
     # segment age into increments of 0.5 years
     age_of_interest = round(age_of_interest * 2) / 2
   ) |>
   
-  summarise(count = n(), .by = c(age_of_interest, influenza_coverage_age, child_siblings, age_cat)) |>
-  mutate(proportion = count / sum (count), .by = c(age_of_interest, child_siblings, age_cat)) |>
-  arrange(child_siblings, age_of_interest, influenza_coverage_age) |>
+  summarise(count = n(), .by = c(age_of_interest, influenza_coverage_age, age_cat)) |>
+  mutate(proportion = count / sum (count), .by = c(age_of_interest, age_cat)) |>
+  arrange(age_of_interest, influenza_coverage_age) |>
   
   mutate(
     # weight observations within each age_category, such that the trend for the proportion that have received each coverage is reflective of the sample size
-    weights = count / sum(count), .by = c(age_cat, child_siblings, influenza_coverage_age)
+    weights = count / sum(count), .by = c(age_cat, influenza_coverage_age)
     
   ) |>
 
@@ -1933,11 +1979,10 @@ inf_prepped_ivd |>
   ggplot(aes(x = age_of_interest, y = proportion, colour = influenza_coverage_age)) +
   geom_point(aes(shape = age_cat)) +
   geom_smooth(aes(linetype = age_cat, weight = weights), method = "lm", se = FALSE) +
-  facet_wrap(vars(child_siblings)) +
   labs(
     title = "proportions of children in different age categores with each degree of 
-    \n coverage by the influenza vaccine, stratified by different age groups and the number of siblings they have",
-    subtitle = "trend lines weighted by the sample size within each age category, coverage status and birth order",
+    \n coverage by the influenza vaccine, stratified by different age groups",
+    subtitle = "lines weighted by the sample size within each age category, coverage status and birth order",
     x = "age",
     y = "proportion"
   ) +
@@ -3261,3 +3306,54 @@ child_grand_mother_stay_home_influenza_age |>
     subtitle = "the columns represent the degree of coverage with the influenza vax we're looking at: unvaxxed (0), partial vax (1), full vax (2)"
   )
 ```
+
+#### household_total
+```{r}
+# covid uptake
+cov_prepped_ivd |>
+  
+  # ensure no missing data 
+  filter(!is.na(child_grand) & !is.na(covid_coverage_age)) |>
+  
+  # reduce the dimensions of the household so we can work with a larger sample size
+  mutate(household_total = ifelse(household_total < 4, as.character(household_total), "4+")) |>
+  
+  # stratify data by the child's coverage statuses, parent's marital statuses and the no. of grandparents
+  function_data_triple_stratify(household_total, as.factor, child_grand, covid_coverage_age) -> child_grand_household_total_covid_age
+
+# plot
+child_grand_household_total_covid_age |>
+  ggplot(aes(x = child_grand, y = proportion, group = household_total)) +
+  geom_point(aes(colour = household_total)) +
+  geom_smooth(aes(colour = household_total), method = "lm") +
+  function_plot_label_count(child_grand, covid_coverage_age) +
+  facet_wrap(vars(covid_coverage_age)) +
+  labs(
+    title = "visualising how the uptake of the covid vaccine varies with an increasing number of grandparents, for children with the total household size",
+    subtitle = "the columns represent the degree of coverage with the coid vax we're looking at: unvaxxed (0), partial vax (1), full vax (2)"
+  )
+
+# influenza uptake
+inf_prepped_ivd |>
+  
+  # ensure no missing data 
+  filter(!is.na(child_grand) & !is.na(influenza_coverage_age)) |>
+  
+  # reduce the dimensions of the household so we can work with a larger sample size
+  mutate(household_total = ifelse(household_total < 4, as.character(household_total), "4+")) |>
+  
+  # stratify data by the child's coverage statuses, parent's marital statuses and the no. of grandparents
+  function_data_triple_stratify(household_total, as.factor, child_grand, influenza_coverage_age) -> child_grand_household_total_influenza_age
+
+# plot
+child_grand_household_total_influenza_age |>
+  ggplot(aes(x = child_grand, y = proportion, group = household_total)) +
+  geom_point(aes(colour = household_total)) +
+  geom_smooth(aes(colour = household_total), method = "lm") +
+  function_plot_label_count(child_grand, influenza_coverage_age) +
+  facet_wrap(vars(influenza_coverage_age)) +
+  labs(
+    title = "visualising how the uptake of the influenza vaccine varies with an increasing number of grandparents, for children with the total household size",
+    subtitle = "the columns represent the degree of coverage with the inf vax we're looking at: unvaxxed (0), partial vax (1), full vax (2)"
+  )
+```   

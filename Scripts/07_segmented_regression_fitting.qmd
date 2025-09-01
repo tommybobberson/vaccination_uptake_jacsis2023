@@ -54,14 +54,31 @@ We will be investigating 2 approaches:
   # Full coverage
 
     # full coverage without siblings
-    model_1_covid_coverage_age_2 <- glm(
-      covid_coverage_age_2 ~ age_of_interest + age_cat + age_cat*age_of_interest,
-      family = "binomial",
-      data = regression_data
-    )
-    
-    # Assessing the fit
-    pscl::pR2(model_1_covid_coverage_age_2)["McFadden"]
+      # normal regression
+      model_1_covid_coverage_age_2 <- glm(
+        covid_coverage_age_2 ~ age_of_interest + age_cat + age_cat*age_of_interest,
+        family = "binomial",
+        data = regression_data
+      )
+      
+      # Assessing the fit
+      pscl::pR2(model_1_covid_coverage_age_2)["McFadden"]
+      
+      # segmented regression
+      segmented_model_1_covid_coverage_age_2 <-
+      glm(
+        covid_coverage_age_2 ~ age_of_interest + age_cat,
+        family = "binomial",
+        data = regression_data
+      ) |>
+  
+        segmented(
+          obj = _,
+          seg.Z = ~ age_of_interest,
+          npsi = 2#,
+          ploontrol = seg.control(it.max = 0)
+        )
+                
     
     # full coverage with siblings
     model_2_covid_coverage_age_2 <- glm(

@@ -32,7 +32,7 @@ data <- readRDS(
   ) |>
     print()
   
-  # filter only for variables which proided a valid response in the checking variable
+  # filter only for variables which provided a valid response in the checking variable
   cleaned_data <- data |>
     filter(Q22 == 4)
   

@@ -2490,7 +2490,7 @@ influenza_mortgage_age |>
   ggplot(aes(x = household_mortgage, y = proportion)) +
   geom_point(aes(colour = influenza_coverage_age)) +
   geom_smooth(aes(colour = influenza_coverage_age), method = "lm") +
-  geom_text(aes(label = count, colour = influenza_coverage_age), size = 3)\
+  geom_text(aes(label = count, colour = influenza_coverage_age), size = 3)
 ```
 Run anovas to determine if the coverage of children in households who've already paid off their mortgages significantly differ from those who haven't. Assumptions are:
   - normality
