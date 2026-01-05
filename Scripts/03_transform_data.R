@@ -784,6 +784,44 @@ independent_variable_data <- independent_variable_data |>
   )
 
 
+# father_work_weekly
+# the number of hours the father has worked / week (for the past month)
+independent_variable_data <- independent_variable_data |>
+  
+  mutate(
+      father_work_weekly = case_when(
+        # no child
+        child_of_interest == 0 ~ NA,
+
+        # respondent is the father, then responding parent is the father
+        parent_1_sex == 0 ~ parent_work_weekly,
+
+        # respondent is the mother, then spouse is the father
+        parent_1_sex == 1 ~ spouse_work_weekly      
+      )
+  )
+
+
+# mother_work_weekly
+# the number of hours the mother has worked / week (for the past month)
+independent_variable_data <- independent_variable_data |>
+
+  mutate(
+    mother_work_weekly = case_when(
+      # no child
+      child_of_interest == 0 ~ NA,
+
+      # responding parent is the mother
+      parent_1_sex == 0 ~ parent_work_weekly,
+
+      # responding parent is the father, then the mother is the spouse
+      parent_1_sex == 1 ~ spouse_work_weekly
+    )
+  )
+
+
+
+
 # parents_student_status
 # whether the mother or father is currently a student
 independent_variable_data <- independent_variable_data |>
@@ -1273,6 +1311,8 @@ transformed_independent_variable_data <- independent_variable_data |>
     parent_chronic_illness,
     father_employment_status,
     mother_employment_status,
+    father_work_weekly,
+    mother_work_weekly,
     parents_student_status,
     parents_retired_status,
     parents_stay_home,

@@ -14,7 +14,8 @@ library(car)
 library(pscl)
 library(segmented)
 
-# source custom functions
+
+# source custom functions + file to resolve clashing function names
 functions <- list.files(
   here("Scripts", "functions"),
   full.names = TRUE
@@ -27,4 +28,3 @@ for(f in functions) {source(f)}
 source(here("Scripts", "01_read_data.R")) # source data
 source(here("Scripts", "02_clean_data.R")) # clean data
 source(here("Scripts", "03_transform_data.R")) # transform data
-
