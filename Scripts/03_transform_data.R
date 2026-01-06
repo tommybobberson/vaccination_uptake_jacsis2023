@@ -593,9 +593,10 @@ independent_variable_data <-independent_variable_data |>
     parent_2_sex = case_when(
     
       # unmarried individuals
-      parents_marital_status != 0 ~ NA, # no parent_2
+      parents_marital_status != 0 ~ NA, # no parent_2 i.e. single parent
       
       # married individuals
+      # determines the partner parent's sex based on the respondent parent's sex
       parents_marital_status == 0 ~ 
         case_when(
           parent_1_sex == 1 ~ 0, # father as second parent
@@ -734,7 +735,7 @@ independent_variable_data <- independent_variable_data |>
         respondent_employment_status %in% c(7:10, 12) ~ 3 # part-time & temp
       ),
       
-      # When the partner is the father
+      # partner of the responding parent is the father
       parent_2_sex == 0 ~ case_when(
         
         # partner's employment status is father's employment status
@@ -770,7 +771,8 @@ independent_variable_data <- independent_variable_data |>
         respondent_employment_status %in% c(7:10, 12) ~ 3 # part-time & temp
       ),
       
-      # When the partner is the mother
+      # When the partner is the mother thus accounting for children whose parents
+      # are unmarried, as they will not be processed and will be NA
       parent_2_sex ==  1 ~ case_when(
         
         # partner's employment status is mother's employment status
@@ -789,16 +791,31 @@ independent_variable_data <- independent_variable_data |>
 independent_variable_data <- independent_variable_data |>
   
   mutate(
-      father_work_weekly = case_when(
-        # no child
-        child_of_interest == 0 ~ NA,
+    father_work_weekly = case_when(
+      # no child
+      child_of_interest == 0 ~ NA,
 
-        # respondent is the father, then responding parent is the father
-        parent_1_sex == 0 ~ parent_work_weekly,
+      # respondent is the father, then parent_1 is the father
+      parent_1_sex == 0 ~ case_when(
+        # if father is not working, then he works 0 hours a week
+        father_employment_status == 0 ~ 0,
 
-        # respondent is the mother, then spouse is the father
-        parent_1_sex == 1 ~ spouse_work_weekly      
+        # if father is working
+        father_employment_status != 0 ~ parent_work_weekly
+      ),
+        
+      # spouse is the father, parent_2 is the father
+      # no need to check for marriage status as if the responding parent is unmarried,
+      # parent_2_sex is by defauly NA, but we need to check for employment status
+      parent_2_sex == 0 ~ case_when(
+        
+        # if father isn't employed, 0 hours per week
+        father_employment_status == 0 ~ 0,
+
+        # if father is working
+        father_employment_status != 0 ~ parent_work_weekly
       )
+    )
   )
 
 
@@ -812,10 +829,23 @@ independent_variable_data <- independent_variable_data |>
       child_of_interest == 0 ~ NA,
 
       # responding parent is the mother
-      parent_1_sex == 0 ~ parent_work_weekly,
+      parent_1_sex == 1 ~ case_when(
+        # mother isn't working then she works 0 hours a week
+        mother_employment_status == 0 ~ 0,
 
-      # responding parent is the father, then the mother is the spouse
-      parent_1_sex == 1 ~ spouse_work_weekly
+        # mother is working
+        mother_employment_status != 0 ~ parent_work_weekly
+      ),
+
+      # spouse is the mother
+      # then we see if the spouse is the mother or if the mother doesn't exist (responding parentg is unmarried)
+      parent_2_sex == 1 ~ case_when(
+        # mother isn't employed, means 0 hours worked weekly
+        mother_employment_status == 0 ~ 0,
+
+        # mother is working
+        mother_employment_status != 0 ~ spouse_work_weekly
+      )
     )
   )
 
@@ -1275,6 +1305,7 @@ transformed_independent_variable_data <- independent_variable_data |>
     respondent_depression,
     respondent_psychiatric_other,
     respondent_employment_status,
+    partner_employment_status,
     respondent_industry_of_work,
     perception_safety,
     perception_infection_danger,
@@ -1309,6 +1340,8 @@ transformed_independent_variable_data <- independent_variable_data |>
     household_debt,
     household_mortgage,
     parent_chronic_illness,
+    parent_work_weekly,
+    spouse_work_weekly,
     father_employment_status,
     mother_employment_status,
     father_work_weekly,
