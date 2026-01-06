@@ -479,6 +479,7 @@ inf_prepped_ivd |>
 function_plot_save(last_plot(), "inf_age_mother_father_highest_education", "png", "Output/05_multivariate_uptake_plots")
   
 ```
+  
 #### father/mother_education income
 coverage by mothers and fathers education with income
 ```{r}
@@ -1212,6 +1213,128 @@ inf_prepped_ivd |>
 ```
 I'm pretty sure there's some sort of interaction between education and household income in affecting the uptake of influenza because the slopes change
 
+#### mother's employment
+We will test to see if a mother's employment status i.e. if the household is a one or 2 income household, affects the rate of vaccination for families of the same income. We are not testing the same for father's employment due to the low no. of responses of mother income only families
+
+Here mother's employment is **fully stratified**
+```{r}
+# Covid vax
+income_mother_employment_cov_age <- cov_prepped_ivd |> 
+  # filter out NA response
+  filter(!if_any(c(mother_employment_status, covid_coverage_age), is.na)) |>
+
+  summarise(count = n(), .by = c(mother_employment_status, test_household_income, covid_coverage_age)) |>
+
+  # make mother's employment binary, working or not working (but really i think that it should be on a scale beacuse the amount of time ???)
+
+  # make each data point depending on coverage, income, etc.
+  mutate(proportion = count/sum(count), .by = c(mother_employment_status, test_household_income))
+
+income_mother_employment_cov_age |>
+  ggplot(aes(x = test_household_income, y = proportion, colour = mother_employment_status)) + 
+  geom_smooth(aes(linetype = covid_coverage_age), method = "lm") +
+  geom_point(aes(shape = covid_coverage_age)) +
+  #geom_line(aes(linetype = covid_coverage_age)) + 
+  labs(title = "The vaccination uptake with increasing income, depending on if the mother works")
+
+income_mother_employment_cov_age
+
+```
+
+```{r}
+# influenza vax
+income_mother_employment_cov_age <- cov_prepped_ivd |> 
+  # filter out NA response
+  filter(!if_any(c(mother_employment_status, covid_coverage_age), is.na)) |>
+
+  summarise(count = n(), .by = c(mother_employment_status, test_household_income, covid_coverage_age)) |>
+
+  # make mother's employment binary, working or not working (but really i think that it should be on a scale beacuse the amount of time ???)
+
+  # make each data point depending on coverage, income, etc.
+  mutate(proportion = count/sum(count), .by = c(mother_employment_status, test_household_income))
+
+income_mother_employment_cov_age |>
+  ggplot(aes(x = test_household_income, y = proportion, colour = mother_employment_status)) + 
+  geom_smooth(aes(linetype = covid_coverage_age), method = "lm")
+  #geom_line(aes(linetype = covid_coverage_age)) + 
+  labs(title = "The vaccination uptake with increasing income, depending on if the mother works")
+
+income_mother_employment_cov_age
+```
+
+#### Mother's weekly working hours
+Seeing how the income varies with the parent's working hours. Logically, for 2 children whose amilies have the same finanical ability to vaccinate them, the child whose parents work less hours a week would be more likely to be fully vaccinated as their parents have the time to bring them to be vaccinated
+
+Covid
+```{r}
+cov_prepped_ivd |>
+  filter(!is.na(mother_work_weekly)) |>
+  # let's try seperating ages into 5 hour bins, with 60+ hours per weeek being 1 bin
+  mutate(
+    mother_work_weekly_bin = factor(
+      case_when(
+      mother_work_weekly < 60 ~ mother_work_weekly %/% 5 * 5, 
+      mother_work_weekly >= 60 ~ 60
+      )
+    )
+   ) |>
+
+  summarise(count = n(), .by = c(covid_coverage_age, mother_work_weekly_bin, test_household_income)) |>
+  
+  # calculate proportion of each income group and mother_work_hours/week which the child's coverage is at
+  mutate(proportion = count/sum(count), .by = c(covid_coverage_age, mother_work_weekly_bin)) |>
+
+  # make a heatmap, for each coverage status
+  # we are now just testing for full coverage
+  filter(covid_coverage_age == 2) |>
+
+  ggplot(aes(x = test_household_income, y = mother_work_weekly_bin)) + 
+    geom_tile(aes(fill = proportion)) +
+    scale_fill_gradient(low = "white", high = "red") 
+```
+
+If we look solely at the 5-10 million yen/year household income range, there is some semblance of less workjing hours equating to a higher uptake of vaccines but i'm not too sure??
+
+Now we look at influenza data instead
+
+```{r}
+inf_prepped_ivd |>
+  filter(!is.na(mother_work_weekly)) |>
+  # let's try seperating ages into 5 hour bins, with 60+ hours per weeek being 1 bin
+  mutate(
+    mother_work_weekly_bin = factor(
+      case_when(
+      mother_work_weekly < 60 ~ mother_work_weekly %/% 5 * 5, 
+      mother_work_weekly >= 60 ~ 60
+      )
+    )
+   ) |>
+
+  summarise(count = n(), .by = c(influenza_coverage_age, mother_work_weekly_bin, test_household_income)) |>
+  
+  # calculate proportion of each income group and mother_work_hours/week which the child's coverage is at
+  mutate(proportion = count/sum(count), .by = c(influenza_coverage_age, mother_work_weekly_bin)) |>
+
+  # make a heatmap, for each coverage status
+  # we are now just testing for full coverage
+  filter(influenza_coverage_age == 2) |>
+
+  ggplot(aes(x = test_household_income, y = mother_work_weekly_bin)) + 
+    geom_tile(aes(fill = proportion)) +
+    scale_fill_gradient(low = "white", high = "red") 
+```
+
+##### Running regressions to see if working hours is truly significant
+
+
+
+#### Father's weekly working hours
+
+
+
+
+#### mother_stay_home (we need mother employment status)
 Now, let's examine how uptake differs between families where mothers stay home and don't, holding income level constant
 ```{r}
 # covid coverage by age
@@ -1323,7 +1446,8 @@ inf_prepped_ivd |>
 
 ```
 
-Let's investigate how vaccine uptake varies with test_household_income, mother_employment_status and father's employment ab
+#### mother_stay_home, father_employment
+Let's investigate how vaccine uptake varies with test_household_income, mother_stay_home and father's employment ab
 ```{r}
 # covid coverage by age
 cov_prepped_ivd |>
