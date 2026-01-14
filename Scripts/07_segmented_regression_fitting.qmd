@@ -75,7 +75,7 @@ We will be investigating 2 approaches:
         segmented(
           obj = _,
           seg.Z = ~ age_of_interest,
-          npsi = 2#,
+          npsi = 2,
           ploontrol = seg.control(it.max = 0)
         )
                 
