@@ -479,7 +479,7 @@ inf_prepped_ivd |>
 function_plot_save(last_plot(), "inf_age_mother_father_highest_education", "png", "Output/05_multivariate_uptake_plots")
   
 ```
-  
+
 #### father/mother_education income
 coverage by mothers and fathers education with income
 ```{r}
@@ -1289,8 +1289,11 @@ cov_prepped_ivd |>
   # we are now just testing for full coverage
   filter(covid_coverage_age == 2) |>
 
+  # Complete the table, fill in empty data
+  complete(test_household_income, mother_work_weekly_bin, fill = list(proportion = 0)) |>
+
   ggplot(aes(x = test_household_income, y = mother_work_weekly_bin)) + 
-    geom_tile(aes(fill = proportion)) +
+   geom_tile(aes(fill = proportion)) +
     scale_fill_gradient(low = "white", high = "red") 
 ```
 
@@ -1326,8 +1329,90 @@ inf_prepped_ivd |>
 ```
 
 ##### Running regressions to see if working hours is truly significant
+So the heatmap plots don't really reveal anything about if there is a sort of interaction between the mother's working hours and household income. 
+
+Hypothesis: that as the number of working hours increases, we would see a decrease in proportion of vaccination even given the same vax status
+
+We'll investigate how the proportion of children with full covid coverage varies vs no full coverage (binary variable)
+
+```{r}
+data <- cov_prepped_ivd |>
+
+  # filter out households without a vaccine status
+  filter(!is.na(covid_coverage_age) & !is.na(test_household_income)) |>
+
+  # recode coverage as binary
+  mutate(
+    cov_vaxxed_full = factor(case_when(
+      covid_coverage_age != 2 ~ 0,
+      covid_coverage_age == 2 ~ 1
+      
+    )
+  )) |>  
+
+  select(cov_vaxxed_full, test_household_income, mother_work_weekly)
+
+  # run one with income_only
+  income_only <- glm(cov_vaxxed_full ~ test_household_income, data = data, family = binomial(link = "logit"))
+
+  # run regression with coverage as binary variable, income and mother's hours as predictor, 
+  # and no interaction term
+  no_interaction <- glm(cov_vaxxed_full ~ test_household_income + mother_work_weekly, data = data, family = binomial(link = "logit"))
+
+  # run logistic regression with interaction term
+  interaction <- glm(cov_vaxxed_full ~ test_household_income + mother_work_weekly + mother_work_weekly*test_household_income, data = data, family = binomial(link = "logit"))
+
+  summary(income_only)
+  summary(no_interaction)
+  summary(interaction)
+```
+
+- additionally, the number of hours that a mother works a week (at the 5% significance level) isn't a significant predictor of uptake
+
+- this is directly against https://www.sciencedirect.com/science/article/abs/pii/S0091743514001844?via%3Dihub
+
+- but we will include working hours as previous literature states that it might be important
 
 
+Now let me do the same for influenza, which I hazard might have a greater possibility of verifying our hyptohesis given that it's not mandatory like covid. Thus, parental free-time is a big factor, which is inversely correlated with parental working hours, in deciding if the child will be brought to be vaccinated
+```{r}
+data <- inf_prepped_ivd |>
+
+  # filter out households without a vaccine status
+  filter(!is.na(influenza_coverage_age) & !is.na(test_household_income)) |>
+
+  # recode coverage as binary
+  mutate(
+    inf_vaxxed_full = factor(case_when(
+      influenza_coverage_age == 2 ~ 1,
+      influenza_coverage_age != 2 ~ 0
+    )
+  )) |>  
+
+  select(inf_vaxxed_full, test_household_income, mother_work_weekly)
+
+  # only household_income
+  income_only <- glm(inf_vaxxed_full ~ test_household_income, data = data, family = "binomial")
+
+  # run regression with coverage as binary variable, income and mother's hours as predictor, 
+  # and no interaction term
+  no_interaction <- glm(inf_vaxxed_full ~ test_household_income + mother_work_weekly, data = data, family = "binomial")
+
+  # run logistic regression with interaction term
+  interaction <- glm(inf_vaxxed_full ~ test_household_income + mother_work_weekly + mother_work_weekly*test_household_income, data = data, family = "binomial")
+
+  summary(income_only)
+  summary(no_interaction)
+  summary(interaction)
+```
+
+
+- forall 3 models it seems that mothers work hours are slightly negatively correlated with full coverage. 
+
+- Income is still a positive predictor of full uptake which corroborates what we've found in our EDA
+
+As income and mother's work hours increase, it seeems that there is a negligible effect on uptake. (P value is 0.311 )
+- the interaction doesn't seems significant
 
 #### Father's weekly working hours
 
