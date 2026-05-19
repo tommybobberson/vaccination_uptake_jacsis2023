@@ -1,0 +1,27 @@
+---
+title: "Vaccine uptake"
+format: html
+---
+
+# structure
+0. Lit review, provide a general overview of what's gone on (**so i need to go back to reading all my papers**)
+1. Describe data transformations + labels used. Also include any asusmptions / categories created (justify why so!)
+2. Describe the Exploratory descriptive statistics done. Include proportion tables and plots (?)
+3. Based on the exploratory statistics, what (causal) relationships did we discover (?)
+4. Explain how we constructed different models with said causal relationships
+5. Testing of different models
+6. Talking about results
+
+# Intro
+Japan has achieved relatively high levels of COVID-19 vaccine coverage in it's population with XX% of its population having received 2 or more doses and YY% of its population having received 3 or more doses. **source** However, Vaccine coverage is not homogeneous -- vaccine coverage in the children population (defined as <18 y/o) are lower than the average. **source**. This is in particular because Japan does not have a mandatory vaccination schedule for children. **source** School based vaccination is particularly effective to achieve high levels of vaccination coverage. Simultaneously, it has been shown that high levels of vaccination in children is beneficial in protecting children + to society. **source** As such, increasing rates of childhood vaccination would be beneficial in uplifting the public health of society (??). 
+
+Whilst studies about (covid-19 and seasonal influenza) vaccination uptake in general, for adults and the elderly in Japan, have been done. **source** The factors that affect childhood vaccination uptake have not been studied. In particular, the nature of this is different given a guardian's consent is required for children to receive vaccinations and it's a decision on the guardian's part. As such, we aim to examine the familial factors (socio-demographic, guardian's opinions etc.), of the household a child belongs to, that are associated with a child's uptake, or lack thereof, of the COVID-19 and Influenza vaccines. Understanding such factors would allow us to implement measures to increase vaccination rates for groups of children who are disproportionately undervaccinated. **source**
+
+## Method
+This is a cross-sectional study and data was obtained from, an internet survey, the 2023 JACSIS Study. **source** Ethical review for the survey has been approved.
+
+Do we need ethical review from NUS??
+
+The survey was conducted in 2 parts: Firstly, from 25/09/2023 to 17/11/2023, 46,840 respondents who had participated in previous editions of the survye were contacted and 26,872 of them responded; From 7/11/2023 to 17/11/2023, a second survey with the same questionnaire was administered to panel members aged 16-79 and ended once 6,128 responses were obtained. In total, 
+
+
