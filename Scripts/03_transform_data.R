@@ -785,6 +785,27 @@ independent_variable_data <- independent_variable_data |>
     factor()
   )
 
+# parent_childcare_daily
+# The average number of hours the responding parent spends on childcare a day (over the past month)
+independent_variable_data <- independent_variable_data |>
+  
+  mutate(
+    # recode the, childcare_daily, responses as the no. of hours spent?
+    parent_childcare_daily = case_when(
+      childcare_daily == 1 ~ 0,
+      childcare_daily %in% c(2,3,4) ~ 1,
+      childcare_daily == 5 ~ 2,
+      childcare_daily == 6 ~ 3,
+      childcare_daily == 7 ~ 4.5,
+      childcare_daily == 8 ~ 6.5,
+      childcare_daily == 9 ~ 8.5,
+      childcare_daily == 10 ~ 10.5,
+      childcare_daily == 11 ~ 12,
+      
+      # parents who don't know how long they spend on childcare a week
+      childcare_daily == 12 ~ NA
+    )
+  )
 
 # father_work_weekly
 # the number of hours the father has worked / week (for the past month)
@@ -1351,6 +1372,7 @@ transformed_independent_variable_data <- independent_variable_data |>
     parents_stay_home,
     mother_stay_home,
     parents_healthcare,
+    parent_childcare_daily,
     father_highest_education,
     mother_highest_education,
     test_father_highest_education,

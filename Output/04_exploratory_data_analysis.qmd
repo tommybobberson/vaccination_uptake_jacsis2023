@@ -2492,15 +2492,171 @@ influenza_mortgage_age |>
   geom_smooth(aes(colour = influenza_coverage_age), method = "lm") +
   geom_text(aes(label = count, colour = influenza_coverage_age), size = 3)
 ```
-Run anovas to determine if the coverage of children in households who've already paid off their mortgages significantly differ from those who haven't. Assumptions are:
-  - normality
-  - homoscedasticity
-  - independence
+
+### parent_childcare_daily
+Whether the number of hours that (the responding) parent spends on childcare a daily affects the child's vaccine uptake
 ```{r}
+# influenza
+inf_ivd |>
+  
+  # filter out non responses (vax status and childcare hours)
+  filter(
+    !is.na(parent_childcare_daily) & !is.na(influenza_coverage_age)
+  ) |>
+  
+  # calc proportions of vaccination statuses for the no of childcare hours
+  summarise(
+    count = n(), .by = c(influenza_coverage_age, parent_childcare_daily)
+  ) |>
+  
+  mutate(
+    proportion = count/sum(count), .by = parent_childcare_daily
+  ) |>
+  
+  # plot scatter plots for EACH status
+  ggplot(aes(x = parent_childcare_daily, y = proportion, colour = influenza_coverage_age)) +
+  geom_point()
+
 # covid
-anova <- aov(covid_coverage_age ~ household_mortgage, data = cov_prepped_ivd)
+cov_ivd |>
+  
+  # filter out non responses (vax status and childcare hours)
+  filter(
+    !is.na(parent_childcare_daily) & !is.na(covid_coverage_age)
+  ) |>
+  
+  # calc proportions of vaccination statuses for the no of childcare hours
+  summarise(
+    count = n(), .by = c(covid_coverage_age, parent_childcare_daily)
+  ) |>
+  
+  mutate(
+    proportion = count/sum(count), .by = parent_childcare_daily
+  ) |>
+  
+  # plot scatter plots for EACH status
+  ggplot(aes(x = parent_childcare_daily, y = proportion, colour = covid_coverage_age)) +
+  geom_point()
+```
+### Father/Mother_work_weekly
+We will examine how the number of hours a child's (assumed) father and mother works a week 
+affects the child's uptake
 
-anova
+It's a numeric var. Can i run a logistic regressoin or bin it?
+```{r}
+# influenza, father work
+inf_ivd |>
+  
+  # filter out lack of vaccine statuses
+  filter(!is.na(influenza_coverage_age) & !is.na(father_work_weekly)) |>
+
+  # first we create bins of 0.5 each on the log(father_work_weekly) scale?
+  mutate(log_father_work_weekly = cut(log(father_work_weekly), seq(-0.5, 6, 0.5))) |>
+
+  # then we calculate the proportional bar plots for each bin
+  summarise(
+    count = n(), .by = c(log_father_work_weekly, influenza_coverage_age)
+  ) |>
+  
+  mutate(
+    proportion = count/sum(count), .by = log_father_work_weekly
+  ) |>
+    
+  # plot the STACKED proportional bar plots
+  ggplot() + 
+  geom_col(
+      aes(x = log_father_work_weekly, y = proportion, fill = influenza_coverage_age)
+    )
+
+# influenza, mother work
+inf_ivd |>
+  
+  # filter out lack of vaccine statuses
+  filter(!is.na(influenza_coverage_age) & !is.na(mother_work_weekly)) |>
+  
+  # log work hours, oh logging 0 gives some undefined value
+  mutate(log_mother_work_weekly = log(mother_work_weekly)) |>
+
+  # first we create bins of 0.5 each on the log(father_work_weekly) scale?
+  mutate(mother_work_bins = cut(log_mother_work_weekly, seq(-0.5, 6, 0.5))) |>  # somewhere in this step they decided to get rid of
+  
 
 
-  ```
+  # then we calculate the proportional bar plots for each bin
+  summarise(
+    count = n(), .by = c(mother_work_bins, influenza_coverage_age)
+  ) |>
+  
+  mutate(
+    proportion = count/sum(count), .by = mother_work_bins
+  ) |>
+    
+  # plot the STACKED proportional bar plots
+  ggplot() + 
+  geom_col(
+      aes(x = mother_work_bins, y = proportion, fill = influenza_coverage_age)
+    )
+```
+
+We note that the uptake of influenza vaccine for mothers who don't work (bin = NA as log 0 is undefined) is not significantly higher than that of those who do work. Other than mothers who have log working hours > 4 $\implies$ working hours $>= e^4 \approximate 54$, nfluenza coverage seems to increase slightly with wokring hours. What this could say is that other than mothers who are suibject to extreme hours out of privation (?) i..e a need to, most mothers CAN find the time / just choose not to find the time to get their children vaccinated
+
+Fathers not working(n = 112), i..e log_father_work_weekly = NA, seems to be correlated with a lack of influenza vaccine uptake. In this case, it could be because they are typically the breadwinner. Thus, their family could be financially disadvantaged and are unable to afford the influenza vaccine -- which isn't subsidised.
+
+```{r}
+# covid, father
+cov_ivd |>
+  
+  # filter out lack of vaccine statuses
+  filter(!is.na(covid_coverage_age) & !is.na(father_work_weekly)) |>
+
+  # first we create bins of 0.5 each on the log(father_work_weekly) scale?
+  mutate(log_father_work_weekly = cut(log(father_work_weekly), seq(-0.5, 6, 0.5))) |>
+
+  # then we calculate the proportional bar plots for each bin
+  summarise(
+    count = n(), .by = c(log_father_work_weekly, covid_coverage_age)
+  ) |>
+  
+  mutate(
+    proportion = count/sum(count), .by = log_father_work_weekly
+  ) |>
+    
+  # plot the STACKED proportional bar plots
+  ggplot() + 
+  geom_col(
+      aes(x = log_father_work_weekly, y = proportion, fill = covid_coverage_age)
+    )
+
+# covid, mother
+cov_ivd |>
+  
+  # filter out lack of vaccine statuses
+  filter(!is.na(covid_coverage_age) & !is.na(mother_work_weekly)) |>
+  
+  # log work hours, oh logging 0 gives some undefined value
+  mutate(log_mother_work_weekly = log(mother_work_weekly)) |>
+
+  # first we create bins of 0.5 each on the log(father_work_weekly) scale?
+  mutate(mother_work_bins = cut(log_mother_work_weekly, seq(-0.5, 6, 0.5))) |>  # somewhere in this step they decided to get rid of
+  
+
+
+  # then we calculate the proportional bar plots for each bin
+  summarise(
+    count = n(), .by = c(mother_work_bins, covid_coverage_age)
+  ) |>
+  
+  mutate(
+    proportion = count/sum(count), .by = mother_work_bins
+  ) |>
+    
+  # plot the STACKED proportional bar plots
+  ggplot() + 
+  geom_col(
+      aes(x = mother_work_bins, y = proportion, fill = covid_coverage_age)
+    )
+```
+
+Mothers not working (n = 1695) is associated with a higehr uptake of the covid vaccine. However, increasing work hours is associated with higher levels of covid vaccination uptake in their children -- it eventually surpasses the level of non-working mothers.
+
+Fathers not working (n = 112) is associated wit ha lower uptake of the covid vaccine. (not sure why given the covid vaccine is heavily subsidised?). For fathers who do work, the length of work hours seems to be uncorrelated with their children's uptake of the covid vax
