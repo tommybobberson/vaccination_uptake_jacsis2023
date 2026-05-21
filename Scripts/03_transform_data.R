@@ -213,8 +213,8 @@ influenza_data <- influenza_data |>
       
       # factorise results
       factor(
-        levels = c(0, 1, 2)#,
-        #labels = c("no coverage", "partial coverage", "full coverage")
+        levels = c(0, 1, 2),
+        labels = c("no coverage", "partial coverage", "full coverage")
       )
   )
 
@@ -319,8 +319,8 @@ covid_data <- covid_data |>
       
       # factorise results
       factor(
-        levels = c(0, 1, 2)#,
-        # = c("no coverage", "partial coverage", "full coverage")
+        levels = c(0, 1, 2),
+        labels = c("no coverage", "partial coverage", "full coverage")
       )
   )
 

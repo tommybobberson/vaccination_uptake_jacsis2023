@@ -51,7 +51,7 @@
   
   # Combining all the data
   data <- bind_cols(age, inf, cov, ivd) |>
-    select(-age_of_interest...60, -birth_order...58) |>
+    select(-age_of_interest...61, -birth_order...59) |>
     rename( birth_order = birth_order...12, age_of_interest = age_of_interest...11)
   
 # data exclusion
@@ -97,8 +97,8 @@
   data <- data |>
     filter(child_of_interest == 1 & !is.na(covid_coverage_age) & !is.na(influenza_coverage_age))
   
-# creating dummy variables for all variables
-data <- dummy_cols(data)
+# creating dummy variables for all variables -- this is not needed?
+# data <- dummy_cols(data)
 
 # save the reshaped data frame
 saveRDS(
